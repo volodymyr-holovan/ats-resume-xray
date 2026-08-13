@@ -1,0 +1,24 @@
+[project]
+name = "ats-resume-xray"
+version = "0.1.0"
+description = "Shows what a resume-parsing pipeline actually extracts from a PDF/DOCX resume, so you can see and fix what breaks before an ATS does."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+dependencies = [
+    "pdfplumber>=0.10",
+    "python-docx>=1.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0"]
+
+[project.scripts]
+atsxray = "ats_xray.cli:main"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
