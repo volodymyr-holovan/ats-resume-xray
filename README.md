@@ -26,22 +26,6 @@ parsing (multi-column layouts, tables, text boxes, non-standard fonts, missing
 alt-text) and show you, transparently, whether your specific file triggers
 them — with the raw extracted text as evidence, not a mystery score.
 
-## Status
-
-This project is being built incrementally, in public. Current stage:
-
-- [x] **Day 1 — Core extraction**: PDF text extraction (naive vs. column-aware)
-      and DOCX text extraction (paragraphs-only vs. paragraphs+tables in true
-      document order).
-- [ ] Day 2 — Structural analysis (headers/footers, non-embedded fonts, images
-      standing in for text)
-- [ ] Day 3 — Field recognition (name, email, phone, skills, experience,
-      education) with per-field success/failure reporting
-- [ ] Day 4 — Rule engine with citations to documented ATS parsing research
-- [ ] Day 5 — Web demo (drag-and-drop, deployed)
-- [ ] Day 6 — Golden-fixture test suite (known-good and known-broken resumes)
-- [ ] Day 7 — Polish, docs, public demo link
-
 ## Usage
 
 ```bash
