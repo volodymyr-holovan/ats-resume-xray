@@ -14,8 +14,9 @@ so they can be unit-tested without opening a real PDF.
 
 import pdfplumber
 
+from ._pdf_words import DEFAULT_LINE_TOLERANCE, group_words_into_lines
+
 DEFAULT_MIN_COLUMN_GAP = 20.0
-DEFAULT_LINE_TOLERANCE = 3.0
 
 
 def extract_naive(pdf_path: str) -> str:
@@ -74,19 +75,5 @@ def _words_to_text(words: list[dict], line_tolerance: float = DEFAULT_LINE_TOLER
     """Sort words into reading order (top to bottom, then left to right
     within a line) and join them into text lines.
     """
-    if not words:
-        return ""
-
-    ordered = sorted(words, key=lambda w: (round(w["top"], 1), w["x0"]))
-
-    lines: list[list[dict]] = []
-    for word in ordered:
-        if lines and abs(word["top"] - lines[-1][-1]["top"]) <= line_tolerance:
-            lines[-1].append(word)
-        else:
-            lines.append([word])
-
-    return "\n".join(
-        " ".join(w["text"] for w in sorted(line, key=lambda w: w["x0"]))
-        for line in lines
-    )
+    lines = group_words_into_lines(words, line_tolerance)
+    return "\n".join(line["text"] for line in lines)

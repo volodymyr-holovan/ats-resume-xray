@@ -11,7 +11,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=7.0"]
+dev = ["pytest>=7.0", "reportlab>=4.0"]
 
 [project.scripts]
 atsxray = "ats_xray.cli:main"

@@ -17,8 +17,9 @@ import re
 
 import pdfplumber
 
+from ._pdf_words import DEFAULT_LINE_TOLERANCE, group_words_into_lines
+
 DEFAULT_ZONE_FRACTION = 0.12
-DEFAULT_LINE_TOLERANCE = 3.0
 
 _DIGIT_RUN = re.compile(r"\d+")
 
@@ -40,7 +41,7 @@ def find_repeated_header_footer_lines(
             return []
 
         for page_number, page in enumerate(pdf.pages, start=1):
-            lines = _group_words_into_lines(page.extract_words(), line_tolerance)
+            lines = group_words_into_lines(page.extract_words(), line_tolerance)
             header_limit = page.height * zone_fraction
             footer_limit = page.height * (1 - zone_fraction)
 
@@ -71,31 +72,3 @@ def _normalize(text: str) -> str:
     the same repeated pattern, and normalize whitespace/case for comparison.
     """
     return _DIGIT_RUN.sub("#", text).strip().lower()
-
-
-def _group_words_into_lines(words: list[dict], line_tolerance: float) -> list[dict]:
-    """Group words into text lines with each line's vertical extent. No
-    column detection: header/footer content is typically single-column.
-    """
-    if not words:
-        return []
-
-    ordered = sorted(words, key=lambda w: (round(w["top"], 1), w["x0"]))
-    lines: list[list[dict]] = []
-    for word in ordered:
-        if lines and abs(word["top"] - lines[-1][-1]["top"]) <= line_tolerance:
-            lines[-1].append(word)
-        else:
-            lines.append([word])
-
-    result = []
-    for line in lines:
-        ordered_line = sorted(line, key=lambda w: w["x0"])
-        result.append(
-            {
-                "text": " ".join(w["text"] for w in ordered_line),
-                "top": min(w["top"] for w in line),
-                "bottom": max(w["bottom"] for w in line),
-            }
-        )
-    return result
