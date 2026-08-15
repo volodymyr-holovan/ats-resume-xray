@@ -5,6 +5,7 @@ from pathlib import Path
 
 from .docx_extract import extract_docx_full, extract_docx_naive
 from .extract import extract_layout_aware, extract_naive
+from .field_report import build_field_report
 from .structure import analyze_structure
 
 SEPARATOR = "=" * 30
@@ -20,6 +21,11 @@ def main() -> None:
         "--structure",
         action="store_true",
         help="Also run structural analysis (fonts, headers/footers, images/text boxes)",
+    )
+    parser.add_argument(
+        "--fields",
+        action="store_true",
+        help="Also run field recognition (name/email/phone/sections), comparing naive vs layout-aware extraction",
     )
     args = parser.parse_args()
 
@@ -45,6 +51,11 @@ def main() -> None:
         print()
         print(SEPARATOR, "STRUCTURAL ANALYSIS", SEPARATOR)
         print(_format_structure_report(analyze_structure(str(path))))
+
+    if args.fields:
+        print()
+        print(SEPARATOR, "FIELD RECOGNITION (layout-aware vs. naive)", SEPARATOR)
+        print(_format_field_comparison(build_field_report(aware), build_field_report(naive)))
 
 
 def _format_structure_report(findings: dict) -> str:
@@ -90,6 +101,27 @@ def _format_structure_report(findings: dict) -> str:
             lines.append(f"  {text_box}")
 
     return "\n".join(lines)
+
+
+def _format_field_comparison(aware_report: dict, naive_report: dict) -> str:
+    lines: list[str] = []
+
+    for field in ("name", "email", "phone"):
+        lines.append(_comparison_line(field, aware_report[field], naive_report[field]))
+
+    for section, aware_field in aware_report["sections"].items():
+        lines.append(_comparison_line(section, aware_field, naive_report["sections"][section]))
+
+    return "\n".join(lines)
+
+
+def _comparison_line(label: str, aware_field: dict, naive_field: dict) -> str:
+    aware_status = "found" if aware_field["found"] else "MISSING"
+    naive_status = "found" if naive_field["found"] else "MISSING"
+    line = f"{label}: layout-aware={aware_status}, naive={naive_status}"
+    if aware_field["found"] and not naive_field["found"]:
+        line += "  <-- at risk: a basic parser would miss this"
+    return line
 
 
 if __name__ == "__main__":
