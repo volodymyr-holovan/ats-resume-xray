@@ -1,5 +1,7 @@
-from ats_xray.cli import _format_field_comparison, _format_structure_report
+from ats_xray.cli import _format_field_comparison, _format_rule_report, _format_structure_report
+from ats_xray.engine import Finding
 from ats_xray.field_report import build_field_report
+from ats_xray.rule import get_rule
 
 
 def test_format_structure_report_pdf_with_findings():
@@ -61,3 +63,26 @@ def test_format_field_comparison_no_risk_when_both_agree():
 
     assert "at risk" not in report
     assert "name: layout-aware=found, naive=found" in report
+
+
+def test_format_rule_report_no_findings():
+    assert _format_rule_report([]) == "No rules triggered."
+
+
+def test_format_rule_report_includes_evidence_and_source():
+    finding = Finding(rule=get_rule("pdf_non_embedded_font"), evidence="Non-embedded fonts: Calibri")
+
+    report = _format_rule_report([finding])
+
+    assert "[MEDIUM] pdf_non_embedded_font" in report
+    assert "Evidence: Non-embedded fonts: Calibri" in report
+    assert "Source: research_sources.md#ats-fonts" in report
+
+
+def test_format_rule_report_orders_high_severity_first():
+    medium_finding = Finding(rule=get_rule("pdf_non_embedded_font"), evidence="medium evidence")
+    high_finding = Finding(rule=get_rule("missing_contact_field"), evidence="high evidence")
+
+    report = _format_rule_report([medium_finding, high_finding])
+
+    assert report.index("missing_contact_field") < report.index("pdf_non_embedded_font")

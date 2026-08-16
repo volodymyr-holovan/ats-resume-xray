@@ -23,7 +23,7 @@ def test_analyze_structure_docx_returns_expected_keys(tmp_path):
 
     result = analyze_structure(str(path))
 
-    assert set(result.keys()) == {"headers_footers", "text_box_content"}
+    assert set(result.keys()) == {"headers_footers", "text_box_content", "has_table_content"}
 
 
 def test_analyze_structure_rejects_unsupported_extension(tmp_path):

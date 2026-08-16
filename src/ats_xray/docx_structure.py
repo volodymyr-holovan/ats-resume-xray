@@ -43,6 +43,18 @@ def extract_docx_headers_footers(docx_path: str) -> dict:
     return {"headers": headers, "footers": footers}
 
 
+def has_table_content(docx_path: str) -> bool:
+    """Return True if any DOCX table cell holds non-empty text.
+
+    Tables are a common way to build a visually clean, side-by-side resume
+    layout — and a common, well-documented way for that layout to break:
+    many parsers flatten table rows in a way that scrambles which value
+    belongs to which label, or skip table content entirely.
+    """
+    document = docx.Document(docx_path)
+    return any(cell.text.strip() for table in document.tables for row in table.rows for cell in row.cells)
+
+
 def find_docx_text_box_content(docx_path: str) -> list[str]:
     """Return the text found inside each Word text box (``w:txbxContent``)
     in the document body, in document order. Empty text boxes are skipped.

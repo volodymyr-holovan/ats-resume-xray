@@ -2,6 +2,7 @@ from .extract import extract_layout_aware, extract_naive
 from .docx_extract import extract_docx_full, extract_docx_naive
 from .structure import analyze_structure
 from .field_report import build_field_report
+from .engine import run_rules
 
 __all__ = [
     "extract_naive",
@@ -10,4 +11,5 @@ __all__ = [
     "extract_docx_full",
     "analyze_structure",
     "build_field_report",
+    "run_rules",
 ]

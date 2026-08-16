@@ -4,9 +4,12 @@ import argparse
 from pathlib import Path
 
 from .docx_extract import extract_docx_full, extract_docx_naive
+from .engine import run_rules
 from .extract import extract_layout_aware, extract_naive
 from .field_report import build_field_report
 from .structure import analyze_structure
+
+_SEVERITY_ORDER = {"high": 0, "medium": 1, "low": 2}
 
 SEPARATOR = "=" * 30
 
@@ -26,6 +29,11 @@ def main() -> None:
         "--fields",
         action="store_true",
         help="Also run field recognition (name/email/phone/sections), comparing naive vs layout-aware extraction",
+    )
+    parser.add_argument(
+        "--report",
+        action="store_true",
+        help="Also run the rule engine and print triggered findings, each with its evidence and cited source",
     )
     args = parser.parse_args()
 
@@ -56,6 +64,11 @@ def main() -> None:
         print()
         print(SEPARATOR, "FIELD RECOGNITION (layout-aware vs. naive)", SEPARATOR)
         print(_format_field_comparison(build_field_report(aware), build_field_report(naive)))
+
+    if args.report:
+        print()
+        print(SEPARATOR, "RULE ENGINE REPORT", SEPARATOR)
+        print(_format_rule_report(run_rules(str(path), naive, aware)))
 
 
 def _format_structure_report(findings: dict) -> str:
@@ -100,6 +113,12 @@ def _format_structure_report(findings: dict) -> str:
         for text_box in text_boxes:
             lines.append(f"  {text_box}")
 
+        lines.append(
+            "Table content: found (many parsers scramble or skip table rows)"
+            if findings.get("has_table_content")
+            else "Table content: none found"
+        )
+
     return "\n".join(lines)
 
 
@@ -122,6 +141,26 @@ def _comparison_line(label: str, aware_field: dict, naive_field: dict) -> str:
     if aware_field["found"] and not naive_field["found"]:
         line += "  <-- at risk: a basic parser would miss this"
     return line
+
+
+def _format_rule_report(findings: list) -> str:
+    if not findings:
+        return "No rules triggered."
+
+    ordered = sorted(findings, key=lambda f: _SEVERITY_ORDER[f.rule.severity])
+    blocks = []
+    for finding in ordered:
+        blocks.append(
+            "\n".join(
+                [
+                    f"[{finding.rule.severity.upper()}] {finding.rule.id}",
+                    f"  {finding.rule.description}",
+                    f"  Evidence: {finding.evidence}",
+                    f"  Source: research_sources.md#{finding.rule.source}",
+                ]
+            )
+        )
+    return "\n\n".join(blocks)
 
 
 if __name__ == "__main__":
