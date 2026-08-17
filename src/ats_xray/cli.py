@@ -3,10 +3,9 @@
 import argparse
 from pathlib import Path
 
-from .docx_extract import extract_docx_full, extract_docx_naive
 from .engine import run_rules
-from .extract import extract_layout_aware, extract_naive
 from .field_report import build_field_report
+from .pipeline import extract_text
 from .structure import analyze_structure
 
 _SEVERITY_ORDER = {"high": 0, "medium": 1, "low": 2}
@@ -38,16 +37,11 @@ def main() -> None:
     args = parser.parse_args()
 
     path = Path(args.file)
-    suffix = path.suffix.lower()
 
-    if suffix == ".pdf":
-        naive = extract_naive(str(path))
-        aware = extract_layout_aware(str(path))
-    elif suffix == ".docx":
-        naive = extract_docx_naive(str(path))
-        aware = extract_docx_full(str(path))
-    else:
-        raise SystemExit(f"Unsupported file type: {suffix or '(none)'}. Use .pdf or .docx.")
+    try:
+        naive, aware = extract_text(str(path))
+    except ValueError as exc:
+        raise SystemExit(str(exc))
 
     print(SEPARATOR, "NAIVE EXTRACTION (what a basic parser sees)", SEPARATOR)
     print(naive)

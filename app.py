@@ -5,14 +5,9 @@ documented parsing risks it triggers.
 Run locally with: streamlit run app.py
 """
 
-import tempfile
-from pathlib import Path
-
 import streamlit as st
 
-from ats_xray.docx_extract import extract_docx_full, extract_docx_naive
-from ats_xray.engine import run_rules
-from ats_xray.extract import extract_layout_aware, extract_naive
+from ats_xray.pipeline import analyze_bytes
 
 SEVERITY_ORDER = {"high": 0, "medium": 1, "low": 2}
 SEVERITY_RENDERER = {"high": st.error, "medium": st.warning, "low": st.info}
@@ -36,22 +31,8 @@ st.caption(
 uploaded_file = st.file_uploader("Upload your resume", type=["pdf", "docx"])
 
 if uploaded_file is not None:
-    suffix = Path(uploaded_file.name).suffix.lower()
-
-    with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp_file:
-        tmp_file.write(uploaded_file.getvalue())
-        tmp_path = tmp_file.name
-
-    try:
-        if suffix == ".pdf":
-            naive_text = extract_naive(tmp_path)
-            aware_text = extract_layout_aware(tmp_path)
-        else:
-            naive_text = extract_docx_naive(tmp_path)
-            aware_text = extract_docx_full(tmp_path)
-        findings = run_rules(tmp_path, naive_text, aware_text)
-    finally:
-        Path(tmp_path).unlink(missing_ok=True)
+    result = analyze_bytes(uploaded_file.getvalue(), uploaded_file.name)
+    naive_text, aware_text, findings = result.naive_text, result.aware_text, result.findings
 
     st.subheader("Findings")
     if not findings:
