@@ -22,7 +22,15 @@ st.set_page_config(page_title="ATS Resume X-Ray", page_icon="🔎")
 st.title("ATS Resume X-Ray")
 st.write(
     "Upload a resume (PDF or DOCX) to see what a resume-parsing pipeline "
-    "actually extracts from it — not a black-box score, an actual diff."
+    "actually extracts from it — not a black-box score, an actual diff. "
+    "Findings are documented, common failure patterns "
+    "([sources](https://github.com/volodymyr-holovan/ats-resume-xray/blob/master/research_sources.md)), "
+    "not a guarantee of how any specific employer's system will behave."
+)
+st.caption(
+    "🔒 Your file is written to a temporary location only for the few seconds "
+    "needed to process it, then deleted immediately. Nothing is stored, logged, "
+    "or sent anywhere else."
 )
 
 uploaded_file = st.file_uploader("Upload your resume", type=["pdf", "docx"])
@@ -63,3 +71,6 @@ if uploaded_file is not None:
     with aware_col:
         with st.expander("Layout-aware extraction — columns and tables handled"):
             st.text(aware_text)
+
+st.divider()
+st.caption("Open source: [github.com/volodymyr-holovan/ats-resume-xray](https://github.com/volodymyr-holovan/ats-resume-xray)")
