@@ -31,27 +31,36 @@ st.caption(
 uploaded_file = st.file_uploader("Upload your resume", type=["pdf", "docx"])
 
 if uploaded_file is not None:
-    result = analyze_bytes(uploaded_file.getvalue(), uploaded_file.name)
-    naive_text, aware_text, findings = result.naive_text, result.aware_text, result.findings
-
-    st.subheader("Findings")
-    if not findings:
-        st.success("No documented parsing risks triggered.")
+    try:
+        result = analyze_bytes(uploaded_file.getvalue(), uploaded_file.name)
+    except ValueError as exc:
+        st.error(str(exc))
+    except Exception:
+        st.error(
+            "Couldn't read this file — it may be corrupted, password-protected, "
+            "or not a valid PDF/DOCX. Try re-exporting it and uploading again."
+        )
     else:
-        ordered_findings = sorted(findings, key=lambda f: SEVERITY_ORDER[f.rule.severity])
-        for finding in ordered_findings:
-            render = SEVERITY_RENDERER[finding.rule.severity]
-            render(f"**[{finding.rule.severity.upper()}]** {finding.rule.description}")
-            st.caption(f"Evidence: {finding.evidence}")
-            st.caption(f"Source: research_sources.md#{finding.rule.source}")
+        naive_text, aware_text, findings = result.naive_text, result.aware_text, result.findings
 
-    naive_col, aware_col = st.columns(2)
-    with naive_col:
-        with st.expander("Naive extraction — what a basic, layout-blind parser sees"):
-            st.text(naive_text)
-    with aware_col:
-        with st.expander("Layout-aware extraction — columns and tables handled"):
-            st.text(aware_text)
+        st.subheader("Findings")
+        if not findings:
+            st.success("No documented parsing risks triggered.")
+        else:
+            ordered_findings = sorted(findings, key=lambda f: SEVERITY_ORDER[f.rule.severity])
+            for finding in ordered_findings:
+                render = SEVERITY_RENDERER[finding.rule.severity]
+                render(f"**[{finding.rule.severity.upper()}]** {finding.rule.description}")
+                st.caption(f"Evidence: {finding.evidence}")
+                st.caption(f"Source: research_sources.md#{finding.rule.source}")
+
+        naive_col, aware_col = st.columns(2)
+        with naive_col:
+            with st.expander("Naive extraction — what a basic, layout-blind parser sees"):
+                st.text(naive_text)
+        with aware_col:
+            with st.expander("Layout-aware extraction — columns and tables handled"):
+                st.text(aware_text)
 
 st.divider()
 st.caption("Open source: [github.com/volodymyr-holovan/ats-resume-xray](https://github.com/volodymyr-holovan/ats-resume-xray)")

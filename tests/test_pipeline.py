@@ -81,6 +81,15 @@ def test_analyze_bytes_unsupported_extension_raises():
         analyze_bytes(b"hello", "resume.txt")
 
 
+def test_analyze_bytes_raises_for_corrupted_pdf_content():
+    """A file that merely has a .pdf name but isn't a real PDF (e.g. a
+    corrupted upload) must raise rather than silently return garbage — this
+    is exactly the case app.py's friendly error message is built for.
+    """
+    with pytest.raises(Exception):
+        analyze_bytes(b"this is not a real pdf file at all, just garbage bytes", "resume.pdf")
+
+
 def test_analyze_bytes_cleans_up_temp_file_even_on_failure(monkeypatch):
     """The temp file must be deleted even when analysis blows up midway —
     e.g. a corrupted upload — not just on the happy path.
