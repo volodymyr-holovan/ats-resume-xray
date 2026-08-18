@@ -12,6 +12,8 @@ import golden_generators as generators
 # (generator, file suffix, expected rule ids)
 GOLDEN_CASES: list[tuple] = [
     (generators.clean_single_column, ".pdf", set()),
+    (generators.missing_optional_section, ".pdf", set()),
+    (generators.contact_with_only_email, ".pdf", set()),
     (generators.two_column_pdf, ".pdf", {"section_missing_under_naive_parsing"}),
     (generators.missing_contact, ".pdf", {"missing_contact_field"}),
     (generators.pdf_textless_image, ".pdf", {"pdf_textless_image"}),

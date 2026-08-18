@@ -37,6 +37,36 @@ def clean_single_column(path) -> None:
     c.save()
 
 
+def missing_optional_section(path) -> None:
+    """A resume that simply never mentions Education — by the candidate's
+    choice, not because of a formatting bug. Every rule that compares
+    naive vs. layout-aware extraction must stay quiet here: a section
+    that's absent from both readings isn't a parsing risk, just content
+    the candidate didn't include.
+    """
+    c = canvas.Canvas(str(path), pagesize=(400, 300))
+    c.setFont("Helvetica", 12)
+    c.drawString(30, 270, "Jane Doe")
+    c.drawString(30, 250, "jane@example.com | +1 555 123 4567")
+    c.drawString(30, 210, "Experience")
+    c.drawString(30, 190, "Senior Engineer at Acme")
+    c.save()
+
+
+def contact_with_only_email(path) -> None:
+    """Only an email, no phone number. missing_contact_field should only
+    fire when *both* are absent — a candidate reachable by one channel is
+    still reachable.
+    """
+    c = canvas.Canvas(str(path), pagesize=(400, 300))
+    c.setFont("Helvetica", 12)
+    c.drawString(30, 270, "Jane Doe")
+    c.drawString(30, 250, "jane@example.com")
+    c.drawString(30, 210, "Experience")
+    c.drawString(30, 190, "Senior Engineer at Acme")
+    c.save()
+
+
 def two_column_pdf(path) -> None:
     """A section header split across two columns: readable layout-aware,
     invisible under naive, order-blind extraction.
