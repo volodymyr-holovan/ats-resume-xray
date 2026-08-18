@@ -1,0 +1,4 @@
+# Used by Streamlit Community Cloud to install the app for deployment.
+# Installs this local package (pyproject.toml) with its "web" extra, which
+# pulls in the core dependencies plus Streamlit itself.
+-e .[web]
