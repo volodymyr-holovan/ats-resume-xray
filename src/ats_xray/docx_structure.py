@@ -8,13 +8,15 @@ disappearing entirely during ATS parsing.
 - **Headers/footers** live in separate XML parts (``word/header1.xml``,
   ``word/footer1.xml``) referenced from section properties, not inside
   ``document.xml``'s body. A reader that only walks the document body —
-  including our own Day 1 "full" extractor — never sees them.
+  including our own "full" extractor in ``docx_extract.py`` — never sees them.
 - **Text boxes** nest their paragraphs inside a ``w:txbxContent`` element,
   itself buried inside a drawing anchor within a run. They don't appear as
   ordinary sibling paragraphs at the body level either, so a body-order walk
   misses them too. Sidebar sections built with text boxes are one of the
   most frequently cited reasons a resume "disappears" in an ATS.
 """
+
+from typing import Any
 
 import docx
 from docx.oxml.ns import qn
@@ -73,5 +75,8 @@ def find_docx_text_box_content(docx_path: str) -> list[str]:
     return contents
 
 
-def _paragraphs_text(header_or_footer) -> str:
+def _paragraphs_text(header_or_footer: Any) -> str:
+    """``header_or_footer`` is a python-docx ``_Header``/``_Footer`` object;
+    typed as ``Any`` since python-docx doesn't export a public type for it.
+    """
     return "\n".join(p.text for p in header_or_footer.paragraphs if p.text.strip())

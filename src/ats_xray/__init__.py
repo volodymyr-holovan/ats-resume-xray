@@ -1,3 +1,9 @@
+"""Public API surface: the functions most callers need, re-exported from
+their implementing modules. Internals (detectors, the rule registry) are
+still importable directly from their own modules for anyone who wants
+finer-grained access.
+"""
+
 from .extract import extract_layout_aware, extract_naive
 from .docx_extract import extract_docx_full, extract_docx_naive
 from .structure import analyze_structure

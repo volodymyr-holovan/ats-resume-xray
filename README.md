@@ -1,41 +1,74 @@
 # ATS Resume X-Ray
 
+[![Tests](https://github.com/volodymyr-holovan/ats-resume-xray/actions/workflows/tests.yml/badge.svg)](https://github.com/volodymyr-holovan/ats-resume-xray/actions/workflows/tests.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue)
+
 **See your resume the way a parser sees it — not a fake "ATS score", an actual diff.**
 
 Most "ATS score checkers" are black boxes: you upload a resume, get a number like
-"87/100", and no idea what it actually means. This project does the opposite.
+"87/100", and no idea what it actually means. This project does the opposite:
+it shows you the extracted text, the exact structural issue behind each
+finding, and a citation for why that pattern matters — nothing hidden.
 
-ATS Resume X-Ray extracts text from your PDF/DOCX resume using two strategies:
+Available as a web app (`streamlit run app.py`) or a CLI (`atsxray`).
 
-- **Naive extraction** — mimics how a basic, layout-blind parser reads your file
-  (the default behavior of common PDF/DOCX text-extraction libraries).
-- **Layout-aware extraction** — detects columns and tables, and reads content
-  in the order a human actually intends.
+## What it does
 
-Comparing the two outputs reveals exactly where a real parsing pipeline would
-mangle or silently drop your content — a two-column layout that gets its lines
-interleaved, a table whose cells vanish entirely, text that only exists inside
-an image, and so on.
+1. **Extracts text two ways** from your PDF/DOCX resume:
+   - *Naive* — mimics a basic, layout-blind parser (the default behavior of
+     common text-extraction libraries).
+   - *Layout-aware* — detects columns and tables, and reads content in the
+     order a human actually intends.
+
+   Comparing the two reveals exactly where a real parsing pipeline would
+   mangle or silently drop your content: a two-column layout that gets its
+   lines interleaved, a table whose cells vanish entirely, text that only
+   exists inside an image.
+
+2. **Runs structural detectors** for other common failure patterns: non-embedded
+   fonts, text hidden in headers/footers or Word text boxes, and large images
+   standing in for real text.
+
+3. **Recognizes fields** (name, email, phone, and the Experience/Education/Skills
+   sections, in English and German) under both extraction strategies, so it
+   can flag content that's only readable in the best case.
+
+4. **Runs a rule engine** over all of the above: each documented risk pattern
+   is a `Rule` with a severity and a citation into
+   [`research_sources.md`](research_sources.md) — a transparent finding with
+   evidence, not an opaque score.
 
 ## Why this exists
 
 Applicant Tracking Systems are proprietary and undocumented, so no open-source
 tool can claim to *replicate* Workday, Taleo, or Greenhouse exactly. What we
-*can* do is document known, research-backed failure patterns in resume
-parsing (multi-column layouts, tables, text boxes, non-standard fonts, missing
-alt-text) and show you, transparently, whether your specific file triggers
-them — with the raw extracted text as evidence, not a mystery score.
+*can* do is document known, common failure patterns in resume parsing and
+show you, transparently, whether your specific file triggers them — with the
+raw extracted text as evidence.
 
 ## Usage
 
+### Web app
+
 ```bash
-pip install -e .
-atsxray path/to/resume.pdf
-atsxray path/to/resume.docx
+pip install -e ".[web]"
+streamlit run app.py
 ```
 
-This prints both extractions side by side so you can visually compare what
-the naive pass saw against what the layout-aware pass recovered.
+Upload a resume, see the naive/layout-aware diff and the rule engine's
+findings in your browser.
+
+### CLI
+
+```bash
+pip install -e .
+
+atsxray path/to/resume.pdf                # naive vs. layout-aware extraction
+atsxray path/to/resume.pdf --structure     # + fonts, headers/footers, images
+atsxray path/to/resume.pdf --fields        # + name/email/phone/section detection
+atsxray path/to/resume.pdf --report        # + full rule engine report
+```
 
 ## How the layout-aware PDF extraction works
 
@@ -58,7 +91,32 @@ interleaved line by line.
   silently dropped.
 - **Full**: walks the document body in true XML order, handling paragraphs
   and tables as they actually appear in the file, so table content is never
-  lost.
+  lost. Headers, footers, and text boxes live outside the document body
+  entirely — a separate set of detectors checks those.
+
+## The rule engine
+
+Every finding traces back to a `Rule`: an id, a plain-language description,
+a severity, and a `source` key pointing into
+[`research_sources.md`](research_sources.md), which documents where the
+underlying claim comes from. Findings always include the specific evidence
+found in *your* file — no rule fires on vibes.
+
+## Testing
+
+The test suite includes a golden-fixture regression harness
+(`tests/test_golden_fixtures.py`): labeled resume fixtures, each with the
+exact set of rule ids it must trigger, so a change that silently breaks a
+detector — or makes one over-fire — shows up as a failing test.
+
+```bash
+pip install -e ".[dev,web]"
+pytest
+```
+
+## Contributing
+
+Adding a rule, a detector, or a fixture? See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Disclaimer
 

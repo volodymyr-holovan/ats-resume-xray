@@ -10,6 +10,7 @@ file and calls ``evaluate()``.
 
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Callable
 
 from . import rules as _rules  # noqa: F401  (import registers the rule set)
 from .field_report import build_field_report
@@ -21,6 +22,13 @@ from .structure import analyze_structure
 class Finding:
     rule: Rule
     evidence: str
+
+
+Trigger = Callable[[str, str], None]
+"""A callback of (rule_id, evidence) -> None, used by the _evaluate_* helpers
+to record a triggered finding without each of them needing to know how
+findings are collected.
+"""
 
 
 def evaluate(file_type: str, structure: dict, aware_fields: dict, naive_fields: dict) -> list[Finding]:
@@ -48,7 +56,7 @@ def evaluate(file_type: str, structure: dict, aware_fields: dict, naive_fields: 
     return findings
 
 
-def _evaluate_pdf_structure(structure: dict, trigger) -> None:
+def _evaluate_pdf_structure(structure: dict, trigger: Trigger) -> None:
     fonts = structure.get("non_embedded_fonts") or []
     if fonts:
         trigger("pdf_non_embedded_font", f"Non-embedded fonts: {', '.join(fonts)}")
@@ -70,7 +78,7 @@ def _evaluate_pdf_structure(structure: dict, trigger) -> None:
         )
 
 
-def _evaluate_docx_structure(structure: dict, trigger) -> None:
+def _evaluate_docx_structure(structure: dict, trigger: Trigger) -> None:
     headers_footers = structure.get("headers_footers") or {"headers": [], "footers": []}
     evidence_parts = headers_footers["headers"] + headers_footers["footers"]
     if evidence_parts:
@@ -84,7 +92,7 @@ def _evaluate_docx_structure(structure: dict, trigger) -> None:
         trigger("docx_table_content", "One or more table cells contain resume content")
 
 
-def _evaluate_fields(aware_fields: dict, naive_fields: dict, trigger) -> None:
+def _evaluate_fields(aware_fields: dict, naive_fields: dict, trigger: Trigger) -> None:
     if not aware_fields["email"]["found"] and not aware_fields["phone"]["found"]:
         trigger("missing_contact_field", "No email or phone found anywhere in the extracted text")
 
