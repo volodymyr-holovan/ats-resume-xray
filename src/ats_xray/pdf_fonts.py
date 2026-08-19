@@ -75,11 +75,11 @@ def _is_embedded(font_dict: dict) -> bool:
     return False
 
 
-def _descriptor_has_font_file(descriptor) -> bool:
+def _descriptor_has_font_file(descriptor: object) -> bool:
     return isinstance(descriptor, dict) and any(key in descriptor for key in _FONT_FILE_KEYS)
 
 
-def _clean_base_font_name(base_font) -> str:
+def _clean_base_font_name(base_font: PSLiteral | bytes | str | None) -> str:
     """Normalize a PDF BaseFont value to a plain name, stripping the
     six-letter subset prefix (e.g. "ABCDEF+Calibri" -> "Calibri") that
     subsetted, embedded fonts carry.

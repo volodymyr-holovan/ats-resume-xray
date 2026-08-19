@@ -16,6 +16,8 @@ disappearing entirely during ATS parsing.
   most frequently cited reasons a resume "disappears" in an ATS.
 """
 
+from typing import Any
+
 import docx
 from docx.oxml.ns import qn
 
@@ -73,5 +75,8 @@ def find_docx_text_box_content(docx_path: str) -> list[str]:
     return contents
 
 
-def _paragraphs_text(header_or_footer) -> str:
+def _paragraphs_text(header_or_footer: Any) -> str:
+    """``header_or_footer`` is a python-docx ``_Header``/``_Footer`` object;
+    typed as ``Any`` since python-docx doesn't export a public type for it.
+    """
     return "\n".join(p.text for p in header_or_footer.paragraphs if p.text.strip())
