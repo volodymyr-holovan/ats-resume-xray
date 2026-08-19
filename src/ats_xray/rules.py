@@ -1,10 +1,10 @@
-"""The first batch of rules: documented resume-parsing risks that the Day 2
-and Day 3 detectors can find evidence for. See ``research_sources.md`` for
-the citation behind each ``source`` key.
+"""The registered rules: documented resume-parsing risks that the detectors
+in ``structure.py`` and ``field_report.py`` can find evidence for. See
+``research_sources.md`` for the citation behind each ``source`` key.
 
-Evaluating these rules against an actual file — the "rule engine runner" —
-is a separate concern and lands in a later commit, so the claims made here
-can be reviewed on their own, independent of the code that checks for them.
+Evaluating these rules against an actual file is a separate concern, handled
+by ``engine.py``, so the claims made here can be reviewed on their own,
+independent of the code that checks for them.
 """
 
 from .rule import Rule, register

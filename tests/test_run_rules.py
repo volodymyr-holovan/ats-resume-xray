@@ -7,7 +7,7 @@ from ats_xray.extract import extract_layout_aware, extract_naive
 
 
 def test_run_rules_pdf_end_to_end_flags_column_hidden_section(tmp_path):
-    """The same effect demonstrated by the Day 1/3 smoke tests: a section
+    """The same effect demonstrated elsewhere in the test suite: a section
     header split across two PDF columns is readable layout-aware but
     disappears under naive extraction, so the rule engine should flag it.
     """

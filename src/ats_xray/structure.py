@@ -1,5 +1,5 @@
-"""Unified structural analysis: runs every Day 2 detector applicable to a
-file's type and returns their findings in one place.
+"""Unified structural analysis: runs every structural detector applicable to
+a file's type and returns their findings in one place.
 """
 
 from pathlib import Path

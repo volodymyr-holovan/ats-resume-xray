@@ -10,7 +10,7 @@ from ats_xray.pipeline import AnalysisResult, analyze_bytes, analyze_path, extra
 def _make_two_column_pdf(path) -> None:
     """A section header split across two columns: readable layout-aware,
     invisible under naive extraction — the same fixture shape used by the
-    Day 1/3/4 smoke tests.
+    other end-to-end tests that exercise this effect.
     """
     c = canvas.Canvas(str(path), pagesize=(500, 300))
     c.setFont("Helvetica", 12)

@@ -8,7 +8,7 @@ disappearing entirely during ATS parsing.
 - **Headers/footers** live in separate XML parts (``word/header1.xml``,
   ``word/footer1.xml``) referenced from section properties, not inside
   ``document.xml``'s body. A reader that only walks the document body —
-  including our own Day 1 "full" extractor — never sees them.
+  including our own "full" extractor in ``docx_extract.py`` — never sees them.
 - **Text boxes** nest their paragraphs inside a ``w:txbxContent`` element,
   itself buried inside a drawing anchor within a run. They don't appear as
   ordinary sibling paragraphs at the body level either, so a body-order walk
