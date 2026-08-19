@@ -1,5 +1,9 @@
 # ATS Resume X-Ray
 
+[![Tests](https://github.com/volodymyr-holovan/ats-resume-xray/actions/workflows/tests.yml/badge.svg)](https://github.com/volodymyr-holovan/ats-resume-xray/actions/workflows/tests.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue)
+
 **See your resume the way a parser sees it — not a fake "ATS score", an actual diff.**
 
 Most "ATS score checkers" are black boxes: you upload a resume, get a number like
@@ -109,6 +113,10 @@ detector — or makes one over-fire — shows up as a failing test.
 pip install -e ".[dev,web]"
 pytest
 ```
+
+## Contributing
+
+Adding a rule, a detector, or a fixture? See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Disclaimer
 
