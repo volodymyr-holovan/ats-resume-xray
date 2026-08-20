@@ -13,12 +13,22 @@ Email: a standard address-shaped regex.
 Phone: any digit-heavy run of 7-15 digits, tolerant of spaces, dots,
 dashes, and parentheses. The digit-count bounds exist to avoid matching
 unrelated short numbers (a year, a bullet count) or absurdly long ones.
+
+Every quantifier below has an explicit upper bound. Unbounded quantifiers
+(``+``, ``{5,}``) on a character class that overlaps with "any character
+that might appear before the required literal never actually shows up"
+are a classic catastrophic-backtracking trap: on adversarial input (e.g.
+a long run of letters with no ``@`` anywhere), an unbounded greedy match
+gets re-attempted, and re-backtracked, at every single position in the
+text, which is quadratic in input length. A resume-parsing tool that
+accepts arbitrary uploaded text needs every regex bounded on principle,
+not just the ones a test happens to catch.
 """
 
 import re
 
-_EMAIL_RE = re.compile(r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+")
-_PHONE_CANDIDATE_RE = re.compile(r"[+(]?\d[\d\s().-]{5,}\d")
+_EMAIL_RE = re.compile(r"[a-zA-Z0-9_.+-]{1,64}@[a-zA-Z0-9-]{1,63}(?:\.[a-zA-Z0-9-]{1,63}){1,8}")
+_PHONE_CANDIDATE_RE = re.compile(r"[+(]?\d[\d\s().-]{5,30}\d")
 _MIN_PHONE_DIGITS = 7
 _MAX_PHONE_DIGITS = 15
 

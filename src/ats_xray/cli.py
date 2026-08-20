@@ -1,6 +1,7 @@
 """Command-line entry point: ``atsxray path/to/resume.pdf``."""
 
 import argparse
+import sys
 from pathlib import Path
 
 from .engine import run_rules
@@ -14,6 +15,14 @@ SEPARATOR = "=" * 30
 
 
 def main() -> None:
+    # Resume content is arbitrary Unicode (umlauts, em-dashes, non-Latin
+    # names); the OS console's default codepage often isn't UTF-8 and can't
+    # represent it, which crashes print() with UnicodeEncodeError instead of
+    # just looking wrong. Force UTF-8 stdout/stderr regardless of locale.
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8")
+
     parser = argparse.ArgumentParser(
         prog="atsxray",
         description="Show what a resume-parsing pipeline actually extracts from your file.",
@@ -38,10 +47,18 @@ def main() -> None:
 
     path = Path(args.file)
 
+    if not path.exists():
+        raise SystemExit(f"File not found: {path}")
+
     try:
         naive, aware = extract_text(str(path))
     except ValueError as exc:
         raise SystemExit(str(exc))
+    except Exception:
+        raise SystemExit(
+            f"Couldn't read {path} — it may be corrupted, password-protected, "
+            "or not a valid PDF/DOCX."
+        )
 
     print(SEPARATOR, "NAIVE EXTRACTION (what a basic parser sees)", SEPARATOR)
     print(naive)

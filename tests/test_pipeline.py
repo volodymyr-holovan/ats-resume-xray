@@ -1,10 +1,19 @@
+import io
+import zipfile
 from pathlib import Path
 
 import docx
 import pytest
 from reportlab.pdfgen import canvas
 
-from ats_xray.pipeline import AnalysisResult, analyze_bytes, analyze_path, extract_text
+from ats_xray.pipeline import (
+    MAX_DOCX_UNCOMPRESSED_BYTES,
+    MAX_FILE_SIZE_BYTES,
+    AnalysisResult,
+    analyze_bytes,
+    analyze_path,
+    extract_text,
+)
 
 
 def _make_two_column_pdf(path) -> None:
@@ -109,3 +118,40 @@ def test_analyze_bytes_cleans_up_temp_file_even_on_failure(monkeypatch):
 
     assert captured_paths
     assert not Path(captured_paths[0]).exists()
+
+
+def test_analyze_bytes_rejects_oversized_file():
+    """A file over the size cap must be rejected before any parsing is
+    attempted — this is the primary defense against a slow/oversized
+    upload tying up server resources.
+    """
+    oversized = b"%PDF-1.4\n" + b"0" * (MAX_FILE_SIZE_BYTES + 1)
+
+    with pytest.raises(ValueError, match="MB"):
+        analyze_bytes(oversized, "resume.pdf")
+
+
+def test_analyze_bytes_rejects_docx_zip_bomb():
+    """A DOCX whose zip central directory declares an implausible amount
+    of uncompressed content must be rejected without ever inflating it —
+    a small, highly-compressible payload can otherwise expand to hundreds
+    of MB and stall the process (a "zip bomb").
+    """
+    oversized_xml = (
+        "<?xml version=\"1.0\"?><w:document "
+        'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'
+        "<w:body><w:p><w:r><w:t>"
+        + ("A" * (MAX_DOCX_UNCOMPRESSED_BYTES + 1024))
+        + "</w:t></w:r></w:p></w:body></w:document>"
+    ).encode("utf-8")
+
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as archive:
+        archive.writestr("[Content_Types].xml", "<Types/>")
+        archive.writestr("word/document.xml", oversized_xml)
+    zip_bytes = buffer.getvalue()
+
+    assert len(zip_bytes) < MAX_FILE_SIZE_BYTES, "fixture should stay under the raw upload-size cap"
+
+    with pytest.raises(ValueError, match="uncompressed"):
+        analyze_bytes(zip_bytes, "resume.docx")
