@@ -1,3 +1,8 @@
+import subprocess
+import sys
+
+import docx
+
 from ats_xray.cli import _format_field_comparison, _format_rule_report, _format_structure_report
 from ats_xray.engine import Finding
 from ats_xray.field_report import build_field_report
@@ -86,3 +91,66 @@ def test_format_rule_report_orders_high_severity_first():
     report = _format_rule_report([medium_finding, high_finding])
 
     assert report.index("missing_contact_field") < report.index("pdf_non_embedded_font")
+
+
+def test_cli_handles_unicode_resume_content_without_crashing(tmp_path):
+    """Regression test: cli.py used to inherit the OS console's default
+    codepage for stdout, which crashed with UnicodeEncodeError on
+    non-ASCII resume content (German umlauts, em-dashes) whenever that
+    codepage couldn't represent it. main() now forces UTF-8 stdout/stderr
+    regardless of locale — this runs the real CLI entry point as a
+    subprocess to verify that end to end.
+    """
+    path = tmp_path / "resume.docx"
+    document = docx.Document()
+    document.add_paragraph("Jörg Müller")
+    document.add_paragraph("jorg.mueller@beispiel.de | +49 151 23456789")
+    document.add_paragraph("Straße: Königsallee 5, 40212 Düsseldorf")
+    document.save(str(path))
+
+    result = subprocess.run(
+        [sys.executable, "-m", "ats_xray.cli", str(path)],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert "Jörg Müller" in result.stdout
+
+
+def test_cli_shows_friendly_message_for_missing_file(tmp_path):
+    """Regression test: the CLI used to let FileNotFoundError propagate as
+    a raw traceback. Should now exit with a clear one-line message.
+    """
+    missing_path = tmp_path / "does-not-exist.pdf"
+
+    result = subprocess.run(
+        [sys.executable, "-m", "ats_xray.cli", str(missing_path)],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    )
+
+    assert result.returncode != 0
+    assert "Traceback" not in result.stderr
+    assert "not found" in result.stderr.lower()
+
+
+def test_cli_shows_friendly_message_for_corrupted_file(tmp_path):
+    """Regression test: a file with a .pdf name but invalid content used
+    to let pdfminer's exception propagate as a raw traceback.
+    """
+    corrupt_path = tmp_path / "corrupt.pdf"
+    corrupt_path.write_text("this is not a real pdf file at all")
+
+    result = subprocess.run(
+        [sys.executable, "-m", "ats_xray.cli", str(corrupt_path)],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    )
+
+    assert result.returncode != 0
+    assert "Traceback" not in result.stderr
+    assert "couldn't read" in result.stderr.lower()
