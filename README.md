@@ -47,28 +47,40 @@ tool can claim to *replicate* Workday, Taleo, or Greenhouse exactly. What we
 show you, transparently, whether your specific file triggers them — with the
 raw extracted text as evidence.
 
+## Install
+
+You need [Python 3.9 or newer](https://www.python.org/downloads/). Then run
+these three commands:
+
+```bash
+git clone https://github.com/volodymyr-holovan/ats-resume-xray.git
+cd ats-resume-xray
+pip install ".[web]"
+```
+
+That's it — you now have both the web app and the `atsxray` command.
+
 ## Usage
 
 ### Web app
 
 ```bash
-pip install -e ".[web]"
 streamlit run app.py
 ```
 
-Upload a resume, see the naive/layout-aware diff and the rule engine's
-findings in your browser.
+This opens the app in your browser. Drag in a resume and you'll see what a
+parser extracts from it, plus any findings.
 
 ### CLI
 
 ```bash
-pip install -e .
-
-atsxray path/to/resume.pdf                # naive vs. layout-aware extraction
-atsxray path/to/resume.pdf --structure     # + fonts, headers/footers, images
-atsxray path/to/resume.pdf --fields        # + name/email/phone/section detection
-atsxray path/to/resume.pdf --report        # + full rule engine report
+atsxray my-resume.pdf              # naive vs. layout-aware extraction
+atsxray my-resume.pdf --report     # + findings, with evidence and sources
 ```
+
+Two more flags show the intermediate steps behind the findings:
+`--structure` (fonts, headers/footers, images) and `--fields`
+(name/email/phone/section detection).
 
 ## How the layout-aware PDF extraction works
 
@@ -108,6 +120,9 @@ The test suite includes a golden-fixture regression harness
 (`tests/test_golden_fixtures.py`): labeled resume fixtures, each with the
 exact set of rule ids it must trigger, so a change that silently breaks a
 detector — or makes one over-fire — shows up as a failing test.
+
+To work on the project, install it in editable mode with the dev extras
+instead of the plain install above:
 
 ```bash
 pip install -e ".[dev,web]"
