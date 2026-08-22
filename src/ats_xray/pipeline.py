@@ -6,12 +6,14 @@ one place instead of being duplicated across the two entry points.
 import io
 import tempfile
 import zipfile
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from .docx_extract import extract_docx_full, extract_docx_naive
 from .engine import Finding, run_rules
 from .extract import extract_layout_aware, extract_naive
+from .field_report import build_field_report
+from .score import ScoreBreakdown, score_resume
 
 SUPPORTED_SUFFIXES = (".pdf", ".docx")
 
@@ -33,6 +35,11 @@ class AnalysisResult:
     naive_text: str
     aware_text: str
     findings: list[Finding]
+    score: ScoreBreakdown
+    rendered_pages: list = field(default_factory=list)
+    """Page images with findings boxed on them. Populated only when analysis
+    is asked to render, and only for PDFs -- rendering costs real time, and
+    a DOCX has no page geometry to draw on."""
 
 
 def extract_text(file_path: str) -> tuple[str, str]:
@@ -47,14 +54,33 @@ def extract_text(file_path: str) -> tuple[str, str]:
     raise ValueError(f"Unsupported file type: {suffix or '(none)'}. Use .pdf or .docx.")
 
 
-def analyze_path(file_path: str) -> AnalysisResult:
-    """Extract text and run the rule engine against a file already on disk."""
+def analyze_path(file_path: str, render: bool = False) -> AnalysisResult:
+    """Extract text, run the rule engine, and score a file already on disk.
+
+    Set ``render`` to also produce page images with findings boxed on them.
+    It is off by default because rendering is the slowest step here and only
+    the visual UI needs it.
+    """
     naive_text, aware_text = extract_text(file_path)
     findings = run_rules(file_path, naive_text, aware_text)
-    return AnalysisResult(naive_text=naive_text, aware_text=aware_text, findings=findings)
+    breakdown = score_resume(build_field_report(aware_text), build_field_report(naive_text), findings)
+
+    rendered: list = []
+    if render and Path(file_path).suffix.lower() == ".pdf":
+        from .overlay import render_pages_with_findings
+
+        rendered = render_pages_with_findings(file_path, findings)
+
+    return AnalysisResult(
+        naive_text=naive_text,
+        aware_text=aware_text,
+        findings=findings,
+        score=breakdown,
+        rendered_pages=rendered,
+    )
 
 
-def analyze_bytes(file_bytes: bytes, filename: str) -> AnalysisResult:
+def analyze_bytes(file_bytes: bytes, filename: str, render: bool = False) -> AnalysisResult:
     """Write file_bytes to a temporary file (named to match filename's
     extension, so format detection works), analyze it, then delete the
     temp file — regardless of whether analysis succeeded.
@@ -78,7 +104,7 @@ def analyze_bytes(file_bytes: bytes, filename: str) -> AnalysisResult:
         tmp_path = tmp_file.name
 
     try:
-        return analyze_path(tmp_path)
+        return analyze_path(tmp_path, render=render)
     finally:
         Path(tmp_path).unlink(missing_ok=True)
 

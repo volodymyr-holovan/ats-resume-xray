@@ -7,6 +7,7 @@ from pathlib import Path
 from .engine import run_rules
 from .field_report import build_field_report
 from .pipeline import extract_text
+from .score import score_resume
 from .structure import analyze_structure
 
 _SEVERITY_ORDER = {"high": 0, "medium": 1, "low": 2}
@@ -42,6 +43,11 @@ def main() -> None:
         "--report",
         action="store_true",
         help="Also run the rule engine and print triggered findings, each with its evidence and cited source",
+    )
+    parser.add_argument(
+        "--score",
+        action="store_true",
+        help="Also print the parse readiness score with the arithmetic behind it",
     )
     args = parser.parse_args()
 
@@ -80,6 +86,28 @@ def main() -> None:
         print()
         print(SEPARATOR, "RULE ENGINE REPORT", SEPARATOR)
         print(_format_rule_report(run_rules(str(path), naive, aware)))
+
+    if args.score:
+        breakdown = score_resume(
+            build_field_report(aware), build_field_report(naive), run_rules(str(path), naive, aware)
+        )
+        print()
+        print(SEPARATOR, "PARSE READINESS", SEPARATOR)
+        print(_format_score(breakdown))
+
+
+def _format_score(breakdown) -> str:
+    lines = [f"{breakdown.total}/100 - {breakdown.rating}"]
+    if breakdown.cap_reason:
+        lines.append(f"  {breakdown.cap_reason} (before the cap: {breakdown.uncapped_total}/100)")
+    lines.append("")
+    for component in breakdown.components:
+        weight = "not scored" if component.weight == 0 else f"weight {component.weight}%"
+        lines.append(f"  {component.name}: {component.score:.0f}/100 ({weight})")
+        lines.append(f"    {component.detail}")
+    lines.append("")
+    lines.append("  Measures parse readiness only, not keyword match against a job posting.")
+    return "\n".join(lines)
 
 
 def _format_structure_report(findings: dict) -> str:

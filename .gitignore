@@ -10,3 +10,7 @@ venv/
 .DS_Store
 *.log
 .claude/
+
+# Promotional material, not part of the project
+linkedin_*.jpg
+linkedin_post.md
