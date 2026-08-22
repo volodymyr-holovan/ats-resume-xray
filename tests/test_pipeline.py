@@ -107,7 +107,7 @@ def test_analyze_bytes_cleans_up_temp_file_even_on_failure(monkeypatch):
 
     captured_paths = []
 
-    def failing_analyze_path(path):
+    def failing_analyze_path(path, render=False):
         captured_paths.append(path)
         raise RuntimeError("boom")
 

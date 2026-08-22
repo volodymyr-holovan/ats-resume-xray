@@ -13,11 +13,15 @@ ships with them, so referencing (without embedding) them is normal and not
 a parsing risk.
 """
 
+import pdfplumber
 from pdfminer.pdfdocument import PDFDocument
 from pdfminer.pdfpage import PDFPage
 from pdfminer.pdfparser import PDFParser
 from pdfminer.pdftypes import resolve1
 from pdfminer.psparser import PSLiteral
+
+from ._pdf_words import DEFAULT_LINE_TOLERANCE
+from .regions import Region
 
 STANDARD_14_FONTS = {
     "Helvetica", "Helvetica-Bold", "Helvetica-Oblique", "Helvetica-BoldOblique",
@@ -54,6 +58,51 @@ def find_non_embedded_fonts(pdf_path: str) -> list[str]:
                     findings.append(base_font)
 
     return findings
+
+
+def find_font_regions(pdf_path: str, font_names: list[str]) -> list[Region]:
+    """Return one region per run of text drawn in any of ``font_names``.
+
+    Characters are grouped into lines by vertical proximity so a paragraph
+    set in a flagged font produces a handful of line-sized boxes rather than
+    one box per glyph. Font names are matched after stripping the six-letter
+    subset prefix, the same normalization ``find_non_embedded_fonts`` applies.
+    """
+    if not font_names:
+        return []
+
+    wanted = set(font_names)
+    regions: list[Region] = []
+
+    with pdfplumber.open(pdf_path) as pdf:
+        for page_number, page in enumerate(pdf.pages, start=1):
+            flagged = [c for c in page.chars if _clean_base_font_name(c.get("fontname")) in wanted]
+            for line_chars in _group_chars_into_lines(flagged):
+                regions.append(
+                    Region(
+                        page=page_number,
+                        x0=min(c["x0"] for c in line_chars),
+                        top=min(c["top"] for c in line_chars),
+                        x1=max(c["x1"] for c in line_chars),
+                        bottom=max(c["bottom"] for c in line_chars),
+                    )
+                )
+
+    return regions
+
+
+def _group_chars_into_lines(chars: list[dict], line_tolerance: float = DEFAULT_LINE_TOLERANCE) -> list[list[dict]]:
+    if not chars:
+        return []
+
+    ordered = sorted(chars, key=lambda c: (round(c["top"], 1), c["x0"]))
+    lines: list[list[dict]] = []
+    for char in ordered:
+        if lines and abs(char["top"] - lines[-1][-1]["top"]) <= line_tolerance:
+            lines[-1].append(char)
+        else:
+            lines.append([char])
+    return lines
 
 
 def _is_embedded(font_dict: dict) -> bool:

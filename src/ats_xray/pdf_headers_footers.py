@@ -18,6 +18,7 @@ import re
 import pdfplumber
 
 from ._pdf_words import DEFAULT_LINE_TOLERANCE, group_words_into_lines
+from .regions import Region
 
 DEFAULT_ZONE_FRACTION = 0.12
 
@@ -30,8 +31,9 @@ def find_repeated_header_footer_lines(
     line_tolerance: float = DEFAULT_LINE_TOLERANCE,
 ) -> list[dict]:
     """Return repeated header/footer lines as
-    ``[{"zone": "header"|"footer", "text": str, "pages": [1, 2, ...]}, ...]``,
-    in first-seen order. Page numbers are 1-indexed.
+    ``[{"zone": "header"|"footer", "text": str, "pages": [1, 2, ...],
+    "regions": [Region, ...]}, ...]``, in first-seen order. Page numbers are
+    1-indexed, and each region locates one occurrence on its page.
     """
     header_occurrences: dict[str, dict] = {}
     footer_occurrences: dict[str, dict] = {}
@@ -50,21 +52,31 @@ def find_repeated_header_footer_lines(
                 if not normalized:
                     continue
                 if line["bottom"] <= header_limit:
-                    _record(header_occurrences, normalized, line["text"], page_number)
+                    _record(header_occurrences, normalized, line, page_number)
                 elif line["top"] >= footer_limit:
-                    _record(footer_occurrences, normalized, line["text"], page_number)
+                    _record(footer_occurrences, normalized, line, page_number)
 
     findings = []
     for zone, occurrences in (("header", header_occurrences), ("footer", footer_occurrences)):
         for entry in occurrences.values():
             if len(entry["pages"]) >= 2:
-                findings.append({"zone": zone, "text": entry["sample_text"], "pages": entry["pages"]})
+                findings.append(
+                    {
+                        "zone": zone,
+                        "text": entry["sample_text"],
+                        "pages": entry["pages"],
+                        "regions": entry["regions"],
+                    }
+                )
     return findings
 
 
-def _record(occurrences: dict, normalized: str, raw_text: str, page_number: int) -> None:
-    entry = occurrences.setdefault(normalized, {"sample_text": raw_text, "pages": []})
+def _record(occurrences: dict, normalized: str, line: dict, page_number: int) -> None:
+    entry = occurrences.setdefault(normalized, {"sample_text": line["text"], "pages": [], "regions": []})
     entry["pages"].append(page_number)
+    entry["regions"].append(
+        Region(page=page_number, x0=line["x0"], top=line["top"], x1=line["x1"], bottom=line["bottom"])
+    )
 
 
 def _normalize(text: str) -> str:

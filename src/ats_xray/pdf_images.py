@@ -13,6 +13,8 @@ so this only flags images large enough to plausibly carry real content.
 
 import pdfplumber
 
+from .regions import Region
+
 DEFAULT_MIN_AREA_FRACTION = 0.02
 
 
@@ -47,6 +49,13 @@ def find_large_textless_images(pdf_path: str, min_area_fraction: float = DEFAULT
                             round(image["bottom"], 1),
                         ),
                         "area_fraction": round(area_fraction, 3),
+                        "region": Region(
+                            page=page_number,
+                            x0=image["x0"],
+                            top=image["top"],
+                            x1=image["x1"],
+                            bottom=image["bottom"],
+                        ),
                     }
                 )
 

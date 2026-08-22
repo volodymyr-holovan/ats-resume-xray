@@ -37,7 +37,35 @@ Available as a web app (`streamlit run app.py`) or a CLI (`atsxray`).
 4. **Runs a rule engine** over all of the above: each documented risk pattern
    is a `Rule` with a severity and a citation into
    [`research_sources.md`](research_sources.md) — a transparent finding with
-   evidence, not an opaque score.
+   evidence.
+
+5. **Shows you where the problem is.** For PDFs, each finding carries the
+   coordinates of the text it refers to, and the app renders your pages with
+   those areas boxed. The heading that disappears under naive parsing gets a
+   red box drawn around it, on your actual resume.
+
+6. **Scores parse readiness** — see below.
+
+## The parse readiness score
+
+Commercial checkers blend two different things into one number: whether your
+file parses, and how well its wording matches a specific job posting. The
+second half needs the posting and the employer's weighting, which is why the
+same resume scores 71 on one tool and 55 on another against the same job.
+
+This scores only the half that is knowable from the file alone, and shows the
+full arithmetic:
+
+| Component | Weight | What it measures |
+| --- | --- | --- |
+| Contact reachability | 30% | Can an email or phone be recovered from the *naive* extraction? |
+| Section survival | 30% | Of the sections that actually exist, how many survive naive reading? |
+| Structural integrity | 40% | 100 minus a deduction per structural finding, by severity |
+
+Two deliberate choices: sections the candidate never wrote are excluded from
+the denominator rather than counted as failures, and any high-severity finding
+caps the headline number — a resume whose skills table gets swallowed should
+not be able to read as "parses cleanly" on a weighted average.
 
 ## Why this exists
 
@@ -76,7 +104,10 @@ parser extracts from it, plus any findings.
 ```bash
 atsxray my-resume.pdf              # naive vs. layout-aware extraction
 atsxray my-resume.pdf --report     # + findings, with evidence and sources
+atsxray my-resume.pdf --score      # + parse readiness score and its arithmetic
 ```
+
+The boxed page previews are a web-app feature; the CLI is text-only.
 
 Two more flags show the intermediate steps behind the findings:
 `--structure` (fonts, headers/footers, images) and `--fields`
