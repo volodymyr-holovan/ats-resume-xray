@@ -8,12 +8,13 @@ convenience wrapper the CLI uses: it gathers those signals from a real
 file and calls ``evaluate()``.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Callable
 
 from . import rules as _rules  # noqa: F401  (import registers the rule set)
 from .field_report import build_field_report
+from .regions import Region
 from .rule import Rule, get_rule
 from .structure import analyze_structure
 
@@ -22,12 +23,16 @@ from .structure import analyze_structure
 class Finding:
     rule: Rule
     evidence: str
+    regions: tuple[Region, ...] = ()
+    """Where on the page the problem is, when that is knowable. Empty for
+    DOCX (no page geometry) and for findings about something being absent,
+    which by definition has no location."""
 
 
-Trigger = Callable[[str, str], None]
-"""A callback of (rule_id, evidence) -> None, used by the _evaluate_* helpers
-to record a triggered finding without each of them needing to know how
-findings are collected.
+Trigger = Callable[..., None]
+"""A callback of (rule_id, evidence, regions=()) -> None, used by the
+_evaluate_* helpers to record a triggered finding without each of them
+needing to know how findings are collected.
 """
 
 
@@ -41,8 +46,8 @@ def evaluate(file_type: str, structure: dict, aware_fields: dict, naive_fields: 
     """
     findings: list[Finding] = []
 
-    def trigger(rule_id: str, evidence: str) -> None:
-        findings.append(Finding(rule=get_rule(rule_id), evidence=evidence))
+    def trigger(rule_id: str, evidence: str, regions: tuple = ()) -> None:
+        findings.append(Finding(rule=get_rule(rule_id), evidence=evidence, regions=tuple(regions)))
 
     if file_type == "pdf":
         _evaluate_pdf_structure(structure, trigger)
@@ -67,6 +72,7 @@ def _evaluate_pdf_structure(structure: dict, trigger: Trigger) -> None:
         trigger(
             "pdf_repeated_header_footer_content",
             f'[{sample["zone"]}] "{sample["text"]}" on pages {sample["pages"]}',
+            tuple(r for entry in repeated for r in entry.get("regions", ())),
         )
 
     images = structure.get("textless_images") or []
@@ -75,6 +81,7 @@ def _evaluate_pdf_structure(structure: dict, trigger: Trigger) -> None:
         trigger(
             "pdf_textless_image",
             f"page {sample['page']}, {sample['area_fraction'] * 100:.0f}% of page area",
+            tuple(entry["region"] for entry in images if entry.get("region")),
         )
 
 
@@ -96,13 +103,18 @@ def _evaluate_fields(aware_fields: dict, naive_fields: dict, trigger: Trigger) -
     if not aware_fields["email"]["found"] and not aware_fields["phone"]["found"]:
         trigger("missing_contact_field", "No email or phone found anywhere in the extracted text")
 
-    for section, aware_field in aware_fields["sections"].items():
-        naive_field = naive_fields["sections"][section]
-        if aware_field["found"] and not naive_field["found"]:
-            trigger(
-                "section_missing_under_naive_parsing",
-                f'"{section}" section found layout-aware but missing under naive parsing',
-            )
+    at_risk = [
+        section
+        for section, aware_field in aware_fields["sections"].items()
+        if aware_field["found"] and not naive_fields["sections"][section]["found"]
+    ]
+    if at_risk:
+        listed = ", ".join(f'"{section}"' for section in at_risk)
+        noun = "section" if len(at_risk) == 1 else "sections"
+        trigger(
+            "section_missing_under_naive_parsing",
+            f"{listed} {noun} found layout-aware but missing under naive parsing",
+        )
 
 
 def run_rules(file_path: str, naive_text: str, aware_text: str) -> list[Finding]:
@@ -122,4 +134,53 @@ def run_rules(file_path: str, naive_text: str, aware_text: str) -> list[Finding]
     aware_fields = build_field_report(aware_text)
     naive_fields = build_field_report(naive_text)
 
-    return evaluate(file_type, structure, aware_fields, naive_fields)
+    findings = evaluate(file_type, structure, aware_fields, naive_fields)
+
+    if file_type == "pdf":
+        findings = _attach_pdf_regions(file_path, findings, structure, aware_fields, naive_fields)
+
+    return findings
+
+
+def _attach_pdf_regions(
+    file_path: str,
+    findings: list[Finding],
+    structure: dict,
+    aware_fields: dict,
+    naive_fields: dict,
+) -> list[Finding]:
+    """Fill in regions for findings whose location can only be resolved by
+    going back to the PDF.
+
+    Structural detectors already report coordinates as they scan, but two
+    rules are decided by comparing extracted *text*, which has no geometry
+    by the time the comparison happens — so their location is looked up here
+    instead.
+    """
+    from .pdf_fonts import find_font_regions
+    from .pdf_locate import find_line_regions
+    from .sections import SECTION_ALIASES, _normalize_header
+
+    at_risk_sections = [
+        section
+        for section, aware in aware_fields["sections"].items()
+        if aware["found"] and not naive_fields["sections"][section]["found"]
+    ]
+
+    enriched: list[Finding] = []
+    for finding in findings:
+        if finding.regions:
+            enriched.append(finding)
+            continue
+
+        if finding.rule.id == "pdf_non_embedded_font":
+            regions = find_font_regions(file_path, structure.get("non_embedded_fonts") or [])
+            enriched.append(replace(finding, regions=tuple(regions)))
+        elif finding.rule.id == "section_missing_under_naive_parsing" and at_risk_sections:
+            aliases = {alias for section in at_risk_sections for alias in SECTION_ALIASES[section]}
+            regions = find_line_regions(file_path, lambda text: _normalize_header(text) in aliases)
+            enriched.append(replace(finding, regions=tuple(regions)))
+        else:
+            enriched.append(finding)
+
+    return enriched
