@@ -6,10 +6,14 @@ the resume survives an automated read.
 Run locally with: streamlit run app.py
 """
 
+import logging
+
 import streamlit as st
 
 from ats_xray.overlay import SEVERITY_COLORS
 from ats_xray.pipeline import analyze_bytes
+
+logger = logging.getLogger(__name__)
 
 SEVERITY_ORDER = {"high": 0, "medium": 1, "low": 2}
 SEVERITY_RENDERER = {"high": st.error, "medium": st.warning, "low": st.info}
@@ -112,6 +116,11 @@ if uploaded_file is not None:
     except ValueError as exc:
         st.error(str(exc))
     except Exception:
+        # Log the real cause server-side while showing the reader a plain
+        # message. Swallowing it entirely made a production failure
+        # undiagnosable from the deployment logs: all they showed was that
+        # something went wrong, never what.
+        logger.exception("Analysis failed for an uploaded %s file", "PDF" if is_pdf else "DOCX")
         st.error(
             "Couldn't read this file — it may be corrupted, password-protected, "
             "or not a valid PDF/DOCX. Try re-exporting it and uploading again."
