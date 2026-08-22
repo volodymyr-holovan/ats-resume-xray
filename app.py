@@ -17,8 +17,9 @@ logger = logging.getLogger(__name__)
 
 SEVERITY_ORDER = {"high": 0, "medium": 1, "low": 2}
 SEVERITY_RENDERER = {"high": st.error, "medium": st.warning, "low": st.info}
+PAGE_PREVIEW_WIDTH = 640
 
-st.set_page_config(page_title="ATS Resume X-Ray", page_icon="🔎", layout="wide")
+st.set_page_config(page_title="ATS Resume X-Ray", page_icon="🔎")
 
 st.title("ATS Resume X-Ray")
 st.write(
@@ -104,7 +105,9 @@ def _render_pages(pages, is_pdf: bool) -> None:
             caption += " — " + ", ".join(sorted({f.rule.id for f in page.marked_findings}))
         else:
             caption += " — nothing flagged"
-        st.image(page.image, caption=caption, use_container_width=True)
+        # Held to a page-like width: a resume shown at full container width
+        # reads as a billboard rather than a document.
+        st.image(page.image, caption=caption, width=PAGE_PREVIEW_WIDTH)
 
 
 if uploaded_file is not None:

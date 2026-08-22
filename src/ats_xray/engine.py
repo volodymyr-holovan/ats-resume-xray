@@ -158,8 +158,8 @@ def _attach_pdf_regions(
     instead.
     """
     from .pdf_fonts import find_font_regions
-    from .pdf_locate import find_line_regions
-    from .sections import SECTION_ALIASES, _normalize_header
+    from .pdf_locate import find_section_regions
+    from .sections import SECTION_ALIASES
 
     at_risk_sections = [
         section
@@ -178,7 +178,7 @@ def _attach_pdf_regions(
             enriched.append(replace(finding, regions=tuple(regions)))
         elif finding.rule.id == "section_missing_under_naive_parsing" and at_risk_sections:
             aliases = {alias for section in at_risk_sections for alias in SECTION_ALIASES[section]}
-            regions = find_line_regions(file_path, lambda text: _normalize_header(text) in aliases)
+            regions = find_section_regions(file_path, aliases)
             enriched.append(replace(finding, regions=tuple(regions)))
         else:
             enriched.append(finding)

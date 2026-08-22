@@ -51,9 +51,9 @@ def _two_column_pdf(path):
     c.save()
 
 
-def test_section_finding_carries_a_region_over_the_heading(tmp_path):
-    """The box must sit on the heading itself, not span the whole page width:
-    a heading in one column should not be reported as covering the other.
+def test_section_finding_region_stays_inside_its_own_column(tmp_path):
+    """A section in the left column must not be reported as covering the
+    right-hand one, however tall it is.
     """
     pdf_path = tmp_path / "resume.pdf"
     _two_column_pdf(pdf_path)
@@ -67,6 +67,35 @@ def test_section_finding_carries_a_region_over_the_heading(tmp_path):
     assert region.page == 1
     assert region.x0 >= 25
     assert region.x1 < 280, "the box must not reach into the right-hand column"
+
+
+def test_section_region_covers_the_body_not_just_the_heading(tmp_path):
+    """The point of the box is to show the content at risk, so it has to
+    extend past the heading line and stop at the next heading.
+    """
+    pdf_path = tmp_path / "resume.pdf"
+    c = canvas.Canvas(str(pdf_path), pagesize=(500, 400))
+    c.setFont("Helvetica", 12)
+    c.drawString(30, 370, "Jane Doe")
+    c.drawString(30, 340, "Experience")
+    c.drawString(30, 320, "Senior Engineer at Acme")
+    c.drawString(30, 300, "Built the billing pipeline")
+    c.drawString(30, 250, "Education")
+    c.drawString(30, 230, "BSc Computer Science")
+    # Right-hand column, to make the sections vanish under naive reading.
+    c.drawString(300, 370, "jane@example.com")
+    c.drawString(300, 340, "+1 555 123 4567")
+    c.save()
+
+    naive, aware = extract_text(str(pdf_path))
+    findings = run_rules(str(pdf_path), naive, aware)
+    finding = next(f for f in findings if f.rule.id == "section_missing_under_naive_parsing")
+
+    experience = min(finding.regions, key=lambda r: r.top)
+    height = experience.bottom - experience.top
+
+    assert height > 40, f"expected the box to cover the section body, got {height:.0f}pt"
+    assert experience.bottom < 160, "the Experience box must stop before the Education heading"
 
 
 def test_render_marks_only_pages_that_have_findings(tmp_path):
