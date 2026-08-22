@@ -75,7 +75,7 @@ def find_section_headers(text: str) -> list[dict]:
     """
     findings = []
     for index, line in enumerate(text.splitlines()):
-        normalized = _normalize_header(line)
+        normalized = normalize_heading(line)
         if not normalized:
             continue
         for section, aliases in SECTION_ALIASES.items():
@@ -117,5 +117,9 @@ def split_into_sections(text: str) -> dict[str, str]:
     return sections
 
 
-def _normalize_header(line: str) -> str:
+def normalize_heading(line: str) -> str:
+    """Reduce a line to the form compared against SECTION_ALIASES: trimmed,
+    trailing punctuation removed, lowercased. Public because locating a
+    section on the page needs the same normalization the recognizer uses.
+    """
     return _TRAILING_PUNCTUATION_RE.sub("", line.strip()).strip().lower()

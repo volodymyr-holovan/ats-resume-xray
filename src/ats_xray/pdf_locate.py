@@ -1,62 +1,61 @@
-"""Locating things on a PDF page: text lines matching a predicate, and the
-column blocks a page is split into.
+"""Locating a section on a PDF page.
 
-Findings that come from comparing *text* (a section heading that survives
+Findings that come from comparing *text* (a section that survives
 layout-aware reading but vanishes under naive reading) have no coordinates
 of their own, because the comparison happens after extraction. To point at
-them on the page, we go back to the PDF and find where that text sits.
-"""
+them on the page, we go back to the PDF and find where that section sits.
 
-from typing import Callable
+A section is its heading plus everything under it, so the box covers the
+content actually at risk rather than just the words of the heading.
+"""
 
 import pdfplumber
 
 from ._pdf_words import DEFAULT_LINE_TOLERANCE, group_words_into_lines
-from .extract import DEFAULT_MIN_COLUMN_GAP, _cluster_columns
-from .regions import Region, region_from_words
+from .extract import _cluster_columns
+from .regions import Region
+from .sections import SECTION_ALIASES, normalize_heading
+
+ALL_HEADING_ALIASES = {alias for aliases in SECTION_ALIASES.values() for alias in aliases}
 
 
-def find_line_regions(
+def find_section_regions(
     pdf_path: str,
-    matches: Callable[[str], bool],
+    target_aliases: set[str],
     line_tolerance: float = DEFAULT_LINE_TOLERANCE,
 ) -> list[Region]:
-    """Return a region for every text line whose text satisfies ``matches``.
+    """Return one region per section whose heading matches ``target_aliases``,
+    spanning the heading and the lines beneath it.
 
-    Lines are built per column, not across the full page width, so a heading
-    in a narrow sidebar produces a box around the heading itself rather than
-    one spanning everything at that height.
+    A section ends at the next recognized heading *of any kind* in the same
+    column, or at the end of that column. Lines are grouped per column rather
+    than across the page, so a section in a narrow sidebar is measured within
+    its own column instead of swallowing whatever sits beside it.
     """
     regions: list[Region] = []
 
     with pdfplumber.open(pdf_path) as pdf:
         for page_number, page in enumerate(pdf.pages, start=1):
             for column_words in _cluster_columns(page.extract_words()):
-                for line in group_words_into_lines(column_words, line_tolerance):
-                    if matches(line["text"]):
-                        region = region_from_words(page_number, line["words"])
-                        if region:
-                            regions.append(region)
+                lines = group_words_into_lines(column_words, line_tolerance)
+                heading_indices = [
+                    i for i, line in enumerate(lines) if normalize_heading(line["text"]) in ALL_HEADING_ALIASES
+                ]
+
+                for position, start in enumerate(heading_indices):
+                    if normalize_heading(lines[start]["text"]) not in target_aliases:
+                        continue
+                    end = heading_indices[position + 1] if position + 1 < len(heading_indices) else len(lines)
+                    regions.append(_span(page_number, lines[start:end]))
 
     return regions
 
 
-def find_column_regions(pdf_path: str, min_gap: float = DEFAULT_MIN_COLUMN_GAP) -> list[Region]:
-    """Return one region per column, for pages that split into two or more.
-
-    Single-column pages produce nothing: there is no column boundary to show
-    and outlining the whole page would be noise.
-    """
-    regions: list[Region] = []
-
-    with pdfplumber.open(pdf_path) as pdf:
-        for page_number, page in enumerate(pdf.pages, start=1):
-            columns = _cluster_columns(page.extract_words(), min_gap=min_gap)
-            if len(columns) < 2:
-                continue
-            for column_words in columns:
-                region = region_from_words(page_number, column_words)
-                if region:
-                    regions.append(region)
-
-    return regions
+def _span(page_number: int, lines: list[dict]) -> Region:
+    return Region(
+        page=page_number,
+        x0=min(line["x0"] for line in lines),
+        top=min(line["top"] for line in lines),
+        x1=max(line["x1"] for line in lines),
+        bottom=max(line["bottom"] for line in lines),
+    )
