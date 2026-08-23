@@ -75,7 +75,7 @@ def test_format_rule_report_no_findings():
 
 
 def test_format_rule_report_includes_evidence_and_source():
-    finding = Finding(rule=get_rule("pdf_non_embedded_font"), evidence="Non-embedded fonts: Calibri")
+    finding = Finding(rule=get_rule("pdf_non_embedded_font"), evidence_key="evidence_fonts", evidence_params={"fonts": "Calibri"})
 
     report = _format_rule_report([finding])
 
@@ -85,8 +85,8 @@ def test_format_rule_report_includes_evidence_and_source():
 
 
 def test_format_rule_report_orders_high_severity_first():
-    medium_finding = Finding(rule=get_rule("pdf_non_embedded_font"), evidence="medium evidence")
-    high_finding = Finding(rule=get_rule("missing_contact_field"), evidence="high evidence")
+    medium_finding = Finding(rule=get_rule("pdf_non_embedded_font"), evidence_key="evidence_fonts", evidence_params={"fonts": "Calibri"})
+    high_finding = Finding(rule=get_rule("missing_contact_field"), evidence_key="evidence_no_contact")
 
     report = _format_rule_report([medium_finding, high_finding])
 

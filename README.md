@@ -31,8 +31,10 @@ Available as a web app (`streamlit run app.py`) or a CLI (`atsxray`).
    standing in for real text.
 
 3. **Recognizes fields** (name, email, phone, and the Experience/Education/Skills
-   sections, in English and German) under both extraction strategies, so it
-   can flag content that's only readable in the best case.
+   sections) under both extraction strategies, so it can flag content that's
+   only readable in the best case. Section headings are recognized in English,
+   German, Ukrainian, Russian, Spanish, Dutch and French — all at once, so a
+   CV that mixes languages still resolves.
 
 4. **Runs a rule engine** over all of the above: each documented risk pattern
    is a `Rule` with a severity and a citation into
@@ -72,6 +74,17 @@ Two deliberate choices: sections the candidate never wrote are excluded from
 the denominator rather than counted as failures, and any high-severity finding
 caps the headline number — a resume whose skills table gets swallowed should
 not be able to read as "parses cleanly" on a weighted average.
+
+## Languages
+
+The interface, the rule descriptions and the evidence text are translated
+into **English, German, Ukrainian, Russian, Spanish, Dutch and French**;
+the web app has a language switcher in the sidebar. Rule ids and source
+keys stay in English — they are identifiers pointing at the citations in
+`research_sources.md`, not prose.
+
+Resume *content* is matched against every language's section headings at
+once, so the interface language and the CV language are independent.
 
 ## Why this exists
 

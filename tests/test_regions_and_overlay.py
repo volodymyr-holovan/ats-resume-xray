@@ -108,7 +108,8 @@ def test_render_marks_only_pages_that_have_findings(tmp_path):
 
     finding = Finding(
         rule=get_rule("pdf_textless_image"),
-        evidence="test",
+        evidence_key="evidence_verbatim",
+        evidence_params={"text": "test"},
         regions=(Region(page=2, x0=10, top=10, x1=100, bottom=50),),
     )
 
@@ -133,7 +134,8 @@ def test_render_draws_visible_pixels_where_the_region_is(tmp_path):
 
     finding = Finding(
         rule=get_rule("pdf_textless_image"),  # high -> red
-        evidence="test",
+        evidence_key="evidence_verbatim",
+        evidence_params={"text": "test"},
         regions=(Region(page=1, x0=20, top=20, x1=80, bottom=60),),
     )
 
