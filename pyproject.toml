@@ -1,6 +1,6 @@
 [project]
 name = "ats-resume-xray"
-version = "0.1.0"
+version = "0.2.0"
 description = "Shows what a resume-parsing pipeline actually extracts from a PDF/DOCX resume, so you can see and fix what breaks before an ATS does."
 readme = "README.md"
 requires-python = ">=3.9"

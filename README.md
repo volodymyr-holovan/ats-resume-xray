@@ -94,7 +94,26 @@ tool can claim to *replicate* Workday, Taleo, or Greenhouse exactly. What we
 show you, transparently, whether your specific file triggers them — with the
 raw extracted text as evidence.
 
-## Install
+## Download for Windows
+
+Grab `ATS-Resume-X-Ray.exe` from the
+[latest release](https://github.com/volodymyr-holovan/ats-resume-xray/releases/latest)
+and run it. No installer, no Python needed — it opens in your browser and
+runs entirely on your machine. It checks for a newer release on startup and
+tells you if one exists.
+
+Two things to expect:
+
+- **Windows SmartScreen will warn you** that the publisher is unknown, and
+  some antivirus tools flag PyInstaller executables generically. The file
+  carries author and version metadata, but that is identification, not a
+  signature — silencing those warnings needs a paid code-signing
+  certificate. Build it yourself with `python build_exe.py` if you would
+  rather not trust a download.
+- **DOCX page previews need LibreOffice** installed separately; everything
+  else works offline.
+
+## Install from source
 
 You need [Python 3.9 or newer](https://www.python.org/downloads/). Then run
 these three commands:

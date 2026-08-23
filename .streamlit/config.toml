@@ -2,7 +2,7 @@
 gatherUsageStats = false
 
 [server]
-# 10 MB matches pipeline.MAX_FILE_SIZE_BYTES. No legitimate resume needs
+# 50 MB matches pipeline.MAX_FILE_SIZE_BYTES. No legitimate resume needs
 # more; this rejects oversized uploads at the server layer before they
 # even reach our code.
-maxUploadSize = 10
+maxUploadSize = 50
