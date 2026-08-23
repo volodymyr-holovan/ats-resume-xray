@@ -37,9 +37,12 @@ Available as a web app (`streamlit run app.py`) or a CLI (`atsxray`).
    CV that mixes languages still resolves.
 
 4. **Runs a rule engine** over all of the above: each documented risk pattern
-   is a `Rule` with a severity and a citation into
+   is a `Rule` with a citation into
    [`research_sources.md`](research_sources.md) — a transparent finding with
-   evidence.
+   evidence, a longer explanation of what it means, and concrete steps to fix
+   it. Severity is judged per finding rather than fixed per rule: a repeated
+   footer holding your phone number is serious, the same rule firing on
+   "Page 1 of 2" is not.
 
 5. **Shows you where the problem is.** Each finding carries the coordinates
    of the text it refers to, and the app renders your pages with those areas
@@ -77,11 +80,18 @@ not be able to read as "parses cleanly" on a weighted average.
 
 ## Languages
 
-The interface, the rule descriptions and the evidence text are translated
-into **English, German, Ukrainian, Russian, Spanish, Dutch and French**;
-the web app has a language switcher in the sidebar. Rule ids and source
-keys stay in English — they are identifiers pointing at the citations in
-`research_sources.md`, not prose.
+The interface, the rule descriptions, the longer explanations, the
+suggested fixes and the evidence text are translated into **English, German,
+Ukrainian, Russian, Spanish, Dutch and French**; the web app has a language
+switcher in the sidebar and the CLI takes `--language`. So is the sources
+file: findings link to the translation matching the interface language
+([de](docs/research_sources.de.md) · [uk](docs/research_sources.uk.md) ·
+[ru](docs/research_sources.ru.md) · [es](docs/research_sources.es.md) ·
+[nl](docs/research_sources.nl.md) · [fr](docs/research_sources.fr.md)).
+
+Rule ids, source keys and the section anchors inside the sources files stay
+in English — they are identifiers, not prose, which is what lets one citation
+key resolve in all seven translations.
 
 Resume *content* is matched against every language's section headings at
 once, so the interface language and the CV language are independent.

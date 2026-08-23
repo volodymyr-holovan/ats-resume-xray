@@ -6,6 +6,7 @@ import docx
 from ats_xray.cli import _format_field_comparison, _format_rule_report, _format_structure_report
 from ats_xray.engine import Finding
 from ats_xray.field_report import build_field_report
+from ats_xray.i18n import t
 from ats_xray.rule import get_rule
 
 
@@ -71,7 +72,7 @@ def test_format_field_comparison_no_risk_when_both_agree():
 
 
 def test_format_rule_report_no_findings():
-    assert _format_rule_report([]) == "No rules triggered."
+    assert _format_rule_report([]) == t("no_findings", "en")
 
 
 def test_format_rule_report_includes_evidence_and_source():
@@ -82,6 +83,37 @@ def test_format_rule_report_includes_evidence_and_source():
     assert "[MEDIUM] pdf_non_embedded_font" in report
     assert "Evidence: Non-embedded fonts: Calibri" in report
     assert "Source: research_sources.md#ats-fonts" in report
+
+
+def test_format_rule_report_explains_the_problem_and_offers_numbered_fixes():
+    """A terminal has no expander, so the CLI prints what the web UI folds
+    away: what the finding means and what to actually do about it."""
+    finding = Finding(
+        rule=get_rule("pdf_non_embedded_font"),
+        evidence_key="evidence_fonts",
+        evidence_params={"fonts": "Calibri"},
+    )
+
+    report = _format_rule_report([finding])
+
+    assert "How to fix it:" in report
+    assert "1." in report and "2." in report
+
+
+def test_format_rule_report_follows_the_requested_language_including_the_source_link():
+    """Reading a finding in Ukrainian and then being sent to an English
+    reference defeats the point of translating the finding at all."""
+    finding = Finding(
+        rule=get_rule("pdf_non_embedded_font"),
+        evidence_key="evidence_fonts",
+        evidence_params={"fonts": "Calibri"},
+    )
+
+    report = _format_rule_report([finding], "uk")
+
+    assert "docs/research_sources.uk.md#ats-fonts" in report
+    assert t("how_to_fix", "uk") in report
+    assert "How to fix it" not in report
 
 
 def test_format_rule_report_orders_high_severity_first():
