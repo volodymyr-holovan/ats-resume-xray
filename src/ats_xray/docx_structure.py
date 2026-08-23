@@ -45,16 +45,34 @@ def extract_docx_headers_footers(docx_path: str) -> dict:
     return {"headers": headers, "footers": footers}
 
 
-def has_table_content(docx_path: str) -> bool:
-    """Return True if any DOCX table cell holds non-empty text.
+def find_docx_table_texts(docx_path: str) -> list[str]:
+    """Return the non-empty text of each DOCX table cell, in document order.
 
     Tables are a common way to build a visually clean, side-by-side resume
     layout — and a common, well-documented way for that layout to break:
     many parsers flatten table rows in a way that scrambles which value
     belongs to which label, or skip table content entirely.
+
+    The texts, not just a yes/no, because locating this finding on a
+    rendered page means searching for the content itself.
     """
     document = docx.Document(docx_path)
-    return any(cell.text.strip() for table in document.tables for row in table.rows for cell in row.cells)
+    texts = []
+    seen = set()
+    for table in document.tables:
+        for row in table.rows:
+            for cell in row.cells:
+                text = cell.text.strip()
+                # Merged cells repeat across the row span they cover.
+                if text and text not in seen:
+                    seen.add(text)
+                    texts.append(text)
+    return texts
+
+
+def has_table_content(docx_path: str) -> bool:
+    """Return True if any DOCX table cell holds non-empty text."""
+    return bool(find_docx_table_texts(docx_path))
 
 
 def find_docx_text_box_content(docx_path: str) -> list[str]:

@@ -39,10 +39,16 @@ Available as a web app (`streamlit run app.py`) or a CLI (`atsxray`).
    [`research_sources.md`](research_sources.md) — a transparent finding with
    evidence.
 
-5. **Shows you where the problem is.** For PDFs, each finding carries the
-   coordinates of the text it refers to, and the app renders your pages with
-   those areas boxed. The heading that disappears under naive parsing gets a
-   red box drawn around it, on your actual resume.
+5. **Shows you where the problem is.** Each finding carries the coordinates
+   of the text it refers to, and the app renders your pages with those areas
+   boxed. The section that disappears under naive parsing gets a red box
+   drawn around it, on your actual resume.
+
+   A DOCX stores content but no page positions, so it is laid out with
+   LibreOffice first and the findings are then located on the result by
+   searching for the text they reported. Without LibreOffice installed the
+   app falls back to the text-only view rather than guessing at a layout
+   your own word processor would disagree with.
 
 6. **Scores parse readiness** — see below.
 
@@ -108,6 +114,13 @@ atsxray my-resume.pdf --score      # + parse readiness score and its arithmetic
 ```
 
 The boxed page previews are a web-app feature; the CLI is text-only.
+
+### Optional: page previews for DOCX
+
+PDF previews work out of the box. To also preview DOCX files, install
+[LibreOffice](https://www.libreoffice.org/download/) — the app finds it
+automatically, or set `ATS_XRAY_SOFFICE` to the `soffice` binary if it lives
+somewhere unusual. Deployments get it from `packages.txt`.
 
 Two more flags show the intermediate steps behind the findings:
 `--structure` (fonts, headers/footers, images) and `--fields`

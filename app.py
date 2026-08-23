@@ -81,15 +81,14 @@ def _render_findings(findings) -> None:
 def _render_pages(pages, is_pdf: bool) -> None:
     st.subheader("Where the problems are")
 
-    if not is_pdf:
-        st.info(
-            "Page previews are available for PDFs only. A DOCX has no fixed page "
-            "layout until a word processor renders it, so there are no coordinates "
-            "to draw on."
-        )
-        return
-
     if not pages:
+        if is_pdf:
+            return
+        st.info(
+            "Page previews for DOCX need LibreOffice, which isn't available here. "
+            "A DOCX stores content but no page positions, so it has to be laid out "
+            "before anything can be drawn on it. The findings above still apply."
+        )
         return
 
     legend = "  ".join(
@@ -97,7 +96,13 @@ def _render_pages(pages, is_pdf: bool) -> None:
         for severity, name in (("high", "red"), ("medium", "orange"), ("low", "blue"))
         if severity in SEVERITY_COLORS
     )
-    st.caption(f"Boxes mark the exact area each finding refers to. {legend}")
+    caption = f"Boxes mark the exact area each finding refers to. {legend}"
+    if not is_pdf:
+        caption += (
+            "  \nThis DOCX was laid out with LibreOffice to produce pages; your own "
+            "word processor may break lines slightly differently."
+        )
+    st.caption(caption)
 
     for page in pages:
         caption = f"Page {page.page_number}"
@@ -115,7 +120,7 @@ if uploaded_file is not None:
 
     try:
         with st.spinner("Analyzing…"):
-            result = analyze_bytes(uploaded_file.getvalue(), uploaded_file.name, render=is_pdf)
+            result = analyze_bytes(uploaded_file.getvalue(), uploaded_file.name, render=True)
     except ValueError as exc:
         st.error(str(exc))
     except Exception:

@@ -184,3 +184,55 @@ def _attach_pdf_regions(
             enriched.append(finding)
 
     return enriched
+
+
+def attach_docx_regions(
+    rendered_pdf_path: str,
+    findings: list[Finding],
+    structure: dict,
+    aware_fields: dict,
+    naive_fields: dict,
+) -> list[Finding]:
+    """Place DOCX findings on a laid-out rendering of the same document.
+
+    DOCX detectors work on XML, which carries no positions, so findings
+    arrive with no regions. Once the document has been through a layout
+    engine we have a page to point at, and the only route from a finding
+    back to a position is the text it reported: search the rendered page
+    for that text.
+
+    ``rendered_pdf_path`` must be a rendering of the same DOCX the findings
+    came from. Content the layout engine places off-page, or drops, simply
+    yields no region -- the finding still stands on its text evidence.
+    """
+    from .pdf_locate import find_section_regions, find_text_regions
+    from .sections import SECTION_ALIASES
+
+    headers_footers = structure.get("headers_footers") or {"headers": [], "footers": []}
+    texts_by_rule = {
+        "docx_header_footer_content": headers_footers["headers"] + headers_footers["footers"],
+        "docx_text_box_content": structure.get("text_box_content") or [],
+        "docx_table_content": structure.get("table_texts") or [],
+    }
+
+    at_risk_sections = [
+        section
+        for section, aware in aware_fields["sections"].items()
+        if aware["found"] and not naive_fields["sections"][section]["found"]
+    ]
+
+    enriched: list[Finding] = []
+    for finding in findings:
+        if finding.regions:
+            enriched.append(finding)
+        elif finding.rule.id in texts_by_rule:
+            regions = find_text_regions(rendered_pdf_path, texts_by_rule[finding.rule.id])
+            enriched.append(replace(finding, regions=tuple(regions)))
+        elif finding.rule.id == "section_missing_under_naive_parsing" and at_risk_sections:
+            aliases = {alias for section in at_risk_sections for alias in SECTION_ALIASES[section]}
+            regions = find_section_regions(rendered_pdf_path, aliases)
+            enriched.append(replace(finding, regions=tuple(regions)))
+        else:
+            enriched.append(finding)
+
+    return enriched
