@@ -8,12 +8,13 @@ convenience wrapper the CLI uses: it gathers those signals from a real
 file and calls ``evaluate()``.
 """
 
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Callable
 
 from . import rules as _rules  # noqa: F401  (import registers the rule set)
 from .field_report import build_field_report
+from .i18n import DEFAULT_LANGUAGE, t
 from .regions import Region
 from .rule import Rule, get_rule
 from .structure import analyze_structure
@@ -22,11 +23,18 @@ from .structure import analyze_structure
 @dataclass(frozen=True)
 class Finding:
     rule: Rule
-    evidence: str
+    evidence_key: str
+    evidence_params: dict = field(default_factory=dict)
     regions: tuple[Region, ...] = ()
     """Where on the page the problem is, when that is knowable. Empty for
     DOCX (no page geometry) and for findings about something being absent,
     which by definition has no location."""
+
+    @property
+    def evidence(self) -> str:
+        """The evidence rendered in English, for the CLI and for logs.
+        The UI renders ``evidence_key`` in the reader's language instead."""
+        return t(self.evidence_key, DEFAULT_LANGUAGE, **self.evidence_params)
 
 
 Trigger = Callable[..., None]
@@ -46,8 +54,15 @@ def evaluate(file_type: str, structure: dict, aware_fields: dict, naive_fields: 
     """
     findings: list[Finding] = []
 
-    def trigger(rule_id: str, evidence: str, regions: tuple = ()) -> None:
-        findings.append(Finding(rule=get_rule(rule_id), evidence=evidence, regions=tuple(regions)))
+    def trigger(rule_id: str, evidence_key: str, params: dict | None = None, regions: tuple = ()) -> None:
+        findings.append(
+            Finding(
+                rule=get_rule(rule_id),
+                evidence_key=evidence_key,
+                evidence_params=params or {},
+                regions=tuple(regions),
+            )
+        )
 
     if file_type == "pdf":
         _evaluate_pdf_structure(structure, trigger)
@@ -64,14 +79,19 @@ def evaluate(file_type: str, structure: dict, aware_fields: dict, naive_fields: 
 def _evaluate_pdf_structure(structure: dict, trigger: Trigger) -> None:
     fonts = structure.get("non_embedded_fonts") or []
     if fonts:
-        trigger("pdf_non_embedded_font", f"Non-embedded fonts: {', '.join(fonts)}")
+        trigger("pdf_non_embedded_font", "evidence_fonts", {"fonts": ", ".join(fonts)})
 
     repeated = structure.get("repeated_header_footer_lines") or []
     if repeated:
         sample = repeated[0]
         trigger(
             "pdf_repeated_header_footer_content",
-            f'[{sample["zone"]}] "{sample["text"]}" on pages {sample["pages"]}',
+            "evidence_repeated_line",
+            {
+                "zone": sample["zone"],
+                "text": sample["text"],
+                "pages": ", ".join(str(p) for p in sample["pages"]),
+            },
             tuple(r for entry in repeated for r in entry.get("regions", ())),
         )
 
@@ -80,7 +100,8 @@ def _evaluate_pdf_structure(structure: dict, trigger: Trigger) -> None:
         sample = images[0]
         trigger(
             "pdf_textless_image",
-            f"page {sample['page']}, {sample['area_fraction'] * 100:.0f}% of page area",
+            "evidence_textless_image",
+            {"page": sample["page"], "percent": f"{sample['area_fraction'] * 100:.0f}"},
             tuple(entry["region"] for entry in images if entry.get("region")),
         )
 
@@ -89,19 +110,19 @@ def _evaluate_docx_structure(structure: dict, trigger: Trigger) -> None:
     headers_footers = structure.get("headers_footers") or {"headers": [], "footers": []}
     evidence_parts = headers_footers["headers"] + headers_footers["footers"]
     if evidence_parts:
-        trigger("docx_header_footer_content", "; ".join(evidence_parts))
+        trigger("docx_header_footer_content", "evidence_verbatim", {"text": "; ".join(evidence_parts)})
 
     text_boxes = structure.get("text_box_content") or []
     if text_boxes:
-        trigger("docx_text_box_content", "; ".join(text_boxes))
+        trigger("docx_text_box_content", "evidence_verbatim", {"text": "; ".join(text_boxes)})
 
     if structure.get("has_table_content"):
-        trigger("docx_table_content", "One or more table cells contain resume content")
+        trigger("docx_table_content", "evidence_table_cells")
 
 
 def _evaluate_fields(aware_fields: dict, naive_fields: dict, trigger: Trigger) -> None:
     if not aware_fields["email"]["found"] and not aware_fields["phone"]["found"]:
-        trigger("missing_contact_field", "No email or phone found anywhere in the extracted text")
+        trigger("missing_contact_field", "evidence_no_contact")
 
     at_risk = [
         section
@@ -110,10 +131,10 @@ def _evaluate_fields(aware_fields: dict, naive_fields: dict, trigger: Trigger) -
     ]
     if at_risk:
         listed = ", ".join(f'"{section}"' for section in at_risk)
-        noun = "section" if len(at_risk) == 1 else "sections"
         trigger(
             "section_missing_under_naive_parsing",
-            f"{listed} {noun} found layout-aware but missing under naive parsing",
+            "evidence_sections_lost_one" if len(at_risk) == 1 else "evidence_sections_lost_many",
+            {"sections": listed},
         )
 
 
@@ -179,6 +200,58 @@ def _attach_pdf_regions(
         elif finding.rule.id == "section_missing_under_naive_parsing" and at_risk_sections:
             aliases = {alias for section in at_risk_sections for alias in SECTION_ALIASES[section]}
             regions = find_section_regions(file_path, aliases)
+            enriched.append(replace(finding, regions=tuple(regions)))
+        else:
+            enriched.append(finding)
+
+    return enriched
+
+
+def attach_docx_regions(
+    rendered_pdf_path: str,
+    findings: list[Finding],
+    structure: dict,
+    aware_fields: dict,
+    naive_fields: dict,
+) -> list[Finding]:
+    """Place DOCX findings on a laid-out rendering of the same document.
+
+    DOCX detectors work on XML, which carries no positions, so findings
+    arrive with no regions. Once the document has been through a layout
+    engine we have a page to point at, and the only route from a finding
+    back to a position is the text it reported: search the rendered page
+    for that text.
+
+    ``rendered_pdf_path`` must be a rendering of the same DOCX the findings
+    came from. Content the layout engine places off-page, or drops, simply
+    yields no region -- the finding still stands on its text evidence.
+    """
+    from .pdf_locate import find_section_regions, find_text_regions
+    from .sections import SECTION_ALIASES
+
+    headers_footers = structure.get("headers_footers") or {"headers": [], "footers": []}
+    texts_by_rule = {
+        "docx_header_footer_content": headers_footers["headers"] + headers_footers["footers"],
+        "docx_text_box_content": structure.get("text_box_content") or [],
+        "docx_table_content": structure.get("table_texts") or [],
+    }
+
+    at_risk_sections = [
+        section
+        for section, aware in aware_fields["sections"].items()
+        if aware["found"] and not naive_fields["sections"][section]["found"]
+    ]
+
+    enriched: list[Finding] = []
+    for finding in findings:
+        if finding.regions:
+            enriched.append(finding)
+        elif finding.rule.id in texts_by_rule:
+            regions = find_text_regions(rendered_pdf_path, texts_by_rule[finding.rule.id])
+            enriched.append(replace(finding, regions=tuple(regions)))
+        elif finding.rule.id == "section_missing_under_naive_parsing" and at_risk_sections:
+            aliases = {alias for section in at_risk_sections for alias in SECTION_ALIASES[section]}
+            regions = find_section_regions(rendered_pdf_path, aliases)
             enriched.append(replace(finding, regions=tuple(regions)))
         else:
             enriched.append(finding)

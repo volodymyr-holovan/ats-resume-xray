@@ -1,0 +1,2 @@
+libreoffice-core-nogui
+libreoffice-writer-nogui

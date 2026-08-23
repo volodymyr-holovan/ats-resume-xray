@@ -25,6 +25,9 @@ Components:
   denominator: their absence is a content choice, not a parsing failure.
 - **Structural integrity** -- starts at 100 and deducts for each triggered
   structural rule, weighted by that rule's severity.
+
+Wording lives in ``i18n``, not here: components carry a translation key and
+its parameters so the same breakdown renders in any supported language.
 """
 
 from dataclasses import dataclass, field
@@ -44,10 +47,11 @@ from the structural deduction so one problem is not counted twice."""
 
 @dataclass(frozen=True)
 class Component:
-    name: str
+    name_key: str
     score: float
     weight: float
-    detail: str
+    detail_key: str
+    detail_params: dict = field(default_factory=dict)
 
 
 HIGH_SEVERITY_CAPS = {1: 79, 2: 59}
@@ -58,23 +62,23 @@ swallowing its entire skills list still read as "parses cleanly". So the
 count of high-severity findings caps the headline number, and the cap is
 reported rather than silently applied."""
 
+RATING_THRESHOLDS = ((85, "rating_clean"), (65, "rating_mostly"), (40, "rating_significant"))
+
 
 @dataclass(frozen=True)
 class ScoreBreakdown:
     total: int
     components: list[Component] = field(default_factory=list)
     uncapped_total: int = 0
-    cap_reason: str | None = None
+    cap_key: str | None = None
+    cap_params: dict = field(default_factory=dict)
 
     @property
-    def rating(self) -> str:
-        if self.total >= 85:
-            return "Parses cleanly"
-        if self.total >= 65:
-            return "Mostly parses, some risk"
-        if self.total >= 40:
-            return "Significant parsing risk"
-        return "Likely to parse badly"
+    def rating_key(self) -> str:
+        for threshold, key in RATING_THRESHOLDS:
+            if self.total >= threshold:
+                return key
+        return "rating_poor"
 
 
 def score_resume(aware_fields: dict, naive_fields: dict, findings: list[Finding]) -> ScoreBreakdown:
@@ -94,12 +98,14 @@ def score_resume(aware_fields: dict, naive_fields: dict, findings: list[Finding]
     cap = HIGH_SEVERITY_CAPS.get(min(high_count, 2)) if high_count else None
 
     if cap is not None and uncapped > cap:
-        plural = "finding" if high_count == 1 else "findings"
         return ScoreBreakdown(
             total=cap,
             components=components,
             uncapped_total=uncapped,
-            cap_reason=f"Capped at {cap}: {high_count} high-severity {plural} put content at risk of being lost",
+            # Separate keys rather than an English plural rule: languages
+            # here pluralise differently and some need three forms.
+            cap_key="cap_reason_one" if high_count == 1 else "cap_reason_many",
+            cap_params={"cap": cap, "count": high_count, "uncapped": uncapped},
         )
 
     return ScoreBreakdown(total=uncapped, components=components, uncapped_total=uncapped)
@@ -109,18 +115,19 @@ def _contact_component(naive_fields: dict) -> Component:
     found = [name for name in ("email", "phone") if naive_fields[name]["found"]]
 
     if len(found) == 2:
-        detail = "Email and phone both recovered from a plain, layout-blind read"
+        detail_key, params = "detail_contact_both", {}
     elif found:
-        missing = "phone" if found == ["email"] else "email"
-        detail = f"{found[0].capitalize()} recovered, but no {missing} found"
+        detail_key = "detail_contact_one"
+        params = {"found": found[0], "missing": "phone" if found == ["email"] else "email"}
     else:
-        detail = "Neither email nor phone could be recovered"
+        detail_key, params = "detail_contact_none", {}
 
     return Component(
-        name="Contact reachability",
+        name_key="component_contact",
         score=len(found) / 2 * 100,
         weight=CONTACT_WEIGHT,
-        detail=detail,
+        detail_key=detail_key,
+        detail_params=params,
     )
 
 
@@ -129,24 +136,25 @@ def _sections_component(aware_fields: dict, naive_fields: dict) -> Component:
 
     if not present:
         return Component(
-            name="Section survival",
+            name_key="component_sections",
             score=0.0,
             weight=0,
-            detail="No standard section headings found at all, so there is nothing to compare",
+            detail_key="detail_sections_absent",
         )
 
     survived = [s for s in present if naive_fields["sections"][s]["found"]]
-    lost = [s for s in present if s not in survived]
-
-    detail = f"{len(survived)} of {len(present)} sections survive a layout-blind read"
-    if lost:
-        detail += f" (lost: {', '.join(sorted(lost))})"
+    lost = sorted(s for s in present if s not in survived)
 
     return Component(
-        name="Section survival",
+        name_key="component_sections",
         score=len(survived) / len(present) * 100,
         weight=SECTIONS_WEIGHT,
-        detail=detail,
+        detail_key="detail_sections_lost" if lost else "detail_sections_all",
+        detail_params={
+            "survived": len(survived),
+            "total": len(present),
+            "lost": ", ".join(lost),
+        },
     )
 
 
@@ -154,15 +162,12 @@ def _structure_component(findings: list[Finding]) -> Component:
     structural = [f for f in findings if f.rule.id not in _FIELD_RULES]
     penalty = sum(SEVERITY_PENALTY[f.rule.severity] for f in structural)
 
-    if not structural:
-        detail = "No structural parsing risks detected"
-    else:
-        parts = [f"{f.rule.id} (-{SEVERITY_PENALTY[f.rule.severity]})" for f in structural]
-        detail = "Deductions: " + ", ".join(parts)
+    deductions = ", ".join(f"{f.rule.id} (-{SEVERITY_PENALTY[f.rule.severity]})" for f in structural)
 
     return Component(
-        name="Structural integrity",
+        name_key="component_structure",
         score=max(0.0, 100.0 - penalty),
         weight=STRUCTURE_WEIGHT,
-        detail=detail,
+        detail_key="detail_structure_deductions" if structural else "detail_structure_clean",
+        detail_params={"deductions": deductions},
     )

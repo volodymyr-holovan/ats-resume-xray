@@ -63,13 +63,17 @@ def analyze_path(file_path: str, render: bool = False) -> AnalysisResult:
     """
     naive_text, aware_text = extract_text(file_path)
     findings = run_rules(file_path, naive_text, aware_text)
-    breakdown = score_resume(build_field_report(aware_text), build_field_report(naive_text), findings)
+    aware_fields = build_field_report(aware_text)
+    naive_fields = build_field_report(naive_text)
+    breakdown = score_resume(aware_fields, naive_fields, findings)
 
     rendered: list = []
-    if render and Path(file_path).suffix.lower() == ".pdf":
-        from .overlay import render_pages_with_findings
-
-        rendered = render_pages_with_findings(file_path, findings)
+    if render:
+        suffix = Path(file_path).suffix.lower()
+        if suffix == ".pdf":
+            rendered = _render(file_path, findings)
+        elif suffix == ".docx":
+            findings, rendered = _render_docx(file_path, findings, aware_fields, naive_fields)
 
     return AnalysisResult(
         naive_text=naive_text,
@@ -78,6 +82,40 @@ def analyze_path(file_path: str, render: bool = False) -> AnalysisResult:
         score=breakdown,
         rendered_pages=rendered,
     )
+
+
+def _render(pdf_path: str, findings: list[Finding]) -> list:
+    from .overlay import render_pages_with_findings
+
+    return render_pages_with_findings(pdf_path, findings)
+
+
+def _render_docx(
+    docx_path: str,
+    findings: list[Finding],
+    aware_fields: dict,
+    naive_fields: dict,
+) -> tuple[list[Finding], list]:
+    """Lay the DOCX out as pages and place its findings on them.
+
+    Returns the findings unchanged and no pages when LibreOffice is not
+    installed: without a layout engine there is no page to draw on, and
+    guessing at one would put boxes on positions the reader's own word
+    processor would not agree with.
+    """
+    from .docx_render import convert_docx_to_pdf
+    from .engine import attach_docx_regions
+    from .structure import analyze_structure
+
+    with tempfile.TemporaryDirectory() as render_dir:
+        converted = convert_docx_to_pdf(docx_path, render_dir)
+        if converted is None:
+            return findings, []
+
+        located = attach_docx_regions(
+            converted, findings, analyze_structure(docx_path), aware_fields, naive_fields
+        )
+        return located, _render(converted, located)
 
 
 def analyze_bytes(file_bytes: bytes, filename: str, render: bool = False) -> AnalysisResult:

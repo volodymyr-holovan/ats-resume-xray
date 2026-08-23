@@ -16,15 +16,15 @@ def fields(email=FOUND, phone=FOUND, experience=FOUND, education=FOUND, skills=F
 
 
 def finding(rule_id):
-    return Finding(rule=get_rule(rule_id), evidence="evidence")
+    return Finding(rule=get_rule(rule_id), evidence_key="evidence_verbatim", evidence_params={"text": "evidence"})
 
 
 def test_perfect_resume_scores_100():
     breakdown = score_resume(fields(), fields(), [])
 
     assert breakdown.total == 100
-    assert breakdown.rating == "Parses cleanly"
-    assert breakdown.cap_reason is None
+    assert breakdown.rating_key == "rating_clean"
+    assert breakdown.cap_key is None
 
 
 def test_missing_both_contact_fields_costs_the_contact_component():
@@ -32,7 +32,7 @@ def test_missing_both_contact_fields_costs_the_contact_component():
 
     breakdown = score_resume(aware, naive, [])
 
-    contact = next(c for c in breakdown.components if c.name == "Contact reachability")
+    contact = next(c for c in breakdown.components if c.name_key == "component_contact")
     assert contact.score == 0
     assert breakdown.total == 70
 
@@ -40,7 +40,7 @@ def test_missing_both_contact_fields_costs_the_contact_component():
 def test_one_contact_field_scores_half():
     aware = naive = fields(phone=MISSING)
 
-    contact = next(c for c in score_resume(aware, naive, []).components if c.name == "Contact reachability")
+    contact = next(c for c in score_resume(aware, naive, []).components if c.name_key == "component_contact")
 
     assert contact.score == 50
 
@@ -53,17 +53,18 @@ def test_sections_absent_from_the_resume_are_not_counted_against_it():
     aware = fields(skills=MISSING)
     naive = fields(skills=MISSING)
 
-    sections = next(c for c in score_resume(aware, naive, []).components if c.name == "Section survival")
+    sections = next(c for c in score_resume(aware, naive, []).components if c.name_key == "component_sections")
 
     assert sections.score == 100
-    assert "2 of 2" in sections.detail
+    assert sections.detail_params["survived"] == 2
+    assert sections.detail_params["total"] == 2
 
 
 def test_sections_component_is_unweighted_when_no_sections_exist():
     aware = naive = fields(experience=MISSING, education=MISSING, skills=MISSING)
 
     breakdown = score_resume(aware, naive, [])
-    sections = next(c for c in breakdown.components if c.name == "Section survival")
+    sections = next(c for c in breakdown.components if c.name_key == "component_sections")
 
     assert sections.weight == 0
     assert breakdown.total == 100, "an unweighted component must not drag the total down"
@@ -73,21 +74,21 @@ def test_sections_lost_only_under_naive_parsing_are_penalised():
     aware = fields()
     naive = fields(experience=MISSING)
 
-    sections = next(c for c in score_resume(aware, naive, []).components if c.name == "Section survival")
+    sections = next(c for c in score_resume(aware, naive, []).components if c.name_key == "component_sections")
 
     assert round(sections.score) == 67
-    assert "experience" in sections.detail
+    assert "experience" in sections.detail_params["lost"]
 
 
 def test_structural_findings_deduct_by_severity():
     findings = [finding("pdf_non_embedded_font")]  # medium, -10
 
     structure = next(
-        c for c in score_resume(fields(), fields(), findings).components if c.name == "Structural integrity"
+        c for c in score_resume(fields(), fields(), findings).components if c.name_key == "component_structure"
     )
 
     assert structure.score == 90
-    assert "pdf_non_embedded_font (-10)" in structure.detail
+    assert "pdf_non_embedded_font (-10)" in structure.detail_params["deductions"]
 
 
 def test_field_rules_are_not_double_counted_in_structure():
@@ -98,7 +99,7 @@ def test_field_rules_are_not_double_counted_in_structure():
     findings = [finding("missing_contact_field")]
 
     structure = next(
-        c for c in score_resume(aware, naive, findings).components if c.name == "Structural integrity"
+        c for c in score_resume(aware, naive, findings).components if c.name_key == "component_structure"
     )
 
     assert structure.score == 100
@@ -111,8 +112,9 @@ def test_one_high_severity_finding_caps_the_total():
 
     assert breakdown.total == 79
     assert breakdown.uncapped_total == 90
-    assert "Capped at 79" in breakdown.cap_reason
-    assert breakdown.rating != "Parses cleanly"
+    assert breakdown.cap_key == "cap_reason_one"
+    assert breakdown.cap_params["cap"] == 79
+    assert breakdown.rating_key != "rating_clean"
 
 
 def test_two_high_severity_findings_cap_lower():
@@ -121,7 +123,8 @@ def test_two_high_severity_findings_cap_lower():
     breakdown = score_resume(fields(), fields(), findings)
 
     assert breakdown.total == 59
-    assert "2 high-severity findings" in breakdown.cap_reason
+    assert breakdown.cap_key == "cap_reason_many"
+    assert breakdown.cap_params["count"] == 2
 
 
 def test_cap_does_not_raise_an_already_lower_score():
@@ -132,4 +135,4 @@ def test_cap_does_not_raise_an_already_lower_score():
     breakdown = score_resume(aware, naive, findings)
 
     assert breakdown.total < 79
-    assert breakdown.cap_reason is None
+    assert breakdown.cap_key is None

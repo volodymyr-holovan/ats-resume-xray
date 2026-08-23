@@ -31,18 +31,26 @@ Available as a web app (`streamlit run app.py`) or a CLI (`atsxray`).
    standing in for real text.
 
 3. **Recognizes fields** (name, email, phone, and the Experience/Education/Skills
-   sections, in English and German) under both extraction strategies, so it
-   can flag content that's only readable in the best case.
+   sections) under both extraction strategies, so it can flag content that's
+   only readable in the best case. Section headings are recognized in English,
+   German, Ukrainian, Russian, Spanish, Dutch and French — all at once, so a
+   CV that mixes languages still resolves.
 
 4. **Runs a rule engine** over all of the above: each documented risk pattern
    is a `Rule` with a severity and a citation into
    [`research_sources.md`](research_sources.md) — a transparent finding with
    evidence.
 
-5. **Shows you where the problem is.** For PDFs, each finding carries the
-   coordinates of the text it refers to, and the app renders your pages with
-   those areas boxed. The heading that disappears under naive parsing gets a
-   red box drawn around it, on your actual resume.
+5. **Shows you where the problem is.** Each finding carries the coordinates
+   of the text it refers to, and the app renders your pages with those areas
+   boxed. The section that disappears under naive parsing gets a red box
+   drawn around it, on your actual resume.
+
+   A DOCX stores content but no page positions, so it is laid out with
+   LibreOffice first and the findings are then located on the result by
+   searching for the text they reported. Without LibreOffice installed the
+   app falls back to the text-only view rather than guessing at a layout
+   your own word processor would disagree with.
 
 6. **Scores parse readiness** — see below.
 
@@ -66,6 +74,17 @@ Two deliberate choices: sections the candidate never wrote are excluded from
 the denominator rather than counted as failures, and any high-severity finding
 caps the headline number — a resume whose skills table gets swallowed should
 not be able to read as "parses cleanly" on a weighted average.
+
+## Languages
+
+The interface, the rule descriptions and the evidence text are translated
+into **English, German, Ukrainian, Russian, Spanish, Dutch and French**;
+the web app has a language switcher in the sidebar. Rule ids and source
+keys stay in English — they are identifiers pointing at the citations in
+`research_sources.md`, not prose.
+
+Resume *content* is matched against every language's section headings at
+once, so the interface language and the CV language are independent.
 
 ## Why this exists
 
@@ -108,6 +127,13 @@ atsxray my-resume.pdf --score      # + parse readiness score and its arithmetic
 ```
 
 The boxed page previews are a web-app feature; the CLI is text-only.
+
+### Optional: page previews for DOCX
+
+PDF previews work out of the box. To also preview DOCX files, install
+[LibreOffice](https://www.libreoffice.org/download/) — the app finds it
+automatically, or set `ATS_XRAY_SOFFICE` to the `soffice` binary if it lives
+somewhere unusual. Deployments get it from `packages.txt`.
 
 Two more flags show the intermediate steps behind the findings:
 `--structure` (fonts, headers/footers, images) and `--fields`
