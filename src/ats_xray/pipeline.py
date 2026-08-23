@@ -17,12 +17,13 @@ from .score import ScoreBreakdown, score_resume
 
 SUPPORTED_SUFFIXES = (".pdf", ".docx")
 
-MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024
-"""10 MB. No legitimate resume — even a DOCX with a photo — comes close to
-this; it exists to bound worst-case processing time for untrusted uploads
-(the web app's actual threat boundary), not because real files need it."""
+MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024
+"""50 MB. Far above any real resume — it exists to bound worst-case
+processing time for untrusted uploads (the web app's actual threat
+boundary), not because real files need the headroom. Raised from 10 MB so
+image-heavy design-tool exports are not turned away."""
 
-MAX_DOCX_UNCOMPRESSED_BYTES = 20 * 1024 * 1024
+MAX_DOCX_UNCOMPRESSED_BYTES = 100 * 1024 * 1024
 """A DOCX is a zip archive, so a small upload can still decompress to a
 huge amount of content ("zip bomb"). Zip central-directory metadata
 records each entry's uncompressed size and is cheap to read without

@@ -4,6 +4,10 @@ still importable directly from their own modules for anyone who wants
 finer-grained access.
 """
 
+__version__ = "0.2.0"
+"""Kept here rather than only in pyproject.toml so a frozen build, which has
+no package metadata to read, can still tell the update check what it is."""
+
 from .extract import extract_layout_aware, extract_naive
 from .docx_extract import extract_docx_full, extract_docx_naive
 from .structure import analyze_structure

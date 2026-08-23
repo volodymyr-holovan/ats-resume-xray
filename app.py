@@ -13,6 +13,7 @@ import streamlit as st
 from ats_xray.i18n import DEFAULT_LANGUAGE, UI_LANGUAGES, rule_description, t
 from ats_xray.overlay import SEVERITY_COLORS
 from ats_xray.pipeline import analyze_bytes
+from ats_xray.updates import check_for_update
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +24,23 @@ REPO_URL = "https://github.com/volodymyr-holovan/ats-resume-xray"
 SOURCES_URL = f"{REPO_URL}/blob/master/research_sources.md"
 
 st.set_page_config(page_title="ATS Resume X-Ray", page_icon="🔎")
+
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def _cached_update_check():
+    """Checked once an hour per session rather than on every rerun, which
+    would mean a network round trip each time a widget changes."""
+    return check_for_update()
+
+
+def _show_update_notice(lang: str) -> None:
+    update = _cached_update_check()
+    if update is None:
+        return
+    st.info(
+        t("update_available", lang, latest=update.latest, current=update.current, url=update.url),
+        icon="⬆️",
+    )
 
 
 def _pick_language() -> str:
@@ -109,6 +127,7 @@ def _render_pages(pages, is_pdf: bool, lang: str) -> None:
 language = _pick_language()
 
 st.title("ATS Resume X-Ray")
+_show_update_notice(language)
 st.write(t("intro", language, sources_url=SOURCES_URL))
 st.caption(t("privacy", language))
 

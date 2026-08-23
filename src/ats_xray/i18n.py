@@ -618,6 +618,15 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "nl": "Secties {sections} worden opmaak-bewust herkend, maar ontbreken bij naïeve parsing",
         "fr": "Les sections {sections} sont détectées avec la mise en page, mais absentes à l'analyse naïve",
     },
+    "update_available": {
+        "en": "Version {latest} is available — you have {current}. [Download the update]({url})",
+        "de": "Version {latest} ist verfügbar — Sie haben {current}. [Update herunterladen]({url})",
+        "uk": "Доступна версія {latest} — у вас {current}. [Завантажити оновлення]({url})",
+        "ru": "Доступна версия {latest} — у вас {current}. [Скачать обновление]({url})",
+        "es": "La versión {latest} está disponible — tienes {current}. [Descargar la actualización]({url})",
+        "nl": "Versie {latest} is beschikbaar — je hebt {current}. [Update downloaden]({url})",
+        "fr": "La version {latest} est disponible — vous avez {current}. [Télécharger la mise à jour]({url})",
+    },
     "open_source": {
         "en": "Open source",
         "de": "Open Source",
