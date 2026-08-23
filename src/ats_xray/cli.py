@@ -2,11 +2,20 @@
 
 import argparse
 import sys
+import textwrap
 from pathlib import Path
 
 from .engine import run_rules
 from .field_report import build_field_report
-from .i18n import DEFAULT_LANGUAGE, t
+from .i18n import (
+    DEFAULT_LANGUAGE,
+    UI_LANGUAGES,
+    rule_description,
+    rule_detail,
+    rule_fixes,
+    sources_path,
+    t,
+)
 from .pipeline import extract_text
 from .score import score_resume
 from .structure import analyze_structure
@@ -50,6 +59,12 @@ def main() -> None:
         action="store_true",
         help="Also print the parse readiness score with the arithmetic behind it",
     )
+    parser.add_argument(
+        "--language",
+        default=DEFAULT_LANGUAGE,
+        choices=sorted(UI_LANGUAGES),
+        help="Language for findings, fixes and the score (default: %(default)s)",
+    )
     args = parser.parse_args()
 
     path = Path(args.file)
@@ -86,7 +101,7 @@ def main() -> None:
     if args.report:
         print()
         print(SEPARATOR, "RULE ENGINE REPORT", SEPARATOR)
-        print(_format_rule_report(run_rules(str(path), naive, aware)))
+        print(_format_rule_report(run_rules(str(path), naive, aware), args.language))
 
     if args.score:
         breakdown = score_resume(
@@ -94,7 +109,7 @@ def main() -> None:
         )
         print()
         print(SEPARATOR, "PARSE READINESS", SEPARATOR)
-        print(_format_score(breakdown))
+        print(_format_score(breakdown, args.language))
 
 
 def _format_score(breakdown, language: str = DEFAULT_LANGUAGE) -> str:
@@ -187,24 +202,39 @@ def _comparison_line(label: str, aware_field: dict, naive_field: dict) -> str:
     return line
 
 
-def _format_rule_report(findings: list) -> str:
+def _format_rule_report(findings: list, language: str = DEFAULT_LANGUAGE) -> str:
     if not findings:
-        return "No rules triggered."
+        return t("no_findings", language)
 
-    ordered = sorted(findings, key=lambda f: _SEVERITY_ORDER[f.rule.severity])
-    blocks = []
-    for finding in ordered:
-        blocks.append(
-            "\n".join(
-                [
-                    f"[{finding.rule.severity.upper()}] {finding.rule.id}",
-                    f"  {finding.rule.description}",
-                    f"  Evidence: {finding.evidence}",
-                    f"  Source: research_sources.md#{finding.rule.source}",
-                ]
-            )
-        )
-    return "\n\n".join(blocks)
+    ordered = sorted(findings, key=lambda f: _SEVERITY_ORDER[f.severity])
+    return "\n\n".join(_format_finding(finding, language) for finding in ordered)
+
+
+def _format_finding(finding, language: str) -> str:
+    """One finding at full depth: what fired, what it means, what to do about
+    it. The web UI folds the last two behind an expander because it can; a
+    terminal has no fold, so it prints the lot."""
+    lines = [
+        f"[{t('severity_' + finding.severity, language)}] {finding.rule.id}",
+        f"  {rule_description(finding.rule.id, language, finding.rule.description)}",
+    ]
+
+    detail = rule_detail(finding.rule.id, language)
+    if detail:
+        lines.extend(f"  {line}" for line in textwrap.wrap(detail, width=78))
+
+    fixes = rule_fixes(finding.rule.id, language)
+    if fixes:
+        lines.append(f"  {t('how_to_fix', language)}:")
+        for number, fix in enumerate(fixes, 1):
+            wrapped = textwrap.wrap(fix, width=74) or [""]
+            lines.append(f"    {number}. {wrapped[0]}")
+            lines.extend(f"       {line}" for line in wrapped[1:])
+
+    evidence = t(finding.evidence_key, language, **finding.evidence_params)
+    lines.append(f"  {t('evidence', language)}: {evidence}")
+    lines.append(f"  {t('source', language)}: {sources_path(language)}#{finding.rule.source}")
+    return "\n".join(lines)
 
 
 if __name__ == "__main__":

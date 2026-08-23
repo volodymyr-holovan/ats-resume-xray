@@ -10,7 +10,15 @@ import logging
 
 import streamlit as st
 
-from ats_xray.i18n import DEFAULT_LANGUAGE, UI_LANGUAGES, rule_description, t
+from ats_xray.i18n import (
+    DEFAULT_LANGUAGE,
+    UI_LANGUAGES,
+    rule_description,
+    rule_detail,
+    rule_fixes,
+    sources_path,
+    t,
+)
 from ats_xray.overlay import SEVERITY_COLORS
 from ats_xray.pipeline import analyze_bytes
 from ats_xray.updates import check_for_update
@@ -21,7 +29,7 @@ SEVERITY_ORDER = {"high": 0, "medium": 1, "low": 2}
 SEVERITY_RENDERER = {"high": st.error, "medium": st.warning, "low": st.info}
 PAGE_PREVIEW_WIDTH = 640
 REPO_URL = "https://github.com/volodymyr-holovan/ats-resume-xray"
-SOURCES_URL = f"{REPO_URL}/blob/master/research_sources.md"
+BLOB_URL = f"{REPO_URL}/blob/master"
 
 st.set_page_config(page_title="ATS Resume X-Ray", page_icon="🔎")
 
@@ -79,20 +87,43 @@ def _render_score(breakdown, lang: str) -> None:
             )
 
 
+def _sources_url(rule, lang: str) -> str:
+    """Deep link to this rule's entry in the sources file, in the language
+    the reader is currently using. The anchors are identical across
+    translations, so only the filename changes."""
+    return f"{BLOB_URL}/{sources_path(lang)}#{rule.source}"
+
+
 def _render_findings(findings, lang: str) -> None:
     st.subheader(t("findings_heading", lang))
     if not findings:
         st.success(t("no_findings", lang))
         return
 
-    for finding in sorted(findings, key=lambda f: SEVERITY_ORDER[f.rule.severity]):
+    for finding in sorted(findings, key=lambda f: SEVERITY_ORDER[f.severity]):
         description = rule_description(finding.rule.id, lang, finding.rule.description)
-        SEVERITY_RENDERER[finding.rule.severity](
-            f"**[{finding.rule.severity.upper()}]** {description}"
-        )
-        evidence = t(finding.evidence_key, lang, **finding.evidence_params)
-        st.caption(f"{t('evidence', lang)}: {evidence}")
-        st.caption(f"{t('source', lang)}: research_sources.md#{finding.rule.source}")
+        severity_label = t(f"severity_{finding.severity}", lang)
+        SEVERITY_RENDERER[finding.severity](f"**[{severity_label}]** {description}")
+
+        # The headline says what is wrong; everything a reader needs to act
+        # on it lives one click away, so a resume with several findings
+        # stays skimmable instead of turning into a wall of advice.
+        with st.expander(t("details_expander", lang)):
+            detail = rule_detail(finding.rule.id, lang)
+            if detail:
+                st.write(detail)
+
+            fixes = rule_fixes(finding.rule.id, lang)
+            if fixes:
+                st.markdown(f"**{t('how_to_fix', lang)}**")
+                st.markdown("\n".join(f"{i}. {fix}" for i, fix in enumerate(fixes, 1)))
+
+            evidence = t(finding.evidence_key, lang, **finding.evidence_params)
+            st.caption(f"{t('evidence', lang)}: {evidence}")
+            st.caption(
+                f"{t('source', lang)}: [{t('read_more', lang)}]"
+                f"({_sources_url(finding.rule, lang)})"
+            )
 
 
 def _render_pages(pages, is_pdf: bool, lang: str) -> None:
@@ -128,7 +159,7 @@ language = _pick_language()
 
 st.title("ATS Resume X-Ray")
 _show_update_notice(language)
-st.write(t("intro", language, sources_url=SOURCES_URL))
+st.write(t("intro", language, sources_url=f"{BLOB_URL}/{sources_path(language)}"))
 st.caption(t("privacy", language))
 
 # A stable key keeps the upload across the rerun that a language change

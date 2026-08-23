@@ -94,7 +94,7 @@ def score_resume(aware_fields: dict, naive_fields: dict, findings: list[Finding]
     weighted = sum(c.score * c.weight for c in present) / total_weight if total_weight else 100.0
     uncapped = round(weighted)
 
-    high_count = sum(1 for f in findings if f.rule.severity == "high")
+    high_count = sum(1 for f in findings if f.severity == "high")
     cap = HIGH_SEVERITY_CAPS.get(min(high_count, 2)) if high_count else None
 
     if cap is not None and uncapped > cap:
@@ -160,9 +160,9 @@ def _sections_component(aware_fields: dict, naive_fields: dict) -> Component:
 
 def _structure_component(findings: list[Finding]) -> Component:
     structural = [f for f in findings if f.rule.id not in _FIELD_RULES]
-    penalty = sum(SEVERITY_PENALTY[f.rule.severity] for f in structural)
+    penalty = sum(SEVERITY_PENALTY[f.severity] for f in structural)
 
-    deductions = ", ".join(f"{f.rule.id} (-{SEVERITY_PENALTY[f.rule.severity]})" for f in structural)
+    deductions = ", ".join(f"{f.rule.id} (-{SEVERITY_PENALTY[f.severity]})" for f in structural)
 
     return Component(
         name_key="component_structure",

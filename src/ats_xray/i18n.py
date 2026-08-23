@@ -221,6 +221,60 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "nl": "Bron",
         "fr": "Source",
     },
+    "details_expander": {
+        "en": "What this means and how to fix it",
+        "de": "Was das bedeutet und wie Sie es beheben",
+        "uk": "Що це означає і як це виправити",
+        "ru": "Что это значит и как это исправить",
+        "es": "Qué significa y cómo solucionarlo",
+        "nl": "Wat dit betekent en hoe u het oplost",
+        "fr": "Ce que cela signifie et comment le corriger",
+    },
+    "how_to_fix": {
+        "en": "How to fix it",
+        "de": "So beheben Sie es",
+        "uk": "Як це виправити",
+        "ru": "Как это исправить",
+        "es": "Cómo solucionarlo",
+        "nl": "Hoe u het oplost",
+        "fr": "Comment le corriger",
+    },
+    "read_more": {
+        "en": "Read more",
+        "de": "Mehr dazu",
+        "uk": "Докладніше",
+        "ru": "Подробнее",
+        "es": "Más información",
+        "nl": "Meer lezen",
+        "fr": "En savoir plus",
+    },
+    "severity_high": {
+        "en": "HIGH",
+        "de": "HOCH",
+        "uk": "ВИСОКИЙ",
+        "ru": "ВЫСОКИЙ",
+        "es": "ALTO",
+        "nl": "HOOG",
+        "fr": "ÉLEVÉ",
+    },
+    "severity_medium": {
+        "en": "MEDIUM",
+        "de": "MITTEL",
+        "uk": "СЕРЕДНІЙ",
+        "ru": "СРЕДНИЙ",
+        "es": "MEDIO",
+        "nl": "MIDDEL",
+        "fr": "MOYEN",
+    },
+    "severity_low": {
+        "en": "LOW",
+        "de": "GERING",
+        "uk": "НИЗЬКИЙ",
+        "ru": "НИЗКИЙ",
+        "es": "BAJO",
+        "nl": "LAAG",
+        "fr": "FAIBLE",
+    },
     "pages_heading": {
         "en": "Where the problems are",
         "de": "Wo die Probleme liegen",
@@ -957,3 +1011,413 @@ def rule_description(rule_id: str, language: str, fallback: str) -> str:
     if entry is None:
         return fallback
     return entry.get(language) or entry.get(DEFAULT_LANGUAGE) or fallback
+
+
+RULE_DETAILS: dict[str, dict[str, str]] = {
+    "pdf_non_embedded_font": {
+        "en": 'The PDF names a font but does not carry it. Whatever opens the file substitutes something else, and the substitute may map characters differently — which is how text that looks fine on your screen arrives as gibberish, or does not arrive at all.',
+        "de": 'Das PDF nennt eine Schrift, enthält sie aber nicht. Das öffnende Programm ersetzt sie, und der Ersatz kann Zeichen anders zuordnen — so kommt Text, der auf Ihrem Bildschirm gut aussieht, als Zeichensalat oder gar nicht an.',
+        "uk": 'PDF називає шрифт, але не містить його. Програма, що відкриває файл, підставляє інший, а підстановка може інакше зіставити символи — саме так текст, який на вашому екрані виглядає нормально, доходить спотвореним або не доходить узагалі.',
+        "ru": 'PDF называет шрифт, но не содержит его. Программа, открывающая файл, подставляет другой, а подстановка может иначе сопоставить символы — именно так текст, который на вашем экране выглядит нормально, доходит искажённым или не доходит вовсе.',
+        "es": 'El PDF nombra una fuente pero no la incluye. El programa que lo abre la sustituye, y el sustituto puede asignar los caracteres de otra forma: así es como un texto que se ve bien en tu pantalla llega ilegible, o no llega.',
+        "nl": 'De PDF noemt een lettertype maar bevat het niet. Wat het bestand opent vervangt het, en de vervanger kan tekens anders toewijzen — zo komt tekst die er op jouw scherm goed uitziet als brij aan, of helemaal niet.',
+        "fr": "Le PDF nomme une police sans l'inclure. Le programme qui l'ouvre la remplace, et le substitut peut associer les caractères autrement : c'est ainsi qu'un texte impeccable à l'écran arrive illisible, ou n'arrive pas.",
+    },
+    "pdf_repeated_header_footer_content": {
+        "en": 'Text that repeats in the same spot on every page reads as page furniture, so parsers commonly strip it before looking at the content. That is the right call for page numbers. It is expensive if your phone number or email lives there and nowhere else.',
+        "de": 'Text, der auf jeder Seite an derselben Stelle steht, wirkt wie Seitenbeiwerk, daher entfernen Parser ihn meist vor der Auswertung. Bei Seitenzahlen ist das richtig. Teuer wird es, wenn dort Ihre Telefonnummer oder E-Mail steht und sonst nirgends.',
+        "uk": 'Текст, що повторюється на кожній сторінці в тому самому місці, сприймається як службовий, тож парсери зазвичай викидають його ще до аналізу вмісту. Для номерів сторінок це правильно. Дорого обходиться, якщо там ваш телефон чи пошта — і більше ніде.',
+        "ru": 'Текст, повторяющийся на каждой странице в одном месте, воспринимается как служебный, поэтому парсеры обычно выбрасывают его ещё до анализа содержимого. Для номеров страниц это верно. Дорого обходится, если там ваш телефон или почта — и больше нигде.',
+        "es": 'El texto que se repite en el mismo sitio de cada página parece decoración, así que los analizadores suelen eliminarlo antes de mirar el contenido. Con los números de página es lo correcto. Sale caro si ahí está tu teléfono o correo y en ningún otro sitio.',
+        "nl": 'Tekst die op elke pagina op dezelfde plek terugkomt oogt als opvulling, dus parsers verwijderen die meestal vóór ze naar de inhoud kijken. Bij paginanummers is dat terecht. Het wordt duur als daar je telefoonnummer of e-mail staat en nergens anders.',
+        "fr": "Un texte répété au même endroit sur chaque page passe pour de l'habillage, aussi les analyseurs le suppriment-ils souvent avant d'examiner le contenu. Pour un numéro de page, c'est justifié. Cela coûte cher si votre téléphone ou e-mail s'y trouve et nulle part ailleurs.",
+    },
+    "pdf_textless_image": {
+        "en": 'A picture covers part of the page and no extracted text sits under it. If that picture is a name plate, a skills chart or a whole sidebar exported from a design tool, its words are not text at all and no parser will read them. If it is a portrait photo, nothing is lost.',
+        "de": 'Ein Bild bedeckt einen Teil der Seite, und darunter liegt kein extrahierter Text. Ist es ein Namensschild, ein Diagramm oder eine ganze Seitenspalte aus einem Design-Tool, sind seine Wörter gar kein Text und kein Parser liest sie. Ist es ein Porträtfoto, geht nichts verloren.',
+        "uk": 'Зображення закриває частину сторінки, і під ним немає видобутого тексту. Якщо це банер з іменем, діаграма навичок чи ціла бічна колонка з дизайн-редактора — слова на ньому взагалі не є текстом, і жоден парсер їх не прочитає. Якщо це портретне фото, нічого не втрачено.',
+        "ru": 'Изображение закрывает часть страницы, и под ним нет извлечённого текста. Если это баннер с именем, диаграмма навыков или целая боковая колонка из дизайн-редактора — слова на нём вообще не текст, и ни один парсер их не прочитает. Если это портретное фото, ничего не потеряно.',
+        "es": 'Una imagen cubre parte de la página y debajo no hay texto extraído. Si esa imagen es un rótulo con el nombre, un gráfico de competencias o una barra lateral entera exportada de una herramienta de diseño, sus palabras no son texto y ningún analizador las leerá. Si es una foto de retrato, no se pierde nada.',
+        "nl": 'Een afbeelding bedekt een deel van de pagina en er ligt geen geëxtraheerde tekst onder. Is die afbeelding een naambanner, een vaardighedendiagram of een hele zijkolom uit een ontwerpprogramma, dan zijn de woorden erop geen tekst en leest geen enkele parser ze. Is het een portretfoto, dan gaat er niets verloren.',
+        "fr": "Une image couvre une partie de la page et aucun texte extrait ne se trouve dessous. Si cette image est un bandeau de nom, un graphique de compétences ou toute une colonne latérale exportée d'un outil de design, ses mots ne sont pas du texte et aucun analyseur ne les lira. S'il s'agit d'une photo de portrait, rien n'est perdu.",
+    },
+    "docx_table_content": {
+        "en": 'Tables are a tidy way to line up a two-column CV on screen, and a common way to scramble it on the way in. Many parsers flatten a table row into one line, so the label and the value from different columns end up welded together — or the table is skipped outright.',
+        "de": 'Tabellen sind eine saubere Art, einen zweispaltigen Lebenslauf am Bildschirm auszurichten — und eine häufige Art, ihn beim Einlesen zu zerlegen. Viele Parser plätten eine Tabellenzeile zu einer Zeile, sodass Bezeichnung und Wert aus verschiedenen Spalten verschweißt werden — oder die Tabelle wird ganz übersprungen.',
+        "uk": 'Таблиці — охайний спосіб вирівняти двоколонкове резюме на екрані й водночас поширений спосіб зіпсувати його при читанні. Багато парсерів згортають рядок таблиці в один рядок тексту, і назва зі значенням із різних колонок зростаються — або таблицю пропускають узагалі.',
+        "ru": 'Таблицы — аккуратный способ выровнять двухколоночное резюме на экране и одновременно распространённый способ испортить его при чтении. Многие парсеры сворачивают строку таблицы в одну строку текста, и название со значением из разных колонок срастаются — либо таблицу пропускают вовсе.',
+        "es": 'Las tablas son una forma limpia de alinear un CV a dos columnas en pantalla, y una forma habitual de desordenarlo al leerlo. Muchos analizadores aplanan una fila en una sola línea, de modo que la etiqueta y el valor de columnas distintas quedan soldados — o la tabla se omite por completo.',
+        "nl": 'Tabellen zijn een nette manier om een cv met twee kolommen uit te lijnen op het scherm, en een veelvoorkomende manier om het bij het inlezen te verhaspelen. Veel parsers plooien een tabelrij tot één regel, waardoor label en waarde uit verschillende kolommen aan elkaar vastzitten — of de tabel wordt helemaal overgeslagen.',
+        "fr": "Les tableaux sont une manière propre d'aligner un CV sur deux colonnes à l'écran, et une manière courante de le brouiller à la lecture. Beaucoup d'analyseurs aplatissent une ligne de tableau en une seule ligne, soudant ainsi le libellé et la valeur de colonnes différentes — ou ignorent le tableau entièrement.",
+    },
+    "docx_header_footer_content": {
+        "en": 'A Word header or footer is stored in its own part of the file, outside the document body. Readers that walk the body — which is most of them — never reach it. A quick check: press Ctrl+A in Word. Whatever does not highlight is roughly what a parser will not see.',
+        "de": 'Eine Word-Kopf- oder Fußzeile liegt in einem eigenen Teil der Datei, außerhalb des Dokumentkörpers. Programme, die den Körper durchlaufen — also die meisten — erreichen sie nie. Schnelltest: Strg+A in Word drücken. Was nicht markiert wird, sieht ein Parser ungefähr auch nicht.',
+        "uk": 'Колонтитул Word зберігається в окремій частині файлу, поза тілом документа. Програми, що обходять тіло — а це більшість — до нього не дістаються. Швидка перевірка: натисніть Ctrl+A у Word. Те, що не виділилось, парсер приблизно так само не побачить.',
+        "ru": 'Колонтитул Word хранится в отдельной части файла, вне тела документа. Программы, обходящие тело — а это большинство — до него не добираются. Быстрая проверка: нажмите Ctrl+A в Word. То, что не выделилось, парсер примерно так же не увидит.',
+        "es": 'Un encabezado o pie de Word se guarda en su propia parte del archivo, fuera del cuerpo del documento. Los lectores que recorren el cuerpo — casi todos — nunca llegan ahí. Comprobación rápida: pulsa Ctrl+A en Word. Lo que no se resalte es más o menos lo que un analizador no verá.',
+        "nl": 'Een Word-kop- of voettekst zit in een eigen deel van het bestand, buiten het documentlichaam. Lezers die het lichaam doorlopen — de meeste dus — komen er nooit. Snelle test: druk Ctrl+A in Word. Wat niet oplicht, ziet een parser ongeveer ook niet.',
+        "fr": "Un en-tête ou pied de page Word est stocké dans sa propre partie du fichier, hors du corps du document. Les lecteurs qui parcourent le corps — la plupart — n'y accèdent jamais. Test rapide : appuyez sur Ctrl+A dans Word. Ce qui ne se surligne pas est à peu près ce qu'un analyseur ne verra pas.",
+    },
+    "docx_text_box_content": {
+        "en": 'A text box is not part of the paragraph flow: Word stores it inside a drawing anchor, off to the side of the text a reader walks through. Sidebars built this way look deliberate and disappear completely, which is why they are among the most cited causes of a CV arriving half-empty.',
+        "de": 'Ein Textfeld gehört nicht zum Absatzfluss: Word legt es in einem Zeichnungsanker ab, abseits des Textes, den ein Leser durchläuft. So gebaute Seitenspalten wirken durchdacht und verschwinden vollständig — deshalb zählen sie zu den meistgenannten Gründen, warum ein Lebenslauf halb leer ankommt.',
+        "uk": 'Текстове поле не належить до потоку абзаців: Word тримає його в графічному якорі, збоку від тексту, який обходить програма читання. Бічні колонки, зроблені так, виглядають продумано і зникають повністю — через це вони серед найчастіше згадуваних причин, чому резюме доходить напівпорожнім.',
+        "ru": 'Текстовое поле не относится к потоку абзацев: Word держит его в графическом якоре, в стороне от текста, который обходит программа чтения. Боковые колонки, сделанные так, выглядят продуманно и исчезают полностью — поэтому они среди самых частых причин, почему резюме доходит полупустым.',
+        "es": 'Un cuadro de texto no forma parte del flujo de párrafos: Word lo guarda dentro de un anclaje de dibujo, al margen del texto que recorre un lector. Las barras laterales hechas así parecen intencionadas y desaparecen por completo, por eso están entre las causas más citadas de que un CV llegue medio vacío.',
+        "nl": 'Een tekstvak hoort niet bij de alineastroom: Word bewaart het in een tekeninganker, naast de tekst die een lezer doorloopt. Zo gebouwde zijkolommen ogen doordacht en verdwijnen volledig — daarom staan ze bij de meest genoemde oorzaken van een half leeg aangekomen cv.',
+        "fr": "Une zone de texte ne fait pas partie du flux de paragraphes : Word la range dans une ancre de dessin, à l'écart du texte qu'un lecteur parcourt. Les colonnes latérales construites ainsi paraissent voulues et disparaissent totalement — d'où leur place parmi les causes les plus citées d'un CV arrivé à moitié vide.",
+    },
+    "missing_contact_field": {
+        "en": 'Neither an email address nor a phone number could be recovered, even reading the file at its best. Whatever else is right, an employer who cannot reach you cannot invite you — this is the one finding that makes the rest moot.',
+        "de": 'Weder E-Mail-Adresse noch Telefonnummer waren zu finden, selbst beim bestmöglichen Lesen der Datei. Was sonst auch stimmt: Wer Sie nicht erreichen kann, kann Sie nicht einladen — dieser Befund macht alle anderen gegenstandslos.',
+        "uk": "Не вдалося дістати ні електронну пошту, ні номер телефону — навіть при найкращому читанні файлу. Що б не було правильним в іншому, роботодавець, який не може з вами зв'язатися, не може вас запросити — саме ця знахідка знецінює всі решта.",
+        "ru": 'Не удалось получить ни адрес электронной почты, ни номер телефона — даже при наилучшем чтении файла. Что бы ни было правильным в остальном, работодатель, который не может с вами связаться, не может вас пригласить — именно эта находка обесценивает все остальные.',
+        "es": 'No se ha podido recuperar ni un correo electrónico ni un teléfono, ni siquiera leyendo el archivo en su mejor caso. Por bien que esté todo lo demás, quien no puede contactarte no puede invitarte: este hallazgo deja sin sentido a los demás.',
+        "nl": 'Er kon geen e-mailadres en geen telefoonnummer worden achterhaald, zelfs niet bij de best mogelijke lezing. Wat er verder ook klopt: wie je niet kan bereiken, kan je niet uitnodigen — deze bevinding maakt de rest irrelevant.',
+        "fr": "Ni adresse e-mail ni numéro de téléphone n'ont pu être retrouvés, même en lisant le fichier au mieux. Quoi que vaille le reste, un employeur qui ne peut pas vous joindre ne peut pas vous convier — ce constat rend les autres sans objet.",
+    },
+    "section_missing_under_naive_parsing": {
+        "en": 'Your file has this section, and reading it with the columns understood finds it. Reading it the plain way — left to right across the whole page, which is what a layout-blind parser does — merges your heading with whatever sits beside it, and the heading stops being a heading. The content is fine; the layout is what puts it at risk.',
+        "de": 'Ihre Datei enthält diesen Abschnitt, und mit erkannten Spalten wird er gefunden. Beim schlichten Lesen — quer über die ganze Seite, wie es ein layoutblinder Parser tut — verschmilzt Ihre Überschrift mit dem, was daneben steht, und hört auf, eine Überschrift zu sein. Der Inhalt ist in Ordnung; das Layout gefährdet ihn.',
+        "uk": 'Ваш файл містить цей розділ, і читання з урахуванням колонок його знаходить. Просте читання — зліва направо через усю сторінку, як робить парсер, сліпий до верстки — зливає ваш заголовок із тим, що стоїть поруч, і заголовок перестає бути заголовком. Зі вмістом усе гаразд; під загрозу його ставить верстка.',
+        "ru": 'Ваш файл содержит этот раздел, и чтение с учётом колонок его находит. Простое чтение — слева направо через всю страницу, как делает парсер, слепой к вёрстке — сливает ваш заголовок с тем, что стоит рядом, и заголовок перестаёт быть заголовком. С содержимым всё в порядке; под угрозу его ставит вёрстка.',
+        "es": 'Tu archivo tiene esta sección, y leerlo entendiendo las columnas la encuentra. Leerlo de forma simple — de izquierda a derecha por toda la página, como hace un analizador ciego al diseño — funde tu encabezado con lo que tenga al lado, y el encabezado deja de serlo. El contenido está bien; es el diseño lo que lo pone en riesgo.',
+        "nl": 'Je bestand bevat deze sectie, en lezen met begrip van de kolommen vindt haar. Simpel lezen — van links naar rechts over de hele pagina, zoals een opmaak-blinde parser doet — smelt je kop samen met wat ernaast staat, en de kop is geen kop meer. De inhoud is prima; de opmaak brengt haar in gevaar.',
+        "fr": "Votre fichier contient cette section, et une lecture qui comprend les colonnes la trouve. Une lecture simple — de gauche à droite sur toute la largeur, ce que fait un analyseur aveugle à la mise en page — fond votre intitulé avec ce qui l'entoure, et l'intitulé cesse d'en être un. Le contenu va bien ; c'est la mise en page qui le met en péril.",
+    },
+}
+
+RULE_FIXES: dict[str, dict[str, list[str]]] = {
+    "pdf_non_embedded_font": {
+        "en": [
+            'Re-export from Word with File → Save As → PDF, and under Options tick "PDF/A compliant" — that forces every font to be embedded.',
+            'Switch the document to a common font (Arial, Calibri, Times New Roman, Georgia) and export again.',
+            'Check it worked: open the PDF, then File → Properties → Fonts. Every entry should say "Embedded" or "Embedded Subset".',
+        ],
+        "de": [
+            'Neu aus Word exportieren: Datei → Speichern unter → PDF, unter Optionen "PDF/A-kompatibel" ankreuzen — das erzwingt das Einbetten aller Schriften.',
+            'Auf eine verbreitete Schrift umstellen (Arial, Calibri, Times New Roman, Georgia) und erneut exportieren.',
+            'Prüfen: PDF öffnen, dann Datei → Eigenschaften → Schriften. Bei jedem Eintrag sollte "Eingebettet" oder "Eingebettete Untergruppe" stehen.',
+        ],
+        "uk": [
+            'Експортуйте з Word заново: Файл → Зберегти як → PDF, у Параметрах позначте "Сумісний з PDF/A" — це змусить вбудувати всі шрифти.',
+            'Переведіть документ на поширений шрифт (Arial, Calibri, Times New Roman, Georgia) і експортуйте ще раз.',
+            'Перевірте результат: відкрийте PDF, далі Файл → Властивості → Шрифти. Біля кожного має бути "Вбудований" або "Вбудована підмножина".',
+        ],
+        "ru": [
+            'Экспортируйте из Word заново: Файл → Сохранить как → PDF, в Параметрах отметьте "Совместимый с PDF/A" — это заставит встроить все шрифты.',
+            'Переведите документ на распространённый шрифт (Arial, Calibri, Times New Roman, Georgia) и экспортируйте ещё раз.',
+            'Проверьте результат: откройте PDF, далее Файл → Свойства → Шрифты. У каждого должно быть "Встроенный" или "Встроенное подмножество".',
+        ],
+        "es": [
+            'Vuelve a exportar desde Word con Archivo → Guardar como → PDF y, en Opciones, marca "Compatible con PDF/A": eso obliga a incrustar todas las fuentes.',
+            'Cambia el documento a una fuente común (Arial, Calibri, Times New Roman, Georgia) y expórtalo de nuevo.',
+            'Comprueba que funcionó: abre el PDF y ve a Archivo → Propiedades → Fuentes. Cada entrada debe decir "Incrustada" o "Subconjunto incrustado".',
+        ],
+        "nl": [
+            'Exporteer opnieuw vanuit Word via Bestand → Opslaan als → PDF en vink bij Opties "PDF/A-compatibel" aan — dat dwingt insluiting van alle lettertypen af.',
+            'Zet het document over op een gangbaar lettertype (Arial, Calibri, Times New Roman, Georgia) en exporteer opnieuw.',
+            'Controleer het: open de PDF en ga naar Bestand → Eigenschappen → Lettertypen. Bij elk item hoort "Ingesloten" of "Ingesloten subset" te staan.',
+        ],
+        "fr": [
+            'Réexportez depuis Word via Fichier → Enregistrer sous → PDF et cochez "Compatible PDF/A" dans les Options : cela force l\'incorporation de toutes les polices.',
+            'Passez le document à une police courante (Arial, Calibri, Times New Roman, Georgia) et réexportez.',
+            'Vérifiez : ouvrez le PDF, puis Fichier → Propriétés → Polices. Chaque entrée doit indiquer "Incorporée" ou "Sous-ensemble incorporé".',
+        ],
+    },
+    "pdf_repeated_header_footer_content": {
+        "en": [
+            'Move your phone and email into the body of the CV, in the first few lines under your name.',
+            'Leave only page numbers in the header and footer — nothing you would mind losing.',
+            'Check it worked: select all the text in the PDF and paste it into a plain text editor. If your contact details are missing there, they are at risk.',
+        ],
+        "de": [
+            'Verschieben Sie Telefon und E-Mail in den Fließtext des Lebenslaufs, in die ersten Zeilen unter Ihrem Namen.',
+            'Lassen Sie in Kopf- und Fußzeile nur Seitenzahlen stehen — nichts, dessen Verlust schmerzt.',
+            'Prüfen: gesamten Text im PDF markieren und in einen einfachen Texteditor einfügen. Fehlen dort Ihre Kontaktdaten, sind sie gefährdet.',
+        ],
+        "uk": [
+            'Перенесіть телефон і пошту в основний текст резюме, у перші рядки під вашим іменем.',
+            'У колонтитулах залиште тільки номери сторінок — нічого такого, що шкода втратити.',
+            'Перевірте результат: виділіть увесь текст у PDF і вставте у простий текстовий редактор. Якщо контактів там немає — вони під загрозою.',
+        ],
+        "ru": [
+            'Перенесите телефон и почту в основной текст резюме, в первые строки под вашим именем.',
+            'В колонтитулах оставьте только номера страниц — ничего такого, что жаль потерять.',
+            'Проверьте результат: выделите весь текст в PDF и вставьте в простой текстовый редактор. Если контактов там нет — они под угрозой.',
+        ],
+        "es": [
+            'Lleva tu teléfono y correo al cuerpo del CV, en las primeras líneas bajo tu nombre.',
+            'Deja en el encabezado y el pie solo los números de página: nada que te importe perder.',
+            'Comprueba que funcionó: selecciona todo el texto del PDF y pégalo en un editor de texto plano. Si tus datos de contacto no aparecen, están en riesgo.',
+        ],
+        "nl": [
+            'Verplaats je telefoonnummer en e-mail naar de tekst van het cv, in de eerste regels onder je naam.',
+            'Laat in de kop- en voettekst alleen paginanummers staan — niets wat je zou missen.',
+            'Controleer het: selecteer alle tekst in de PDF en plak die in een kale teksteditor. Ontbreken je contactgegevens daar, dan lopen ze gevaar.',
+        ],
+        "fr": [
+            'Déplacez votre téléphone et votre e-mail dans le corps du CV, dans les premières lignes sous votre nom.',
+            'Ne laissez que les numéros de page en en-tête et pied de page — rien dont la perte compte.',
+            "Vérifiez : sélectionnez tout le texte du PDF et collez-le dans un éditeur de texte brut. Si vos coordonnées n'y sont pas, elles sont en péril.",
+        ],
+    },
+    "pdf_textless_image": {
+        "en": [
+            'If the image is a name plate, a title bar or a skills chart, retype it as real text — that is the whole fix.',
+            'If it is a portrait photo, it costs you no text. Keep it or not depending on the market: normal in Germany and much of Europe, usually left off in the US, UK and Ireland.',
+            'Check which it is: open the PDF and press Ctrl+A. Anything that does not highlight is a picture, not text.',
+        ],
+        "de": [
+            'Ist das Bild ein Namensschild, ein Titelbalken oder ein Kompetenzdiagramm, tippen Sie es als echten Text ab — das ist die ganze Lösung.',
+            'Ist es ein Porträtfoto, kostet es keinen Text. Behalten oder nicht, je nach Markt: in Deutschland und weiten Teilen Europas üblich, in den USA, UK und Irland meist weggelassen.',
+            'Prüfen, was es ist: PDF öffnen und Strg+A drücken. Was nicht markiert wird, ist ein Bild, kein Text.',
+        ],
+        "uk": [
+            'Якщо це банер з іменем, титульна смуга чи діаграма навичок — наберіть це справжнім текстом, і проблему вичерпано.',
+            'Якщо це портретне фото, тексту воно не коштує. Лишати чи ні — залежить від ринку: у Німеччині та більшості Європи звично, у США, Британії та Ірландії зазвичай не додають.',
+            'Перевірте, що саме там: відкрийте PDF і натисніть Ctrl+A. Усе, що не виділилось, — зображення, а не текст.',
+        ],
+        "ru": [
+            'Если это баннер с именем, титульная полоса или диаграмма навыков — наберите это настоящим текстом, и проблема исчерпана.',
+            'Если это портретное фото, текста оно не стоит. Оставлять или нет — зависит от рынка: в Германии и большей части Европы привычно, в США, Британии и Ирландии обычно не добавляют.',
+            'Проверьте, что именно там: откройте PDF и нажмите Ctrl+A. Всё, что не выделилось, — изображение, а не текст.',
+        ],
+        "es": [
+            'Si la imagen es un rótulo con el nombre, una barra de título o un gráfico de competencias, vuelve a escribirlo como texto real: ahí acaba el problema.',
+            'Si es una foto de retrato, no te cuesta ningún texto. Mantenerla o no depende del mercado: habitual en Alemania y buena parte de Europa, normalmente se omite en EE. UU., Reino Unido e Irlanda.',
+            'Comprueba cuál es: abre el PDF y pulsa Ctrl+A. Lo que no se resalte es una imagen, no texto.',
+        ],
+        "nl": [
+            'Is de afbeelding een naambanner, titelbalk of vaardighedendiagram, typ het dan over als echte tekst — daarmee is het opgelost.',
+            'Is het een portretfoto, dan kost het je geen tekst. Houden of niet hangt van de markt af: gebruikelijk in Duitsland en veel van Europa, in de VS, het VK en Ierland meestal weggelaten.',
+            'Kijk wat het is: open de PDF en druk Ctrl+A. Alles wat niet oplicht is een afbeelding, geen tekst.',
+        ],
+        "fr": [
+            "Si l'image est un bandeau de nom, une barre de titre ou un graphique de compétences, ressaisissez-la en vrai texte : le problème est réglé.",
+            "S'il s'agit d'une photo de portrait, elle ne vous coûte aucun texte. La garder ou non dépend du marché : courante en Allemagne et dans une grande partie de l'Europe, généralement omise aux États-Unis, au Royaume-Uni et en Irlande.",
+            "Vérifiez de quoi il s'agit : ouvrez le PDF et appuyez sur Ctrl+A. Tout ce qui ne se surligne pas est une image, pas du texte.",
+        ],
+    },
+    "docx_table_content": {
+        "en": [
+            'Convert the table to plain text: click in it, then Table Layout → Convert to Text → separate with paragraph marks.',
+            'Rebuild the alignment with tab stops or plain line breaks instead of a table.',
+            'Keep tables only for genuinely tabular data. A two-column page layout is not tabular data.',
+        ],
+        "de": [
+            'Wandeln Sie die Tabelle in Text um: hineinklicken, dann Tabellenlayout → In Text konvertieren → mit Absatzmarken trennen.',
+            'Bauen Sie die Ausrichtung mit Tabstopps oder einfachen Zeilenumbrüchen statt mit einer Tabelle nach.',
+            'Tabellen nur für echte Tabellendaten verwenden. Ein zweispaltiges Seitenlayout sind keine Tabellendaten.',
+        ],
+        "uk": [
+            'Перетворіть таблицю на текст: клацніть у ній, далі Макет таблиці → Перетворити на текст → розділяти знаками абзацу.',
+            'Відтворіть вирівнювання табуляціями або звичайними переносами рядків замість таблиці.',
+            'Лишайте таблиці лише для справді табличних даних. Двоколонкова верстка сторінки — це не табличні дані.',
+        ],
+        "ru": [
+            'Преобразуйте таблицу в текст: щёлкните в ней, далее Макет таблицы → Преобразовать в текст → разделять знаками абзаца.',
+            'Воспроизведите выравнивание табуляциями или обычными переносами строк вместо таблицы.',
+            'Оставляйте таблицы только для действительно табличных данных. Двухколоночная вёрстка страницы — это не табличные данные.',
+        ],
+        "es": [
+            'Convierte la tabla en texto: haz clic dentro y ve a Disposición de tabla → Convertir en texto → separar con marcas de párrafo.',
+            'Rehaz la alineación con tabuladores o saltos de línea normales en lugar de una tabla.',
+            'Reserva las tablas para datos realmente tabulares. Una maquetación a dos columnas no son datos tabulares.',
+        ],
+        "nl": [
+            'Zet de tabel om naar tekst: klik erin en ga naar Tabelindeling → Converteren naar tekst → scheiden met alineamarkeringen.',
+            'Bouw de uitlijning opnieuw op met tabstops of gewone regeleinden in plaats van een tabel.',
+            'Gebruik tabellen alleen voor echt tabellarische gegevens. Een pagina-indeling met twee kolommen is dat niet.',
+        ],
+        "fr": [
+            'Convertissez le tableau en texte : cliquez dedans, puis Disposition du tableau → Convertir en texte → séparer par des marques de paragraphe.',
+            "Refaites l'alignement avec des taquets de tabulation ou de simples sauts de ligne plutôt qu'un tableau.",
+            "Réservez les tableaux aux données réellement tabulaires. Une mise en page à deux colonnes n'en est pas.",
+        ],
+    },
+    "docx_header_footer_content": {
+        "en": [
+            'Move everything you need read into the document body — header and footer should hold nothing you would mind losing.',
+            'Put your contact details in the first few lines under your name, as ordinary paragraphs.',
+            'Check it worked: press Ctrl+A in Word. If text does not highlight, it is not in the body and a parser will likely miss it.',
+        ],
+        "de": [
+            'Verschieben Sie alles, was gelesen werden soll, in den Dokumentkörper — in Kopf- und Fußzeile gehört nichts, dessen Verlust schmerzt.',
+            'Setzen Sie Ihre Kontaktdaten als normale Absätze in die ersten Zeilen unter Ihrem Namen.',
+            'Prüfen: Strg+A in Word drücken. Was nicht markiert wird, steht nicht im Körper und wird von einem Parser wahrscheinlich übersehen.',
+        ],
+        "uk": [
+            'Перенесіть у тіло документа все, що має бути прочитане — у колонтитулах не місце нічому, що шкода втратити.',
+            'Розмістіть контакти звичайними абзацами в перших рядках під вашим іменем.',
+            'Перевірте результат: натисніть Ctrl+A у Word. Якщо текст не виділився — він не в тілі документа, і парсер його, найімовірніше, не побачить.',
+        ],
+        "ru": [
+            'Перенесите в тело документа всё, что должно быть прочитано — в колонтитулах не место ничему, что жаль потерять.',
+            'Разместите контакты обычными абзацами в первых строках под вашим именем.',
+            'Проверьте результат: нажмите Ctrl+A в Word. Если текст не выделился — он не в теле документа, и парсер его, скорее всего, не увидит.',
+        ],
+        "es": [
+            'Lleva al cuerpo del documento todo lo que quieras que se lea: en el encabezado y el pie no debe quedar nada que te importe perder.',
+            'Pon tus datos de contacto como párrafos normales en las primeras líneas bajo tu nombre.',
+            'Comprueba que funcionó: pulsa Ctrl+A en Word. Si un texto no se resalta, no está en el cuerpo y es probable que un analizador lo pase por alto.',
+        ],
+        "nl": [
+            'Verplaats alles wat gelezen moet worden naar het documentlichaam — in kop- en voettekst hoort niets wat je zou missen.',
+            "Zet je contactgegevens als gewone alinea's in de eerste regels onder je naam.",
+            'Controleer het: druk Ctrl+A in Word. Licht tekst niet op, dan staat die niet in het lichaam en mist een parser die waarschijnlijk.',
+        ],
+        "fr": [
+            "Déplacez dans le corps du document tout ce qui doit être lu — l'en-tête et le pied de page ne doivent rien contenir dont la perte compte.",
+            'Placez vos coordonnées en paragraphes ordinaires dans les premières lignes sous votre nom.',
+            "Vérifiez : appuyez sur Ctrl+A dans Word. Si un texte ne se surligne pas, il n'est pas dans le corps et un analyseur le manquera probablement.",
+        ],
+    },
+    "docx_text_box_content": {
+        "en": [
+            'Cut the text out of the box, paste it into the document as ordinary paragraphs, then delete the empty box.',
+            'Replace a boxed sidebar with a normal heading followed by its content, in one column.',
+            'Check it worked: press Ctrl+A in Word. Text still inside a box will not highlight.',
+        ],
+        "de": [
+            'Schneiden Sie den Text aus dem Feld aus, fügen Sie ihn als normale Absätze ins Dokument ein und löschen Sie das leere Feld.',
+            'Ersetzen Sie eine Seitenspalte im Textfeld durch eine normale Überschrift mit Inhalt darunter, einspaltig.',
+            'Prüfen: Strg+A in Word drücken. Text, der noch im Feld steckt, wird nicht markiert.',
+        ],
+        "uk": [
+            'Виріжте текст із поля, вставте його в документ звичайними абзацами, а порожнє поле видаліть.',
+            'Замініть бічну колонку в текстовому полі на звичайний заголовок із вмістом під ним, в одну колонку.',
+            'Перевірте результат: натисніть Ctrl+A у Word. Текст, що залишився в полі, не виділиться.',
+        ],
+        "ru": [
+            'Вырежьте текст из поля, вставьте его в документ обычными абзацами, а пустое поле удалите.',
+            'Замените боковую колонку в текстовом поле на обычный заголовок с содержимым под ним, в одну колонку.',
+            'Проверьте результат: нажмите Ctrl+A в Word. Текст, оставшийся в поле, не выделится.',
+        ],
+        "es": [
+            'Corta el texto del cuadro, pégalo en el documento como párrafos normales y borra el cuadro vacío.',
+            'Sustituye una barra lateral en cuadro por un encabezado normal seguido de su contenido, a una sola columna.',
+            'Comprueba que funcionó: pulsa Ctrl+A en Word. El texto que siga dentro de un cuadro no se resaltará.',
+        ],
+        "nl": [
+            "Knip de tekst uit het vak, plak die als gewone alinea's in het document en verwijder het lege vak.",
+            'Vervang een zijkolom in een tekstvak door een gewone kop met daaronder de inhoud, in één kolom.',
+            'Controleer het: druk Ctrl+A in Word. Tekst die nog in een vak zit, licht niet op.',
+        ],
+        "fr": [
+            'Coupez le texte de la zone, collez-le dans le document en paragraphes ordinaires, puis supprimez la zone vide.',
+            'Remplacez une colonne latérale en zone de texte par un intitulé normal suivi de son contenu, sur une seule colonne.',
+            'Vérifiez : appuyez sur Ctrl+A dans Word. Le texte encore dans une zone ne se surlignera pas.',
+        ],
+    },
+    "missing_contact_field": {
+        "en": [
+            'Put your email and phone as plain text in the first three lines, directly under your name.',
+            'Do not leave them only in a header, inside an image, or in a text box — those are the three places a parser is most likely to miss.',
+            'Write them plainly: name@example.com and +49 151 2345678, not "name [at] example [dot] com".',
+        ],
+        "de": [
+            'Setzen Sie E-Mail und Telefon als reinen Text in die ersten drei Zeilen, direkt unter Ihren Namen.',
+            'Lassen Sie sie nicht nur in einer Kopfzeile, in einem Bild oder in einem Textfeld stehen — das sind die drei Orte, die ein Parser am ehesten übersieht.',
+            'Schreiben Sie sie schlicht: name@example.com und +49 151 2345678, nicht "name [at] example [Punkt] com".',
+        ],
+        "uk": [
+            'Напишіть пошту й телефон звичайним текстом у перших трьох рядках, одразу під вашим іменем.',
+            'Не лишайте їх тільки в колонтитулі, всередині зображення чи в текстовому полі — саме ці три місця парсер пропускає найчастіше.',
+            'Пишіть просто: name@example.com і +380 67 1234567, а не "name [собака] example [крапка] com".',
+        ],
+        "ru": [
+            'Напишите почту и телефон обычным текстом в первых трёх строках, сразу под вашим именем.',
+            'Не оставляйте их только в колонтитуле, внутри изображения или в текстовом поле — именно эти три места парсер пропускает чаще всего.',
+            'Пишите просто: name@example.com и +7 900 1234567, а не "name [собака] example [точка] com".',
+        ],
+        "es": [
+            'Pon tu correo y tu teléfono como texto plano en las tres primeras líneas, justo bajo tu nombre.',
+            'No los dejes solo en un encabezado, dentro de una imagen o en un cuadro de texto: son los tres sitios que un analizador tiene más papeletas de omitir.',
+            'Escríbelos de forma sencilla: nombre@ejemplo.com y +34 600 123 456, no "nombre [arroba] ejemplo [punto] com".',
+        ],
+        "nl": [
+            'Zet je e-mail en telefoonnummer als platte tekst in de eerste drie regels, direct onder je naam.',
+            'Laat ze niet alleen in een koptekst, in een afbeelding of in een tekstvak staan — dat zijn de drie plekken die een parser het vaakst mist.',
+            'Schrijf ze gewoon uit: naam@voorbeeld.nl en +31 6 12345678, niet "naam [apenstaartje] voorbeeld [punt] nl".',
+        ],
+        "fr": [
+            'Indiquez votre e-mail et votre téléphone en texte brut dans les trois premières lignes, juste sous votre nom.',
+            "Ne les laissez pas uniquement dans un en-tête, dans une image ou dans une zone de texte : ce sont les trois endroits qu'un analyseur rate le plus souvent.",
+            'Écrivez-les simplement : nom@exemple.fr et +33 6 12 34 56 78, pas "nom [arobase] exemple [point] fr".',
+        ],
+    },
+    "section_missing_under_naive_parsing": {
+        "en": [
+            'Switch to a single-column layout. It is the one change that reliably fixes this, and it costs less visually than it sounds.',
+            'If you keep two columns, make sure no heading shares a horizontal line with sidebar content — the merge happens line by line.',
+            'Check it worked: copy everything out of your CV into a plain text editor and read it top to bottom. That is roughly what the parser sees.',
+        ],
+        "de": [
+            'Wechseln Sie zu einem einspaltigen Layout. Das ist die eine Änderung, die das zuverlässig behebt, und sie kostet optisch weniger als es klingt.',
+            'Wenn Sie zwei Spalten behalten, achten Sie darauf, dass keine Überschrift auf derselben Höhe wie Seitenspalteninhalt steht — verschmolzen wird zeilenweise.',
+            'Prüfen: alles aus dem Lebenslauf in einen einfachen Texteditor kopieren und von oben nach unten lesen. Ungefähr so sieht es der Parser.',
+        ],
+        "uk": [
+            'Перейдіть на одноколонкову верстку. Це єдина зміна, яка надійно це виправляє, і візуально вона коштує менше, ніж здається.',
+            'Якщо лишаєте дві колонки, стежте, щоб жоден заголовок не стояв на одній горизонталі з вмістом бічної колонки — злиття відбувається саме порядково.',
+            'Перевірте результат: скопіюйте все з резюме у простий текстовий редактор і прочитайте згори вниз. Приблизно так це бачить парсер.',
+        ],
+        "ru": [
+            'Перейдите на одноколоночную вёрстку. Это единственное изменение, которое надёжно это исправляет, и визуально оно стоит меньше, чем кажется.',
+            'Если оставляете две колонки, следите, чтобы ни один заголовок не стоял на одной горизонтали с содержимым боковой колонки — слияние происходит именно построчно.',
+            'Проверьте результат: скопируйте всё из резюме в простой текстовый редактор и прочитайте сверху вниз. Примерно так это видит парсер.',
+        ],
+        "es": [
+            'Pasa a una maquetación de una sola columna. Es el único cambio que lo arregla de forma fiable, y visualmente cuesta menos de lo que parece.',
+            'Si mantienes dos columnas, asegúrate de que ningún encabezado comparta línea horizontal con contenido de la barra lateral: la fusión ocurre línea a línea.',
+            'Comprueba que funcionó: copia todo el CV en un editor de texto plano y léelo de arriba abajo. Eso es más o menos lo que ve el analizador.',
+        ],
+        "nl": [
+            'Stap over op één kolom. Dat is de ene wijziging die dit betrouwbaar oplost, en visueel kost het minder dan het klinkt.',
+            'Houd je twee kolommen aan, zorg dan dat geen enkele kop op dezelfde hoogte staat als inhoud in de zijkolom — het samensmelten gebeurt regel voor regel.',
+            'Controleer het: kopieer alles uit je cv naar een kale teksteditor en lees het van boven naar beneden. Dat is ongeveer wat de parser ziet.',
+        ],
+        "fr": [
+            "Passez à une mise en page sur une seule colonne. C'est le seul changement qui règle cela de façon fiable, et visuellement il coûte moins qu'il n'y paraît.",
+            "Si vous gardez deux colonnes, veillez à ce qu'aucun intitulé ne partage sa ligne horizontale avec le contenu de la colonne latérale : la fusion se fait ligne par ligne.",
+            "Vérifiez : copiez tout le CV dans un éditeur de texte brut et lisez-le de haut en bas. C'est à peu près ce que voit l'analyseur.",
+        ],
+    },
+}
+
+
+def rule_detail(rule_id: str, language: str) -> str:
+    """The longer explanation shown when a finding is expanded, or "" when
+    a rule has none yet -- the caller simply shows nothing extra."""
+    entry = RULE_DETAILS.get(rule_id)
+    if entry is None:
+        return ""
+    return entry.get(language) or entry.get(DEFAULT_LANGUAGE) or ""
+
+
+def rule_fixes(rule_id: str, language: str) -> list[str]:
+    """Concrete steps for this finding, most direct first. Empty when a
+    rule has no advice yet, which the caller renders as no fix list rather
+    than an empty heading."""
+    entry = RULE_FIXES.get(rule_id)
+    if entry is None:
+        return []
+    return entry.get(language) or entry.get(DEFAULT_LANGUAGE) or []
+
+
+SOURCES_FILENAME = "research_sources.md"
+
+
+def sources_path(language: str) -> str:
+    """Repo-relative path to the sources file in this language.
+
+    English lives at the repo root because that is where every existing link
+    to it points; the translations sit in docs/ so the root stays readable.
+    An unknown language falls back to English rather than producing a link
+    to a file that was never written.
+    """
+    if language == DEFAULT_LANGUAGE or language not in UI_LANGUAGES:
+        return SOURCES_FILENAME
+    return f"docs/research_sources.{language}.md"

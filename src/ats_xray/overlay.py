@@ -63,7 +63,7 @@ def render_pages_with_findings(
 
             on_this_page = [f for f in findings if any(r.page == page_number for r in f.regions)]
             for finding in on_this_page:
-                color = SEVERITY_COLORS.get(finding.rule.severity, SEVERITY_COLORS["low"])
+                color = SEVERITY_COLORS.get(finding.severity, SEVERITY_COLORS["low"])
                 for region in finding.regions:
                     if region.page == page_number:
                         _draw_box(image, region.padded(BOX_PADDING), color, scale_x, scale_y)

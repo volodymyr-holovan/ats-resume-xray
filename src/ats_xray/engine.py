@@ -29,6 +29,15 @@ class Finding:
     """Where on the page the problem is, when that is knowable. Empty for
     DOCX (no page geometry) and for findings about something being absent,
     which by definition has no location."""
+    severity_override: str | None = None
+    """Set when *this instance* is more or less serious than the rule in
+    general. A repeated footer holding a phone number risks losing contact
+    details; the same rule firing on "Page 1 of 2" risks nothing. Reporting
+    both at one level makes the level meaningless."""
+
+    @property
+    def severity(self) -> str:
+        return self.severity_override or self.rule.severity
 
     @property
     def evidence(self) -> str:
@@ -54,13 +63,20 @@ def evaluate(file_type: str, structure: dict, aware_fields: dict, naive_fields: 
     """
     findings: list[Finding] = []
 
-    def trigger(rule_id: str, evidence_key: str, params: dict | None = None, regions: tuple = ()) -> None:
+    def trigger(
+        rule_id: str,
+        evidence_key: str,
+        params: dict | None = None,
+        regions: tuple = (),
+        severity: str | None = None,
+    ) -> None:
         findings.append(
             Finding(
                 rule=get_rule(rule_id),
                 evidence_key=evidence_key,
                 evidence_params=params or {},
                 regions=tuple(regions),
+                severity_override=severity,
             )
         )
 
@@ -84,6 +100,7 @@ def _evaluate_pdf_structure(structure: dict, trigger: Trigger) -> None:
     repeated = structure.get("repeated_header_footer_lines") or []
     if repeated:
         sample = repeated[0]
+        carries_contact = any(_holds_contact_details(entry["text"]) for entry in repeated)
         trigger(
             "pdf_repeated_header_footer_content",
             "evidence_repeated_line",
@@ -93,6 +110,9 @@ def _evaluate_pdf_structure(structure: dict, trigger: Trigger) -> None:
                 "pages": ", ".join(str(p) for p in sample["pages"]),
             },
             tuple(r for entry in repeated for r in entry.get("regions", ())),
+            # Losing a running "Page 1 of 2" costs nothing; losing a running
+            # footer that holds the phone number costs the application.
+            severity="high" if carries_contact else "low",
         )
 
     images = structure.get("textless_images") or []
@@ -103,6 +123,7 @@ def _evaluate_pdf_structure(structure: dict, trigger: Trigger) -> None:
             "evidence_textless_image",
             {"page": sample["page"], "percent": f"{sample['area_fraction'] * 100:.0f}"},
             tuple(entry["region"] for entry in images if entry.get("region")),
+            severity="high" if any(_is_banner_shaped(e) for e in images) else "low",
         )
 
 
@@ -110,7 +131,13 @@ def _evaluate_docx_structure(structure: dict, trigger: Trigger) -> None:
     headers_footers = structure.get("headers_footers") or {"headers": [], "footers": []}
     evidence_parts = headers_footers["headers"] + headers_footers["footers"]
     if evidence_parts:
-        trigger("docx_header_footer_content", "evidence_verbatim", {"text": "; ".join(evidence_parts)})
+        joined = "; ".join(evidence_parts)
+        trigger(
+            "docx_header_footer_content",
+            "evidence_verbatim",
+            {"text": joined},
+            severity="high" if _holds_contact_details(joined) else "medium",
+        )
 
     text_boxes = structure.get("text_box_content") or []
     if text_boxes:
@@ -118,6 +145,32 @@ def _evaluate_docx_structure(structure: dict, trigger: Trigger) -> None:
 
     if structure.get("has_table_content"):
         trigger("docx_table_content", "evidence_table_cells")
+
+
+BANNER_ASPECT_RATIO = 2.0
+"""Width-to-height above which a textless image is treated as a banner --
+a name plate or chart exported as a picture, whose text is genuinely lost.
+Portrait or roughly square images are usually a profile photo, which is
+normal on CVs in much of Europe and loses no text, so they are reported at
+the lowest level rather than as a defect."""
+
+
+def _is_banner_shaped(image: dict) -> bool:
+    region = image.get("region")
+    if region is None:
+        return True  # no geometry to judge by; assume the worse case
+    height = region.bottom - region.top
+    if height <= 0:
+        return True
+    return (region.x1 - region.x0) / height >= BANNER_ASPECT_RATIO
+
+
+def _holds_contact_details(text: str) -> bool:
+    """True when the text carries an email or phone number, i.e. something
+    whose loss would leave the candidate unreachable."""
+    from .contact import find_email, find_phone
+
+    return bool(find_email(text) or find_phone(text))
 
 
 def _evaluate_fields(aware_fields: dict, naive_fields: dict, trigger: Trigger) -> None:
