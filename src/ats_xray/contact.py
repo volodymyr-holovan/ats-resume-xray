@@ -28,7 +28,10 @@ not just the ones a test happens to catch.
 import re
 
 _EMAIL_RE = re.compile(r"[a-zA-Z0-9_.+-]{1,64}@[a-zA-Z0-9-]{1,63}(?:\.[a-zA-Z0-9-]{1,63}){1,8}")
-_PHONE_CANDIDATE_RE = re.compile(r"[+(]?\d[\d\s().-]{5,30}\d")
+# The slash is in the class because German numbers are written
+# "040 / 123 456 78". It also pulls date ranges like "09/2021 - 06/2025"
+# in as single candidates, which the date shapes below then reject.
+_PHONE_CANDIDATE_RE = re.compile(r"[+(]?\d[\d\s()/.-]{5,30}\d")
 _MIN_PHONE_DIGITS = 7
 _MAX_PHONE_DIGITS = 15
 
@@ -46,10 +49,41 @@ def find_email(text: str) -> str | None:
     return match.group(0) if match else None
 
 
+_DATE_SHAPES = (
+    re.compile(r"^\d{1,2}[./]\d{1,2}[./]\d{2,4}$"),          # 12.03.1988
+    re.compile(r"^\d{1,2}[./]\d{4}$"),                        # 09/2021
+    re.compile(r"^\d{4}\s*[-–—]\s*\d{4}$"),                   # 2019 - 2024
+    re.compile(r"^\d{1,2}[./]\d{4}\s*[-–—]\s*\d{1,2}[./]\d{4}$"),  # 09/2021 - 06/2025
+    re.compile(r"^\d{4}\s*[-–—]\s*\d{1,4}$"),                 # 2024-0871, 2019-24
+)
+"""Shapes that are dates or reference numbers, never phone numbers.
+
+A German Lebenslauf carries a date of birth and a column of employment
+spans, and "12.03.1988" has eight digits and no letters -- indistinguishable
+from a phone number by digit count alone. A CV with a date of birth and no
+phone number at all was scoring 100/100 and being told both contact details
+were found, which is the one failure this tool exists to catch."""
+
+_PHONE_HINT = re.compile(r"^[+(]|^0|^00")
+"""A real phone number written on a CV starts with a plus, a bracket or a
+zero. Anything else needs enough digits that it cannot be a year."""
+
+_MIN_DIGITS_WITHOUT_HINT = 9
+
+
+def _looks_like_a_date(candidate: str) -> bool:
+    return any(shape.match(candidate) for shape in _DATE_SHAPES)
+
+
 def find_phone(text: str) -> str | None:
     for match in _PHONE_CANDIDATE_RE.finditer(text):
         candidate = match.group(0).strip()
         digit_count = sum(ch.isdigit() for ch in candidate)
-        if _MIN_PHONE_DIGITS <= digit_count <= _MAX_PHONE_DIGITS:
-            return candidate
+        if not _MIN_PHONE_DIGITS <= digit_count <= _MAX_PHONE_DIGITS:
+            continue
+        if _looks_like_a_date(candidate):
+            continue
+        if not _PHONE_HINT.match(candidate) and digit_count < _MIN_DIGITS_WITHOUT_HINT:
+            continue
+        return candidate
     return None
