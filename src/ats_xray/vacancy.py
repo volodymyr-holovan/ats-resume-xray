@@ -23,123 +23,81 @@ from .credentials import (
     find_required_years,
     language_required_without_level,
 )
+from .langid import detect_language, merge_for
 from .normalize import fold
 from .skills_lexicon import find_skills, label_for
+from .terms import MAX_TERMS_PER_AD, extract_terms
 
-BLOCK_HEADINGS: dict[str, tuple[str, ...]] = {
-    "profile": (
-        "ihr profil",
-        "dein profil",
-        "das bringen sie mit",
-        "das bringst du mit",
-        "was sie mitbringen",
-        "was du mitbringst",
-        "anforderungen",
-        "anforderungsprofil",
-        "qualifikationen",
-        "ihre qualifikationen",
-        "voraussetzungen",
-        "unsere erwartungen",
-        "das zeichnet sie aus",
-        "damit ueberzeugen sie uns",
-        "your profile",
-        "requirements",
-        "what you bring",
-        "qualifications",
-        "about you",
-        "your skills",
-        "who you are",
-        "perfil",
-        "tu perfil",
-        "jouw profiel",
-        "votre profil",
-        "ваш профіль",
-        "ваш профиль",
-    ),
-    "tasks": (
-        "ihre aufgaben",
-        "deine aufgaben",
-        "aufgabengebiet",
-        "ihr aufgabengebiet",
-        "taetigkeiten",
-        "ihre taetigkeiten",
-        "was sie erwartet",
-        "was dich erwartet",
-        "stellenbeschreibung",
-        "your tasks",
-        "your responsibilities",
-        "responsibilities",
-        "the role",
-        "what you will do",
-        "job description",
-        "tus tareas",
-        "jouw taken",
-        "vos missions",
-        "ваші завдання",
-        "ваши задачи",
-    ),
-    "offer": (
-        "wir bieten",
-        "was wir bieten",
-        "das bieten wir",
-        "unsere benefits",
-        "benefits",
-        "ihre vorteile",
-        "deine vorteile",
-        "wir freuen uns",
-        "unser angebot",
-        "was wir ihnen bieten",
-        "we offer",
-        "what we offer",
-        "our offer",
-        "perks",
-        "why join us",
-        "ofrecemos",
-        "wij bieden",
-        "nous offrons",
-        "ми пропонуємо",
-        "мы предлагаем",
-    ),
+BLOCK_HEADINGS_BY_LANGUAGE: dict[str, dict[str, tuple[str, ...]]] = {
+    "de": {
+        "profile": ("ihr profil", "dein profil", "das bringen sie mit", "das bringst du mit", "was sie mitbringen", "was du mitbringst", "anforderungen", "anforderungsprofil", "qualifikationen", "ihre qualifikationen", "voraussetzungen", "unsere erwartungen", "das zeichnet sie aus", "damit ueberzeugen sie uns", "ihr koennen", "fachliche anforderungen"),
+        "tasks": ("ihre aufgaben", "deine aufgaben", "aufgabengebiet", "ihr aufgabengebiet", "taetigkeiten", "ihre taetigkeiten", "was sie erwartet", "was dich erwartet", "stellenbeschreibung", "ihre rolle", "aufgabenschwerpunkte"),
+        "offer": ("wir bieten", "was wir bieten", "das bieten wir", "unsere benefits", "ihre vorteile", "deine vorteile", "wir freuen uns", "unser angebot", "was wir ihnen bieten", "darauf koennen sie sich freuen"),
+    },
+    "en": {
+        "profile": ("your profile", "requirements", "what you bring", "qualifications", "about you", "your skills", "who you are", "what we expect"),
+        "tasks": ("your tasks", "your responsibilities", "responsibilities", "the role", "what you will do", "job description", "your mission"),
+        "offer": ("we offer", "what we offer", "our offer", "benefits", "perks", "why join us", "what is in it for you"),
+    },
+    "es": {
+        "profile": ("tu perfil", "su perfil", "requisitos", "perfil del candidato", "que buscamos"),
+        "tasks": ("tus tareas", "funciones", "responsabilidades", "descripcion del puesto"),
+        "offer": ("ofrecemos", "que ofrecemos", "beneficios", "te ofrecemos"),
+    },
+    "nl": {
+        "profile": ("jouw profiel", "uw profiel", "wat vragen wij", "functie-eisen", "vereisten", "wie ben jij"),
+        "tasks": ("jouw taken", "werkzaamheden", "functieomschrijving", "wat ga je doen"),
+        "offer": ("wij bieden", "wat bieden wij", "arbeidsvoorwaarden", "ons aanbod"),
+    },
+    "fr": {
+        "profile": ("votre profil", "profil recherche", "exigences", "vos competences", "qui etes-vous"),
+        "tasks": ("vos missions", "vos taches", "description du poste", "responsabilites"),
+        "offer": ("nous offrons", "ce que nous offrons", "avantages", "notre offre"),
+    },
+    "uk": {
+        "profile": ("ваш профіль", "вимоги", "наші вимоги", "що ми очікуємо", "кваліфікація"),
+        "tasks": ("ваші завдання", "обов", "посадові обов", "опис вакансії"),
+        "offer": ("ми пропонуємо", "що ми пропонуємо", "умови роботи", "переваги"),
+    },
+    "ru": {
+        "profile": ("ваш профиль", "требования", "наши требования", "что мы ожидаем", "квалификация"),
+        "tasks": ("ваши задачи", "обязанности", "должностные обязанности", "описание вакансии"),
+        "offer": ("мы предлагаем", "что мы предлагаем", "условия работы", "преимущества"),
+    },
 }
 
-MUST_CUES = (
-    "zwingend",
-    "zwingend erforderlich",
-    "erforderlich",
-    "voraussetzung",
-    "voraussetzungen",
-    "setzen wir voraus",
-    "unabdingbar",
-    "unerlaesslich",
-    "notwendig",
-    "muss",
-    "muessen",
-    "required",
-    "must have",
-    "must-have",
-    "mandatory",
-    "essential",
-)
+BLOCK_ORDER = ("profile", "tasks", "offer")
+"""Checked in this order, so a line matching two block names is read as the
+more specific one."""
 
-NICE_CUES = (
-    "von vorteil",
-    "vorteilhaft",
-    "wuenschenswert",
-    "idealerweise",
-    "im idealfall",
-    "gerne auch",
-    "ein plus",
-    "pluspunkt",
-    "optional",
-    "nice to have",
-    "nice-to-have",
-    "a plus",
-    "preferred",
-    "desirable",
-    "ideally",
-    "bonus",
-    "would be great",
-)
+
+def _headings_for(language: str) -> dict[str, tuple[str, ...]]:
+    merged: dict[str, list[str]] = {block: [] for block in BLOCK_ORDER}
+    for code in (language, "en"):
+        for block, headings in BLOCK_HEADINGS_BY_LANGUAGE.get(code, {}).items():
+            merged[block].extend(headings)
+    return {block: tuple(headings) for block, headings in merged.items()}
+
+
+MUST_CUES_BY_LANGUAGE: dict[str, tuple[str, ...]] = {
+    "de": ("zwingend", "zwingend erforderlich", "erforderlich", "voraussetzung", "voraussetzungen", "setzen wir voraus", "unabdingbar", "unerlaesslich", "notwendig", "muss", "muessen", "wird vorausgesetzt"),
+    "en": ("required", "must have", "must-have", "mandatory", "essential", "is a must"),
+    "es": ("imprescindible", "obligatorio", "requisito indispensable", "se requiere"),
+    "nl": ("vereist", "noodzakelijk", "must", "verplicht"),
+    "fr": ("exige", "obligatoire", "indispensable", "requis"),
+    "uk": ("обов", "вимагається", "необхідн", "мусить"),
+    "ru": ("обязательн", "требуется", "необходим"),
+}
+
+NICE_CUES_BY_LANGUAGE: dict[str, tuple[str, ...]] = {
+    "de": ("von vorteil", "vorteilhaft", "wuenschenswert", "idealerweise", "im idealfall", "gerne auch", "ein plus", "pluspunkt", "optional", "von nutzen"),
+    "en": ("nice to have", "nice-to-have", "a plus", "preferred", "desirable", "ideally", "bonus", "would be great", "an advantage"),
+    "es": ("valorable", "deseable", "se valorara", "un plus"),
+    "nl": ("een pre", "wenselijk", "gewenst", "is een plus"),
+    "fr": ("un atout", "souhaite", "apprecie", "de preference"),
+    "uk": ("буде перевагою", "бажано", "вітається", "як перевага"),
+    "ru": ("будет преимуществом", "желательно", "приветствуется", "как плюс"),
+}
 
 MAX_HEADING_LENGTH = 80
 """A heading is short. Requiring that stops a sentence that happens to
@@ -176,7 +134,7 @@ class VacancyProfile:
         return [r for r in self.requirements if r.kind == kind]
 
 
-def split_blocks(text: str) -> dict[str, str]:
+def split_blocks(text: str, language: str | None = None) -> dict[str, str]:
     """Group the advert's lines under the headings it uses.
 
     Text before the first recognised heading goes to ``"intro"``; an advert
@@ -184,6 +142,7 @@ def split_blocks(text: str) -> dict[str, str]:
     block, because a pasted requirements list is the common case and
     treating it as an offer block would discard all of it.
     """
+    language = language or detect_language(text)
     lines = text.splitlines()
     marks: list[tuple[int, str]] = []
 
@@ -192,7 +151,7 @@ def split_blocks(text: str) -> dict[str, str]:
         if not stripped or len(stripped) > MAX_HEADING_LENGTH:
             continue
         folded = fold(stripped)
-        for block, headings in BLOCK_HEADINGS.items():
+        for block, headings in _headings_for(language).items():
             # An empty folded heading would match every line; guard rather
             # than trust every alias to survive folding.
             if any(h and h in folded for h in (fold(heading) for heading in headings)):
@@ -216,7 +175,7 @@ def split_blocks(text: str) -> dict[str, str]:
     return {name: "\n".join(parts) for name, parts in blocks.items()}
 
 
-def line_is_must(line: str, default_must: bool) -> bool:
+def line_is_must(line: str, default_must: bool, language: str = "en") -> bool:
     """Whether one line states a hard requirement.
 
     "Nice" is checked first on purpose. When a line carries both kinds of
@@ -225,9 +184,9 @@ def line_is_must(line: str, default_must: bool) -> bool:
     as a blocking gap.
     """
     folded = fold(line)
-    if any(fold(cue) in folded for cue in NICE_CUES):
+    if any(fold(cue) in folded for cue in merge_for(NICE_CUES_BY_LANGUAGE, language)):
         return False
-    if any(fold(cue) in folded for cue in MUST_CUES):
+    if any(fold(cue) in folded for cue in merge_for(MUST_CUES_BY_LANGUAGE, language)):
         return True
     return default_must
 
@@ -238,8 +197,16 @@ SCANNED_BLOCKS = ("profile", "tasks", "intro")
 gives, not what the candidate needs."""
 
 
-def parse_vacancy(text: str) -> VacancyProfile:
-    blocks = split_blocks(text)
+def parse_vacancy(text: str, language: str | None = None) -> VacancyProfile:
+    """Read an advert into weighted requirements.
+
+    The language is detected once and every phrase vocabulary is narrowed to
+    it plus English, because an advert and the CV measured against it are
+    written in one language and reading all seven invites cross-language
+    false positives.
+    """
+    language = language or detect_language(text)
+    blocks = split_blocks(text, language)
     scanned = {name: body for name, body in blocks.items() if name in SCANNED_BLOCKS}
     requirements: dict[str, Requirement] = {}
 
@@ -255,7 +222,7 @@ def parse_vacancy(text: str) -> VacancyProfile:
         for line in body.splitlines():
             if not line.strip():
                 continue
-            must = line_is_must(line, default_must)
+            must = line_is_must(line, default_must, language)
             for skill_id in find_skills(line):
                 add(
                     Requirement(
@@ -266,7 +233,19 @@ def parse_vacancy(text: str) -> VacancyProfile:
                         evidence=line.strip(),
                     )
                 )
-            years = find_required_years(line)
+            # Anything the lexicon does not know still has to surface, or an
+            # advert for a trade nobody added would produce an empty list.
+            for term in extract_terms(line, language):
+                add(
+                    Requirement(
+                        kind="skill",
+                        key=f"term:{fold(term)}",
+                        label=term,
+                        must=must,
+                        evidence=line.strip(),
+                    )
+                )
+            years = find_required_years(line, language)
             if years:
                 add(
                     Requirement(
@@ -279,8 +258,8 @@ def parse_vacancy(text: str) -> VacancyProfile:
                     )
                 )
 
-    _add_education(scanned, text, add)
-    _add_languages(scanned, add)
+    _add_education(scanned, text, add, language)
+    _add_languages(scanned, add, language)
 
     licence = find_licence(text)
     if licence:
@@ -289,10 +268,12 @@ def parse_vacancy(text: str) -> VacancyProfile:
                 kind="licence",
                 key=licence,
                 label=f"Führerschein / licence {licence}",
-                must=_licence_is_must(text),
+                must=_licence_is_must(text, language),
                 evidence=_line_containing(text, "hrerschein") or _line_containing(text, "licence") or "",
             )
         )
+
+    _cap_generic_terms(requirements)
 
     ordered = sorted(
         requirements.values(),
@@ -301,24 +282,40 @@ def parse_vacancy(text: str) -> VacancyProfile:
     return VacancyProfile(tuple(ordered), blocks)
 
 
+def _cap_generic_terms(requirements: dict) -> None:
+    """Keep the guessed keywords to a readable number.
+
+    Lexicon hits are never dropped: those are known skills. Only the
+    generic guesses are trimmed, required ones first, because a list too
+    long to read is a list nobody will correct.
+    """
+    generic = [r for r in requirements.values() if r.key.startswith("term:")]
+    if len(generic) <= MAX_TERMS_PER_AD:
+        return
+    keep = {r.uid for r in sorted(generic, key=lambda r: not r.must)[:MAX_TERMS_PER_AD]}
+    for requirement in generic:
+        if requirement.uid not in keep:
+            del requirements[requirement.uid]
+
+
 KIND_ORDER = {"education": 0, "experience": 1, "language": 2, "licence": 3, "skill": 4}
 
 
-def _add_education(scanned: dict[str, str], whole_text: str, add) -> None:
-    if education_waived(whole_text):
+def _add_education(scanned: dict[str, str], whole_text: str, add, language: str) -> None:
+    if education_waived(whole_text, language):
         return
     best: Requirement | None = None
     for name, body in scanned.items():
         default_must = BLOCK_DEFAULT_MUST.get(name, False)
         for line in body.splitlines():
-            fact = find_education(line)
+            fact = find_education(line, language)
             if fact is None:
                 continue
             candidate = Requirement(
                 kind="education",
                 key=fact.level,
                 label=_education_label(fact.level),
-                must=line_is_must(line, default_must) and not fact.equivalent_accepted,
+                must=line_is_must(line, default_must, language) and not fact.equivalent_accepted,
                 evidence=line.strip(),
                 detail={
                     "level": fact.level,
@@ -344,12 +341,12 @@ def _education_label(level: str) -> str:
     return EDUCATION_LABELS.get(level, level)
 
 
-def _add_languages(scanned: dict[str, str], add) -> None:
+def _add_languages(scanned: dict[str, str], add, language: str) -> None:
     body = "\n".join(scanned.values())
     if not body.strip():
         return
 
-    for fact in find_languages(body):
+    for fact in find_languages(body, language):
         add(
             Requirement(
                 kind="language",
@@ -361,7 +358,7 @@ def _add_languages(scanned: dict[str, str], add) -> None:
             )
         )
 
-    for code in language_required_without_level(body):
+    for code in language_required_without_level(body, language):
         add(
             Requirement(
                 kind="language",
@@ -374,9 +371,9 @@ def _add_languages(scanned: dict[str, str], add) -> None:
         )
 
 
-def _licence_is_must(text: str) -> bool:
+def _licence_is_must(text: str, language: str = "en") -> bool:
     line = _line_containing(text, "hrerschein") or _line_containing(text, "licence")
-    return line_is_must(line, True) if line else True
+    return line_is_must(line, True, language) if line else True
 
 
 def _line_containing(text: str, needle: str) -> str | None:

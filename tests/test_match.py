@@ -66,7 +66,13 @@ def test_a_higher_degree_satisfies_a_lower_requirement():
     """The comparison is a level comparison, not a keyword one: a Master
     reported as "missing Bachelor" would be obviously wrong to any reader
     and would sink trust in the whole report."""
-    cv = "Ausbildung\nMasterabschluss Informatik\n"
+    # A realistic section rather than two words: the language is detected
+    # from the CV, and two words are not a language.
+    cv = (
+        "Ausbildung\n"
+        "Masterabschluss der Informatik an der Technischen Universitaet\n"
+        "Das Studium wurde mit Auszeichnung und in Regelstudienzeit beendet\n"
+    )
     requirement = Requirement(
         kind="education", key="bachelor", label="Bachelor", must=True, detail={"level": "bachelor"}
     )

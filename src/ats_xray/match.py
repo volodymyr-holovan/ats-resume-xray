@@ -19,6 +19,7 @@ from dataclasses import dataclass, field
 from datetime import date
 
 from .credentials import CEFR_RANK, EDUCATION_RANK, find_education, find_experience_months, find_languages, find_licence
+from .langid import detect_language
 from .normalize import contains_phrase, fold, tokens
 from .sections import split_into_sections
 from .skills_lexicon import SKILLS_BY_ID, find_skills, label_for
@@ -83,12 +84,15 @@ def evaluate_match(
     naive_text: str = "",
     today: date | None = None,
 ) -> MatchReport:
+    # The CV has its own language, which need not be the advert's: a German
+    # CV is sometimes measured against an English posting.
+    language = detect_language(aware_text)
     sections = split_into_sections(aware_text)
     cv_skills = set(find_skills(aware_text))
     naive_skills = set(find_skills(naive_text)) if naive_text else cv_skills
 
     outcomes = [
-        _evaluate(requirement, aware_text, sections, cv_skills, naive_skills, today)
+        _evaluate(requirement, aware_text, sections, cv_skills, naive_skills, today, language)
         for requirement in requirements
     ]
 
@@ -109,15 +113,15 @@ def evaluate_match(
     )
 
 
-def _evaluate(requirement, aware_text, sections, cv_skills, naive_skills, today):
+def _evaluate(requirement, aware_text, sections, cv_skills, naive_skills, today, language):
     if requirement.kind == "skill":
         return _evaluate_skill(requirement, aware_text, cv_skills, naive_skills)
     if requirement.kind == "experience":
         return _evaluate_experience(requirement, sections, aware_text, today)
     if requirement.kind == "education":
-        return _evaluate_education(requirement, sections, aware_text)
+        return _evaluate_education(requirement, sections, aware_text, language)
     if requirement.kind == "language":
-        return _evaluate_language(requirement, sections, aware_text)
+        return _evaluate_language(requirement, sections, aware_text, language)
     if requirement.kind == "licence":
         return _evaluate_licence(requirement, aware_text)
     return Outcome(requirement, "missing")
@@ -191,9 +195,9 @@ def _evaluate_experience(requirement, sections, aware_text, today) -> Outcome:
     )
 
 
-def _evaluate_education(requirement, sections, aware_text) -> Outcome:
+def _evaluate_education(requirement, sections, aware_text, language="en") -> Outcome:
     scope = sections.get("education") or aware_text
-    fact = find_education(scope)
+    fact = find_education(scope, language)
     wanted_rank = EDUCATION_RANK.get(requirement.key, 0)
     equivalent = requirement.detail.get("equivalent_accepted", False)
 
@@ -230,10 +234,10 @@ def _evaluate_education(requirement, sections, aware_text) -> Outcome:
     )
 
 
-def _evaluate_language(requirement, sections, aware_text) -> Outcome:
+def _evaluate_language(requirement, sections, aware_text, language="en") -> Outcome:
     scope = "\n".join(part for part in (sections.get("languages"), aware_text) if part)
     wanted = requirement.detail.get("level")
-    have = next((f for f in find_languages(scope) if f.language == requirement.key), None)
+    have = next((f for f in find_languages(scope, language) if f.language == requirement.key), None)
 
     if have is None:
         return Outcome(
