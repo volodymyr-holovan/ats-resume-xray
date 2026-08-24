@@ -16,6 +16,7 @@ Run locally with: streamlit run app.py
 """
 
 import html
+from contextlib import nullcontext
 import logging
 from dataclasses import replace
 from pathlib import Path
@@ -201,6 +202,11 @@ def _legend(lang: str) -> str:
     return f'<div class="axr-legend">{swatches}</div>'
 
 
+PAGE_PANE_HEIGHT = 900
+"""Tall enough for a whole A4 page at the width this column gets, so the
+scroller never cuts one in half."""
+
+
 def _render_pages(pages, is_pdf: bool, lang: str) -> None:
     if not pages:
         if not is_pdf:
@@ -213,13 +219,18 @@ def _render_pages(pages, is_pdf: bool, lang: str) -> None:
     if not is_pdf:
         st.caption(t("docx_layout_note", lang))
 
-    for page in pages:
-        label = f"{t('page', lang)} {page.page_number}"
-        if page.marked_findings:
-            label += " — " + ", ".join(sorted({f.rule.id for f in page.marked_findings}))
-        else:
-            label += f" — {t('nothing_flagged', lang)}"
-        st.image(page.image, caption=label, use_container_width=True)
+    # One page needs no scroller. Several do: a six-page CV rendered at full
+    # width runs past everything else on the screen, and the reader loses
+    # the score sitting beside it.
+    frame = st.container(height=PAGE_PANE_HEIGHT) if len(pages) > 1 else nullcontext()
+    with frame:
+        for page in pages:
+            label = f"{t('page', lang)} {page.page_number}"
+            if page.marked_findings:
+                label += " — " + ", ".join(sorted({f.rule.id for f in page.marked_findings}))
+            else:
+                label += f" — {t('nothing_flagged', lang)}"
+            st.image(page.image, caption=label, use_container_width=True)
 
 
 def _render_scorecard(breakdown, findings, lang: str) -> None:
