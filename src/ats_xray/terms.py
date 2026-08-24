@@ -77,6 +77,9 @@ _MODIFIERS = (
     "advanced", "working", "outstanding", "ideally", "preferably", "several",
     "willingness", "passion", "familiarity", "proficiency", "hands-on",
     "completed", "afgeronde", "vloeiend", "diplome", "estudios",
+    "technische", "technisches", "technischer", "direkter", "direkte",
+    "moderne", "modernes", "hochwertiges", "attraktive", "gründliche",
+    "abwechslungsreiches", "innovativem", "wichtige", "verschiedene",
     # Infinitives that open a German task bullet. They are capitalised there
     # by sentence position and look exactly like nouns.
     "führen", "betreuen", "durchführen", "erstellen", "pflegen", "unterstützen",
@@ -93,6 +96,14 @@ _MODIFIERS = (
     "vorgabe", "vorgaben", "regelungen", "bestimmungen", "grundsätze",
     "kriterien", "aspekte", "inhalte", "punkte", "verfahren", "methoden",
     "maßnahmen", "abläufe", "vorschriften", "unterlagen", "dokumente",
+    # Nouns that describe taking part in work rather than any skill. German
+    # task bullets are built out of these: "Mitarbeit bei der Umsetzung der
+    # Vorgaben" names nothing a candidate could have.
+    "mitarbeit", "mitwirkung", "umsetzung", "übernahme", "unterstützung",
+    "erstellung", "bearbeitung", "abwicklung", "sicherstellung", "gestaltung",
+    "verantwortung", "posten", "einsatzort", "schwerpunkt", "schwerpunkte",
+    "geräte", "gerät", "einstieg", "einarbeitung", "anfertigung",
+    "optimierung", "installation", "infrastruktur", "komponenten",
 )
 
 _FRAMING_WORDS = (
@@ -213,7 +224,19 @@ INTRODUCERS_BY_LANGUAGE: dict[str, tuple[str, ...]] = {
     ),
 }
 
-_ARTICLES = r"(?:der|die|das|dem|den|the|a|an|el|la|los|las|de|le|les|het|een)"
+ARTICLES_BY_LANGUAGE: dict[str, tuple[str, ...]] = {
+    "de": ("der", "die", "das", "dem", "den", "einer", "einem", "eines"),
+    "en": ("the", "a", "an"),
+    "es": ("el", "la", "los", "las", "un", "una"),
+    "nl": ("het", "de", "een"),
+    "fr": ("le", "la", "les", "un", "une"),
+    "uk": (),
+    "ru": (),
+}
+"""Articles are skipped between the introducer and the keyword. Kept per
+language and matched as whole words: an unanchored alternation let the
+Spanish "el" bite the "El" off German "Elektronik", and the requirement came
+back as "ektronik"."""
 
 
 def _introduced_pattern(language: str) -> re.Pattern:
@@ -222,9 +245,13 @@ def _introduced_pattern(language: str) -> re.Pattern:
     cached = _PATTERN_CACHE.get(language)
     if cached is None:
         introducers = merge_for(INTRODUCERS_BY_LANGUAGE, language)
+        articles = merge_for(ARTICLES_BY_LANGUAGE, language)
+        # The article must be a whole word followed by space, so it can only
+        # ever consume an article.
+        skip = r"(?:(?:" + "|".join(articles) + r")\s+)?" if articles else ""
         cached = re.compile(
-            r"(?:" + "|".join(introducers) + r")\s+" + _ARTICLES + r"?\s*"
-            r"([\w\-]+(?:\s+[\w\-]+){0,%d})" % (MAX_PHRASE_WORDS - 1),
+            r"(?:" + "|".join(introducers) + r")\s+" + skip
+            + r"([\w\-]+(?:\s+[\w\-]+){0,%d})" % (MAX_PHRASE_WORDS - 1),
             re.IGNORECASE | re.UNICODE,
         )
         _PATTERN_CACHE[language] = cached
@@ -266,18 +293,47 @@ def _is_shouted(line: str) -> bool:
     return sum(ch.isupper() for ch in letters) / len(letters) >= UPPERCASE_LINE_RATIO
 
 
+def _is_elided(word: str) -> bool:
+    """Whether a word is the tail of an elided German compound.
+
+    "Fehlersuche und -behebung" means Fehlersuche and Fehlerbehebung; the
+    hyphen stands in for the head. Reporting "behebung" on its own names
+    nothing, and the reader cannot trace it back to the advert.
+    """
+    return word.lstrip(" ").startswith(("-", "–", "—"))
+
+
 def _trim(candidate: str) -> str:
     """Drop framing words from both ends of a captured phrase.
 
     "Pflegedokumentation sind zwingend" is the phrase pattern doing its job
     and then running past the noun; the requirement is the first word.
     """
+    if _is_elided(candidate):
+        return ""
     words = candidate.strip(" -–—.·•*").split()
     while words and fold(words[-1]) in STOPWORDS:
         words.pop()
     while words and fold(words[0]) in STOPWORDS:
         words.pop(0)
     return " ".join(words)
+
+
+def _drop_covered_words(candidate: str, covered: set[str]) -> str:
+    """Remove the words a lexicon match already explained.
+
+    Filtering has to work on whole original words, not on folded tokens:
+    folding splits "IT-Systemen" into two tokens while ``str.split`` keeps it
+    as one, and zipping the two lists together sliced characters out of the
+    middle of words -- "Elektronik" came back as "ektronik".
+    """
+    kept = []
+    for word in candidate.split():
+        tokens = fold(word).split()
+        if tokens and all(token in covered for token in tokens):
+            continue
+        kept.append(word)
+    return " ".join(kept)
 
 
 def _collect(candidate: str, covered: set[str], found: list[str]) -> None:
@@ -295,16 +351,12 @@ def _collect(candidate: str, covered: set[str], found: list[str]) -> None:
     # Words a lexicon match already explained are removed rather than the
     # whole phrase: "HACCP-Richtlinien" collapses to nothing and disappears,
     # while "underwater welding" keeps the half the gazetteer does not know.
-    remainder = [word for word in folded.split() if word not in covered]
-    if not remainder or all(word in STOPWORDS for word in remainder):
+    candidate = _drop_covered_words(candidate, covered)
+    folded = fold(candidate)
+    if len(candidate) < MIN_TERM_LENGTH or not folded:
         return
-    if len(remainder) != len(folded.split()):
-        candidate = " ".join(
-            word for word in candidate.split() if fold(word) not in covered
-        )
-        folded = fold(candidate)
-        if len(candidate) < MIN_TERM_LENGTH:
-            return
+    if all(word in STOPWORDS for word in folded.split()):
+        return
     if any(fold(existing) == folded for existing in found):
         return
     found.append(candidate)

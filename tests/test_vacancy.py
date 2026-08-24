@@ -234,3 +234,96 @@ def test_a_lower_cased_advert_reads_the_same_as_a_normal_one():
 
     known = lambda profile: {r.key for r in profile.requirements if not r.key.startswith("term:")}
     assert known(normal) == known(lowered)
+
+
+# --------------------------------------------------------------------------
+# Regressions from real adverts. Every one of these was found by running the
+# parser over live postings rather than over text written for the tests.
+# --------------------------------------------------------------------------
+
+HOSPITAL_KITCHEN_AD = """Koch (m/w/d)
+Krankenhaus Neuwittelsbach, München
+
+Wir sind die Kongregation der Barmherzigen Schwestern. Das Krankenhaus
+Neuwittelsbach im Muenchner Stadtteil Nymphenburg ist eine Fachklinik fuer
+Innere Medizin. Mit 132 Betten ist die Klinik ein kleines, familiaeres Haus,
+sie verfuegt aber ueber ein hauseigenes Labor und eine Roentgenabteilung.
+
+Was Sie bei uns erwartet - wir freuen uns auf Sie:
+- Eine attraktive Verguetung nach AVR Caritas
+- 31 Tage Urlaub und eine betriebliche Altersvorsorge
+- Kostenlose Getraenke am Arbeitsplatz
+
+Ihre Aufgaben:
+- Zubereitung von Diaet- und Normalkost
+- Mitarbeit bei der Umsetzung aller geforderten HACCP-Vorgaben
+
+Voraussetzungen - darum sind Sie unsere erste Wahl:
+- Eine abgeschlossene Ausbildung als Koch/Koechin mit mehrjaehriger Berufserfahrung
+- Eine selbststaendige Arbeitsweise
+"""
+
+INFORMAL_AD = """Elektroniker (m/w/d) Geraete und Systeme
+
+Dich zeichnet aus:
+- Abgeschlossene elektrotechnische Ausbildung oder mehrjaehrige Berufserfahrung
+- Fundierte Kenntnisse in Elektronik und IT-Systemen
+- Reisebereitschaft, ca. 20 Wochen jaehrlich im Aussendienst
+- Fuehrerschein Klasse B
+
+In deinem neuen Job gibt es fuer dich:
+- Attraktive Verguetungs- und Weiterbildungsmoeglichkeiten
+- Hochwertiges Werkzeug und ein Dienstfahrzeug
+
+Deine Aufgaben als Elektroniker (m/w/d):
+- Installation, Wartung und Reparatur elektronischer Geraete
+- Fehlersuche und -behebung in IT-gestuetzten Systemen
+"""
+
+
+def test_the_company_blurb_is_not_mined_for_requirements():
+    """A real hospital advert opens with three sentences about the order that
+    founded it. Reading those produced "Nymphenburg", "Religion" and "Betten"
+    as things the candidate should have."""
+    labels = {r.label.lower() for r in parse_vacancy(HOSPITAL_KITCHEN_AD).requirements}
+
+    for boilerplate in ("nymphenburg", "betten", "klinik", "kongregation", "labor"):
+        assert boilerplate not in labels, boilerplate
+
+
+def test_an_unlabelled_intro_is_still_read_when_no_profile_block_exists():
+    """Skipping the intro is only safe when the requirements were found
+    somewhere else. Otherwise it throws away the only place they can be."""
+    bare = "Wir suchen eine Reinigungskraft.\nErfahrung in der Unterhaltsreinigung und Sorgfalt."
+
+    assert parse_vacancy(bare).requirements
+
+
+def test_headings_that_address_the_reader_informally_are_recognised():
+    """"Dich zeichnet aus" is as common as "Ihr Profil" and was not in the
+    list, so a real advert came back with no requirements at all."""
+    profile = parse_vacancy(INFORMAL_AD)
+    must = {r.label for r in profile.requirements if r.must}
+
+    assert "profile" in profile.blocks
+    assert must, "the requirements block was not recognised"
+    assert "Reisebereitschaft" in must
+
+
+def test_the_offer_block_is_recognised_however_it_is_worded():
+    """Two real phrasings that are neither "Wir bieten" nor a synonym of it:
+    "Was Sie bei uns erwartet" and "In deinem neuen Job gibt es fuer dich"."""
+    for advert, benefit in (
+        (HOSPITAL_KITCHEN_AD, "urlaub"),
+        (INFORMAL_AD, "werkzeug"),
+    ):
+        labels = {r.label.lower() for r in parse_vacancy(advert).requirements}
+        assert not any(benefit in label for label in labels), benefit
+
+
+def test_a_real_advert_keeps_its_typed_requirements():
+    profile = parse_vacancy(HOSPITAL_KITCHEN_AD)
+    by_kind = {r.kind: r for r in profile.requirements}
+
+    assert by_kind["education"].key == "ausbildung"
+    assert by_kind["experience"].detail["years"] == 3
