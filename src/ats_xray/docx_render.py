@@ -19,6 +19,14 @@ from pathlib import Path
 
 CONVERSION_TIMEOUT_SECONDS = 90
 
+CONVERSION_ATTEMPTS = 2
+"""How many times to ask LibreOffice before giving up.
+
+It fails transiently under load -- exiting cleanly having written nothing --
+and a single retry is the difference between a reader getting no page
+preview at all and getting one a few seconds later. More than two attempts
+would only make a genuine failure slower to report."""
+
 _WINDOWS_CANDIDATES = (
     r"D:\Programs\LibreOffice\program\soffice.exe",
     r"C:\Program Files\LibreOffice\program\soffice.exe",
@@ -62,7 +70,17 @@ def convert_docx_to_pdf(docx_path: str, out_dir: str) -> str | None:
         return None
 
     source = Path(docx_path)
+    # LibreOffice fails transiently under load even with its own profile:
+    # it exits cleanly having written nothing. One retry turns that from a
+    # missing page preview into a slightly slower one.
+    for _ in range(CONVERSION_ATTEMPTS):
+        produced = _run_conversion(soffice, source, out_dir)
+        if produced is not None:
+            return produced
+    return None
 
+
+def _run_conversion(soffice: str, source: Path, out_dir: str) -> str | None:
     with tempfile.TemporaryDirectory() as profile_dir:
         profile_url = Path(profile_dir).as_uri()
         try:

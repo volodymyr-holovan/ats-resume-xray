@@ -88,6 +88,11 @@ _MODIFIERS = (
     "bewohner", "patienten", "patient", "gäste", "gast", "klienten", "nutzer",
     "anwender", "besucher", "bewerber", "schüler", "teilnehmer", "personen",
     "menschen", "bürger", "mandanten", "gemeinde", "kinder", "jugendliche",
+    # What is left over when a compound's first half was a lexicon hit:
+    # "HACCP-Vorgaben" must not come back as a requirement called "Vorgaben".
+    "vorgabe", "vorgaben", "regelungen", "bestimmungen", "grundsätze",
+    "kriterien", "aspekte", "inhalte", "punkte", "verfahren", "methoden",
+    "maßnahmen", "abläufe", "vorschriften", "unterlagen", "dokumente",
 )
 
 _FRAMING_WORDS = (
