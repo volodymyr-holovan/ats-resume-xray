@@ -1,6 +1,14 @@
 [browser]
 gatherUsageStats = false
 
+[runner]
+# Streamlit renders any bare top-level expression, and a docstring under a
+# module constant is a bare top-level expression. Two of them were printing
+# above the masthead -- "Tall enough for a whole A4 page..." -- which is a
+# strange way to lose documentation. Nothing in app.py relies on magic;
+# every widget is an explicit st.* call.
+magicEnabled = false
+
 [server]
 # 50 MB matches pipeline.MAX_FILE_SIZE_BYTES. No legitimate resume needs
 # more; this rejects oversized uploads at the server layer before they
