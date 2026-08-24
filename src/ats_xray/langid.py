@@ -141,15 +141,27 @@ def _heading_hits(text: str) -> dict[str, int]:
     Imported from the section recogniser rather than retyped, so the two
     stay in step: a heading added there immediately becomes evidence here.
     """
+    # Imported late: vacancy imports this module, so a top-level import
+    # here would close the loop.
     from .sections import SECTION_ALIASES_BY_LANGUAGE, normalize_heading
+    from .vacancy import BLOCK_HEADINGS_BY_LANGUAGE
 
     lines = {normalize_heading(line) for line in text.splitlines() if line.strip()}
     if not lines:
         return {}
-    return {
-        code: sum(1 for aliases in sections.values() for alias in aliases if alias in lines)
-        for code, sections in SECTION_ALIASES_BY_LANGUAGE.items()
-    }
+
+    hits: dict[str, int] = {}
+    for code, sections in SECTION_ALIASES_BY_LANGUAGE.items():
+        hits[code] = sum(1 for aliases in sections.values() for alias in aliases if alias in lines)
+    # An advert has no CV section headings but does have its own -- and
+    # "Requisitos" identifies Spanish as surely as "Berufserfahrung"
+    # identifies German.
+    for code, blocks in BLOCK_HEADINGS_BY_LANGUAGE.items():
+        hits[code] = hits.get(code, 0) + sum(
+            1 for headings in blocks.values() for heading in headings
+            if any(heading in line for line in lines)
+        )
+    return hits
 
 
 def _cyrillic_choice(text: str, scores: dict[str, int]) -> str | None:

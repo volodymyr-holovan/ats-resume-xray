@@ -162,6 +162,13 @@ _FRAMING_WORDS = (
     "знание", "опыт", "образование", "высшее", "профиль", "требования",
     "обязанности", "годы", "лет", "уровень", "владение", "желательно",
     "обязательно", "компания", "должность", "команда", "навыки",
+    # Slavic bullets open with these the way German ones open with
+    # "Abgeschlossene": they quantify the requirement, they are not it.
+    "щонайменше", "не менше", "принаймні", "профільна", "профільне",
+    "закінчена", "закінчене", "чинна", "чинне", "впевнене", "готовність",
+    "бажання", "уміння", "вміння", "не менее", "профильное", "профильная",
+    "законченное", "действующая", "уверенное", "готовность", "желание",
+    "умение", "высшее", "среднее", "начальное",
 )
 
 _LANGUAGE_NAMES = tuple(
@@ -198,29 +205,45 @@ INTRODUCERS_BY_LANGUAGE: dict[str, tuple[str, ...]] = {
         r"familiarity\s+with",
         r"skills?\s+in",
     ),
+    # Spanish and French write no capital on their nouns, so these patterns
+    # carry the whole load and have to be generous. Accents are optional
+    # because half of all adverts are typed without them.
     "es": (
-        r"experiencia\s+(?:en|con)",
-        r"conocimientos?\s+(?:de|en)",
-        r"dominio\s+de",
+        r"experiencia\s+(?:en|con|de|del)",
+        r"conocimientos?\s+(?:de|en|del|sobre)",
+        r"dominio\s+(?:de|del)",
+        r"manejo\s+(?:de|del)",
+        r"formaci[óo]n\s+(?:en|de|profesional\s+en)",
+        r"titulaci[óo]n\s+(?:en|de)",
+        r"nivel\s+(?:de|alto\s+de)",
     ),
     "nl": (
         r"ervaring\s+(?:met|in)",
         r"kennis\s+van",
     ),
     "fr": (
-        r"expérience\s+(?:en|avec|dans)",
-        r"connaissances?\s+(?:de|en)",
-        r"maîtrise\s+de",
+        r"exp[ée]rience\s+(?:en|avec|dans|de|des|du|d')",
+        r"connaissances?\s+(?:de|des|du|en|d')",
+        r"ma[iî]trise\s+(?:de|des|du|d')",
+        r"comp[ée]tences?\s+(?:en|de|des)",
+        r"formation\s+(?:en|de|dans)",
+        r"dipl[oô]me\s+(?:en|de|d')",
+        r"titulaire\s+(?:de|d'|du)",
+        r"pratique\s+(?:de|des|du)",
     ),
     "uk": (
         r"досвід\s+(?:роботи\s+)?(?:з|у|в|із)",
         r"знання(?:\s+(?:з|у|в))?",
         r"володіння",
+        r"вміння",
+        r"навички(?:\s+(?:з|у|в))?",
     ),
     "ru": (
         r"опыт\s+(?:работы\s+)?(?:с|в|со)",
         r"знание(?:\s+(?:в|по))?",
         r"владение",
+        r"умение",
+        r"навыки(?:\s+(?:в|по))?",
     ),
 }
 

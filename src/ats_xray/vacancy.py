@@ -62,7 +62,10 @@ BLOCK_HEADINGS_BY_LANGUAGE: dict[str, dict[str, tuple[str, ...]]] = {
     },
     "uk": {
         "profile": ("ваш профіль", "вимоги", "наші вимоги", "що ми очікуємо", "кваліфікація"),
-        "tasks": ("ваші завдання", "обов", "посадові обов", "опис вакансії"),
+        # "обов" alone matched "є обов'язковою" in the middle of a
+        # requirement line and split the advert there, losing the whole
+        # requirements block. Headings are whole words.
+        "tasks": ("ваші завдання", "обов'язки", "посадові обов'язки", "опис вакансії", "функції"),
         "offer": ("ми пропонуємо", "що ми пропонуємо", "умови роботи", "переваги"),
     },
     "ru": {
@@ -91,7 +94,7 @@ MUST_CUES_BY_LANGUAGE: dict[str, tuple[str, ...]] = {
     "es": ("imprescindible", "obligatorio", "requisito indispensable", "se requiere"),
     "nl": ("vereist", "noodzakelijk", "must", "verplicht"),
     "fr": ("exige", "obligatoire", "indispensable", "requis"),
-    "uk": ("обов", "вимагається", "необхідн", "мусить"),
+    "uk": ("обов'язков", "вимагається", "необхідн", "мусить", "є обов"),
     "ru": ("обязательн", "требуется", "необходим"),
 }
 
