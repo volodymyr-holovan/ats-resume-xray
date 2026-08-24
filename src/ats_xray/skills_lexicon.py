@@ -37,7 +37,10 @@ def _build(row: tuple[str, ...]) -> Skill:
 SKILLS: tuple[Skill, ...] = tuple(_build(row) for row in ALL_SKILLS)
 SKILLS_BY_ID: dict[str, Skill] = {skill.id: skill for skill in SKILLS}
 
-AMBIGUOUS_ALIASES = frozenset({"go", "r", "c", "ad", "ai", "ki", "qa", "hr", "au", "hu", "bar", "din", "iso", "sap fi", "sap co"})
+AMBIGUOUS_ALIASES = frozenset({
+    "go", "r", "c", "ad", "ai", "ki", "qa", "hr", "au", "hu", "bar", "din", "iso",
+    "sap fi", "sap co",
+})
 """Spellings that are never treated as a skill mention even though they are
 the real name of one.
 
@@ -46,6 +49,11 @@ a place rather than the craft: each is an ordinary word somewhere, and a
 requirements list that gained a programming language from a launch date
 would be wrong in a way the reader cannot easily spot. Every skill here
 stays reachable through a longer, unambiguous alias.
+
+The test for this list is the corpus, not the dictionary. "Angular" is an
+ordinary English adjective and belongs here by that measure -- but nobody
+writes about angular momentum on a CV, and half the front-end adverts in
+Germany ask for the framework by that exact word. It stays.
 """
 
 ALIAS_TO_ID: dict[str, str] = {}
@@ -131,12 +139,21 @@ is not."""
 
 
 def _is_inflection(alias: str, word: str) -> bool:
+    """Whether ``word`` is ``alias`` with a case or plural ending added.
+
+    One direction only. Allowing the word to be the *shorter* of the two --
+    stripping an ending off the alias rather than adding one to it -- let
+    "Schleife" (a ribbon) reach CNC through "schleifen", "Toleranz" (an
+    attitude) reach Messtechnik through "toleranzen", "Workshop" reach
+    Change Management, "transform" reach Deep Learning and "embedding"
+    reach RAG. Every legitimate case adds: "Reinigungsmitteln" is
+    "reinigungsmittel" declined, never the reverse.
+    """
     if alias == word:
         return True
-    shorter, longer = sorted((alias, word), key=len)
-    if len(shorter) < MIN_INFLECTED_ALIAS or not longer.startswith(shorter):
+    if len(alias) < MIN_INFLECTED_ALIAS or not word.startswith(alias):
         return False
-    return longer[len(shorter) :] in INFLECTIONAL_ENDINGS
+    return word[len(alias) :] in INFLECTIONAL_ENDINGS
 
 
 def _lookup(window: list[str]) -> str | None:
