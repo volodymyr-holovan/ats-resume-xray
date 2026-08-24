@@ -92,15 +92,18 @@ def _pick_language() -> str:
     """
     current = st.session_state.get("language", DEFAULT_LANGUAGE)
     codes = list(UI_LANGUAGES)
-    with st.popover(UI_LANGUAGES[current], icon=":material/language:", use_container_width=True):
-        return st.radio(
-            t("language_menu", current),
-            options=codes,
-            index=codes.index(current),
-            format_func=lambda code: UI_LANGUAGES[code],
-            key="language",
-            label_visibility="collapsed",
-        )
+    with st.container(key="axr-language"):
+        with st.popover(
+            UI_LANGUAGES[current], icon=":material/language:", use_container_width=True
+        ):
+            return st.radio(
+                t("language_menu", current),
+                options=codes,
+                index=codes.index(current),
+                format_func=lambda code: UI_LANGUAGES[code],
+                key="language",
+                label_visibility="collapsed",
+            )
 
 
 def _masthead(lang: str) -> None:
@@ -327,15 +330,46 @@ def _keyword_editor(profile, lang: str) -> list:
     return selected
 
 
-def _outcome_list(outcomes, lang: str) -> None:
-    if not outcomes:
-        st.caption("—")
-        return
-    for outcome in outcomes:
-        line = f"**{outcome.requirement.label}**"
-        if outcome.note_key:
-            line += f"  \n{t(outcome.note_key, lang, **outcome.note_params)}"
-        st.markdown(line)
+OUTCOME_PANE_HEIGHT = 340
+"""How tall a result column may grow before it scrolls inside itself.
+
+An advert can state thirty requirements. Left unbounded, one column pushes
+the other two off the screen and the reader loses the comparison, which is
+the only reason the three columns are side by side."""
+
+
+def _outcome_pane(heading_key: str, tone: str, outcomes, lang: str, extras=None) -> None:
+    """One bordered, height-capped column of results.
+
+    The border is what makes three lists read as three lists rather than as
+    one long page of bold words.
+    """
+    count = len(outcomes) if extras is None else len(extras)
+    st.markdown(
+        f'<p class="axr-column-heading axr-severity-{tone}">'
+        f"{t(heading_key, lang)} <span class=\"axr-count\">{count}</span></p>",
+        unsafe_allow_html=True,
+    )
+    with st.container(border=True, height=OUTCOME_PANE_HEIGHT):
+        if extras is not None:
+            if not extras:
+                st.caption("—")
+                return
+            st.markdown("  \n".join(label_for(skill_id) for skill_id in extras))
+            return
+
+        if not outcomes:
+            st.caption("—")
+            return
+        for outcome in outcomes:
+            label = outcome.requirement.label
+            if outcome.status == "partial":
+                # A partial belongs with the gaps -- it is something to act
+                # on -- but the reader has to see that it is not a blank.
+                label += f' <span class="axr-partly">{t("match_partly_tag", lang)}</span>'
+            st.markdown(f"**{label}**", unsafe_allow_html=True)
+            if outcome.note_key:
+                st.caption(t(outcome.note_key, lang, **outcome.note_params))
 
 
 def _render_match_report(report, lang: str) -> None:
@@ -350,32 +384,27 @@ def _render_match_report(report, lang: str) -> None:
                 st.success(t("match_all_must_covered", lang))
             st.caption(t("match_score_caption", lang))
 
+    # Three columns, and the middle one is not "partly covered". That column
+    # was almost always empty: only a language level, a degree or a span of
+    # years can be partly met, and a skill never can. Partials now sit with
+    # the gaps, where the reader can act on them, and the freed column shows
+    # what the CV has that the advert did not ask for -- which is what you
+    # need when deciding what to cut.
+    gaps = report.of_status("missing") + report.of_status("partial")
     with st.container(key="axr-split-outcomes"):
-        missing_col, partial_col, met_col = st.columns(3, gap="large")
-        for column, status, heading in (
-            (missing_col, "missing", "match_missing_heading"),
-            (partial_col, "partial", "match_partial_heading"),
-            (met_col, "met", "match_met_heading"),
-        ):
-            with column:
-                outcomes = report.of_status(status)
-                st.markdown(
-                    f'<p class="axr-severity axr-severity-'
-                    f'{ {"missing": "high", "partial": "medium", "met": "low"}[status] }">'
-                    f"{t(heading, lang)} ({len(outcomes)})</p>",
-                    unsafe_allow_html=True,
-                )
-                _outcome_list(outcomes, lang)
+        gaps_col, met_col, extras_col = st.columns(3, gap="medium")
+        with gaps_col:
+            _outcome_pane("match_gaps_heading", "high", gaps, lang)
+        with met_col:
+            _outcome_pane("match_met_heading", "low", report.of_status("met"), lang)
+        with extras_col:
+            _outcome_pane("match_extras_heading", "neutral", [], lang, extras=report.extras)
+            st.caption(t("match_extras_caption", lang))
 
     if report.at_risk:
         st.warning(f"**{t('match_at_risk_heading', lang)}** ({len(report.at_risk)})")
         st.caption(t("match_at_risk_caption", lang))
         st.markdown(", ".join(o.requirement.label for o in report.at_risk))
-
-    if report.extras:
-        with st.expander(f"{t('match_extras_heading', lang)} ({len(report.extras)})"):
-            st.caption(t("match_extras_caption", lang))
-            st.markdown(", ".join(label_for(skill_id) for skill_id in report.extras))
 
 
 def _match_zone(analysis, lang: str) -> None:

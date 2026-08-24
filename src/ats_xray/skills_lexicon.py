@@ -109,23 +109,50 @@ def find_skills_and_covered(text: str) -> tuple[list[str], set[str]]:
     return found, covered
 
 
+MIN_INFLECTED_ALIAS = 8
+"""Shortest alias allowed to match an inflected form of itself.
+
+The general shared-stem comparison in :mod:`normalize` is right for ordinary
+German words and disastrous here. It turned "mongoose" into MongoDB,
+"excels" into Excel, "swiftly" into Swift, "reacts" into React and "sparks"
+into Spark -- every one of those observed, and the first of them reported
+from a blank character sheet that scored well as a CV.
+
+Technology names do not inflect, so they need no tolerance at all. Only the
+long descriptive aliases do: "Reinigungsmittel" really does appear as
+"Reinigungsmitteln". At eight characters a coincidence stops being
+plausible."""
+
+INFLECTIONAL_ENDINGS = frozenset({"e", "en", "er", "es", "em", "n", "s", "ns", "nen"})
+"""German case and plural endings. Requiring the difference to be one of
+these is what separates an inflected form from a different word that merely
+starts the same way: "Datenbanken" is "Datenbank" declined, "Datenbankdesign"
+is not."""
+
+
+def _is_inflection(alias: str, word: str) -> bool:
+    if alias == word:
+        return True
+    shorter, longer = sorted((alias, word), key=len)
+    if len(shorter) < MIN_INFLECTED_ALIAS or not longer.startswith(shorter):
+        return False
+    return longer[len(shorter) :] in INFLECTIONAL_ENDINGS
+
+
 def _lookup(window: list[str]) -> str | None:
     """Resolve one window of folded words to a skill id.
 
-    Tries the exact spelling first, because that is both the common case and
-    the safe one. Only single words fall back to inflection-tolerant
-    comparison: allowing it on every phrase would make long aliases match
-    far too loosely.
+    Exact spelling first: that is both the common case and the safe one.
+    Only single words fall back to inflection, and only long ones -- see
+    :data:`MIN_INFLECTED_ALIAS` for what happens without that floor.
     """
-    from .normalize import same_word
-
     phrase = " ".join(window)
     exact = ALIAS_TO_ID.get(phrase)
     if exact is not None:
         return exact
-    if len(window) != 1:
+    if len(window) != 1 or len(phrase) < MIN_INFLECTED_ALIAS:
         return None
     for alias, skill_id in _SINGLE_WORD_ALIASES.items():
-        if same_word(alias, phrase):
+        if _is_inflection(alias, phrase):
             return skill_id
     return None

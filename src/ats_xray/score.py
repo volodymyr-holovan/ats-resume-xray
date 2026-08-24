@@ -75,14 +75,59 @@ class ScoreBreakdown:
 
     @property
     def rating_key(self) -> str:
+        # "Parses poorly" would be the wrong thing to say about a document
+        # that is not a CV: it parsed fine, it just is not one.
+        if self.cap_key == "cap_reason_not_a_resume":
+            return "rating_not_a_resume"
         for threshold, key in RATING_THRESHOLDS:
             if self.total >= threshold:
                 return key
         return "rating_poor"
 
 
+NOT_A_RESUME_SCORE = 0
+"""What a document scores when nothing in it says "CV".
+
+Reported after someone uploaded a blank character sheet and got a
+respectable number back. The structure component was the cause: a document
+with no columns, no tables and no images triggers no rules, so it scored
+full marks for being cleanly parseable -- which was true and useless. A form
+with nothing on it parses perfectly and is not a CV.
+
+Zero rather than a low score, with an explanation, because the honest answer
+to "how readable is this CV" for something that is not a CV is not a number."""
+
+
+def looks_like_a_resume(aware_fields: dict) -> bool:
+    """Whether the document has anything that marks it as a CV at all.
+
+    The bar is deliberately low -- one contact detail or one recognised
+    section heading -- because a real CV in an unusual shape must still get
+    through. What it stops is the document that has neither: no email, no
+    phone, and nothing the section recogniser knows in any of seven
+    languages.
+    """
+    has_contact = aware_fields["email"]["found"] or aware_fields["phone"]["found"]
+    has_section = any(field["found"] for field in aware_fields["sections"].values())
+    return has_contact or has_section
+
+
 def score_resume(aware_fields: dict, naive_fields: dict, findings: list[Finding]) -> ScoreBreakdown:
     """Compute the parse readiness score and the components behind it."""
+    if not looks_like_a_resume(aware_fields):
+        components = [
+            _contact_component(naive_fields),
+            _sections_component(aware_fields, naive_fields),
+            _structure_component(findings),
+        ]
+        return ScoreBreakdown(
+            total=NOT_A_RESUME_SCORE,
+            components=components,
+            uncapped_total=NOT_A_RESUME_SCORE,
+            cap_key="cap_reason_not_a_resume",
+            cap_params={},
+        )
+
     components = [
         _contact_component(naive_fields),
         _sections_component(aware_fields, naive_fields),

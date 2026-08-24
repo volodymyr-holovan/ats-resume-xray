@@ -6,7 +6,7 @@ import docx
 from ats_xray.cli import _format_field_comparison, _format_rule_report, _format_structure_report
 from ats_xray.engine import Finding
 from ats_xray.field_report import build_field_report
-from ats_xray.i18n import t
+from ats_xray.i18n import t as t_
 from ats_xray.rule import get_rule
 
 
@@ -72,7 +72,7 @@ def test_format_field_comparison_no_risk_when_both_agree():
 
 
 def test_format_rule_report_no_findings():
-    assert _format_rule_report([]) == t("no_findings", "en")
+    assert _format_rule_report([]) == t_("no_findings", "en")
 
 
 def test_format_rule_report_includes_evidence_and_source():
@@ -80,7 +80,7 @@ def test_format_rule_report_includes_evidence_and_source():
 
     report = _format_rule_report([finding])
 
-    assert "[MEDIUM] pdf_non_embedded_font" in report
+    assert f"[{t_('severity_medium', 'en')}] pdf_non_embedded_font" in report
     assert "Evidence: Non-embedded fonts: Calibri" in report
     assert "Source: research_sources.md#ats-fonts" in report
 
@@ -112,7 +112,7 @@ def test_format_rule_report_follows_the_requested_language_including_the_source_
     report = _format_rule_report([finding], "uk")
 
     assert "docs/research_sources.uk.md#ats-fonts" in report
-    assert t("how_to_fix", "uk") in report
+    assert t_("how_to_fix", "uk") in report
     assert "How to fix it" not in report
 
 

@@ -96,7 +96,7 @@ IT_SKILLS: tuple[tuple[str, ...], ...] = (
     ("flutter", "Flutter", "mobile"),
     ("reactnative", "React Native", "mobile", "ionic", "cordova"),
     # --- databases -----------------------------------------------------------
-    ("sql", "SQL", "database", "sql-kenntnisse", "structured query language", "sql-abfragen"),
+    ("sql", "SQL", "database", "sql-kenntnisse", "structured query language", "sql-abfragen", "datenbank", "datenbanken", "relationale datenbanken"),
     ("mysql", "MySQL", "database", "mariadb"),
     ("postgresql", "PostgreSQL", "database", "postgres"),
     ("mssql", "Microsoft SQL Server", "database", "ms sql", "mssql", "sql server", "t-sql", "tsql", "ssms"),
@@ -437,6 +437,9 @@ PROFESSION_SKILLS: tuple[tuple[str, ...], ...] = (
     ("terminplanung", "Terminplanung", "office", "kalenderverwaltung", "scheduling", "reiseplanung", "reisekostenabrechnung", "veranstaltungsorganisation"),
     ("einkauf", "Einkauf", "office", "beschaffung", "procurement", "lieferantenmanagement", "purchasing", "bestellabwicklung", "preisverhandlungen"),
     ("projectmanagement", "Projektmanagement", "office", "project management", "projektleitung", "projektsteuerung", "meilensteinplanung", "ressourcenplanung", "budgetverantwortung"),
+    ("training", "Schulungen", "business", "schulung", "training", "einweisung", "unterweisung", "workshops", "anwenderschulung"),
+    ("support", "Anwendersupport", "business", "user support", "1st level", "2nd level", "first level", "second level", "anwenderbetreuung", "technischer support", "it-support"),
+    ("digitalisierung", "Digitalisierung", "business", "prozessdigitalisierung", "digital transformation", "digitale transformation"),
     ("telefonzentrale", "Telefonzentrale", "office", "empfangstätigkeiten", "call center", "telefonische betreuung", "postbearbeitung"),
     ("immobilien", "Immobilien", "realestate", "makler", "real estate", "objektverwaltung", "hausverwaltung", "wohnungswirtschaft", "exposé", "mietverwaltung", "nebenkostenabrechnung", "wegverwaltung"),
     # --- sport and leisure -------------------------------------------------------------------------------------

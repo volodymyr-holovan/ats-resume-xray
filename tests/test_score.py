@@ -128,11 +128,46 @@ def test_two_high_severity_findings_cap_lower():
 
 
 def test_cap_does_not_raise_an_already_lower_score():
-    """The cap is a ceiling, never a floor."""
-    aware = naive = fields(email=MISSING, phone=MISSING, experience=MISSING, education=MISSING, skills=MISSING)
+    """The cap is a ceiling, never a floor.
+
+    The sections stay found: a document with neither contact details nor any
+    section is not treated as a CV at all, which is a different code path.
+    """
+    aware = naive = fields(email=MISSING, phone=MISSING)
     findings = [finding("missing_contact_field")]
 
     breakdown = score_resume(aware, naive, findings)
 
     assert breakdown.total < 79
     assert breakdown.cap_key is None
+
+
+def test_a_document_with_no_contact_and_no_sections_is_not_scored():
+    """Reported after a blank character sheet came back with a respectable
+    number. It had no columns, no tables and no images, so it triggered no
+    rules and scored full marks for parsing cleanly -- true, and useless."""
+    nothing = fields(email=MISSING, phone=MISSING, experience=MISSING, education=MISSING, skills=MISSING)
+
+    breakdown = score_resume(nothing, nothing, [])
+
+    assert breakdown.total == 0
+    assert breakdown.cap_key == "cap_reason_not_a_resume"
+    assert breakdown.rating_key == "rating_not_a_resume"
+
+
+def test_one_contact_detail_is_enough_to_be_treated_as_a_cv():
+    """The bar is deliberately low: a real CV in an unusual shape must still
+    get through."""
+    sparse = fields(phone=MISSING, experience=MISSING, education=MISSING, skills=MISSING)
+
+    breakdown = score_resume(sparse, sparse, [])
+
+    assert breakdown.cap_key != "cap_reason_not_a_resume"
+
+
+def test_one_recognised_section_is_enough_to_be_treated_as_a_cv():
+    sparse = fields(email=MISSING, phone=MISSING, education=MISSING, skills=MISSING)
+
+    breakdown = score_resume(sparse, sparse, [])
+
+    assert breakdown.cap_key != "cap_reason_not_a_resume"
