@@ -9,7 +9,7 @@ from pathlib import Path
 
 from streamlit.testing.v1 import AppTest
 
-from ats_xray.i18n import t
+from ats_xray.i18n import UI_LANGUAGES, t
 from golden_generators import two_column_pdf
 
 APP_PATH = str(Path(__file__).parent.parent / "app.py")
@@ -29,12 +29,28 @@ def test_app_loads_without_exception():
     assert not at.exception
 
 
-def test_app_shows_title_and_uploader():
+def test_app_shows_its_name_and_one_uploader():
+    """The wordmark is drawn as markup rather than st.title so it can sit on
+    one line with the tagline and the language control."""
     at = AppTest.from_file(APP_PATH)
     at.run()
 
-    assert at.title[0].value == "ATS Resume X-Ray"
+    body = " ".join(markdown.value for markdown in at.markdown)
+    assert "ATS Resume X-Ray" in body
     assert len(at.get("file_uploader")) == 1
+
+
+def test_the_language_control_is_a_radio_in_the_masthead():
+    """It used to be a selectbox in a collapsed sidebar, which most readers
+    never opened -- six of the seven translations were unreachable."""
+    at = AppTest.from_file(APP_PATH)
+    at.run()
+
+    languages = at.get("radio")
+    assert languages, "no language control on the page"
+    # The options carry the display names, which is what a reader picks from.
+    assert set(languages[0].options) >= {"English", "Deutsch"}
+    assert len(languages[0].options) == len(UI_LANGUAGES)
 
 
 def test_app_offers_details_and_fixes_under_each_finding(tmp_path):
@@ -64,7 +80,7 @@ def test_app_source_link_points_at_the_file_in_the_displayed_language(tmp_path):
 
     at = AppTest.from_file(APP_PATH, default_timeout=120)
     at.run()
-    at.get("selectbox")[0].set_value("uk").run()
+    at.get("radio")[0].set_value("uk").run()
     _upload(at, resume)
 
     assert not at.exception
