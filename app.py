@@ -1,13 +1,23 @@
-"""Streamlit demo: upload a resume and see what a parsing pipeline actually
-extracts from it — naive (layout-blind) vs. layout-aware — which documented
-parsing risks it triggers, where those risks sit on the page, and how much of
-the resume survives an automated read.
+"""ATS Resume X-Ray — the web interface.
+
+The page is built as four zones in the order someone actually works through
+them: load the file, look at it, compare it against a job ad, then fix what
+came back. They are numbered on screen because a stack of equal-looking
+panels cannot say by itself that it is a sequence.
+
+Wide screens get a two-pane document review -- pages on the left, the
+readability verdict on the right -- because that is what the task is. You
+cannot judge a finding without seeing the place it refers to, and every tool
+built for reviewing a document, from proof marks to code review, puts the
+artefact and the notes side by side. Below 1000px the panes stack; a
+two-pane review on a phone is two unreadable slivers.
 
 Run locally with: streamlit run app.py
 """
 
 import logging
 from dataclasses import replace
+from pathlib import Path
 
 import streamlit as st
 
@@ -31,14 +41,25 @@ from ats_xray.vacancy import Requirement, parse_vacancy
 logger = logging.getLogger(__name__)
 
 SEVERITY_ORDER = {"high": 0, "medium": 1, "low": 2}
-SEVERITY_RENDERER = {"high": st.error, "medium": st.warning, "low": st.info}
-PAGE_PREVIEW_WIDTH = 640
-JOB_AD_HEIGHT = 220
-STATUS_ICON = {"met": ":green[+]", "partial": ":orange[~]", "missing": ":red[-]"}
+STATUS_TONE = {"met": "green", "partial": "orange", "missing": "red"}
+JOB_AD_HEIGHT = 200
 REPO_URL = "https://github.com/volodymyr-holovan/ats-resume-xray"
 BLOB_URL = f"{REPO_URL}/blob/master"
+STYLESHEET = Path(__file__).parent / "assets" / "app.css"
 
-st.set_page_config(page_title="ATS Resume X-Ray", page_icon="🔎")
+st.set_page_config(
+    page_title="ATS Resume X-Ray",
+    page_icon="🔎",
+    layout="wide",
+    initial_sidebar_state="collapsed",
+)
+
+
+@st.cache_data(show_spinner=False)
+def _stylesheet() -> str:
+    """Read once rather than on every rerun. It is a few kilobytes, but a
+    rerun happens on every keystroke in the job-ad box."""
+    return STYLESHEET.read_text(encoding="utf-8") if STYLESHEET.exists() else ""
 
 
 @st.cache_data(ttl=3600, show_spinner=False)
@@ -48,108 +69,144 @@ def _cached_update_check():
     return check_for_update()
 
 
+@st.cache_data(show_spinner=False)
+def _parse_vacancy_cached(ad_text: str):
+    """Parsing is pure and the same text is re-parsed on every widget
+    interaction, so cache on the text itself."""
+    return parse_vacancy(ad_text)
+
+
+# --------------------------------------------------------------------------
+# Chrome
+# --------------------------------------------------------------------------
+
+
+def _pick_language() -> str:
+    """A globe in the masthead rather than a dropdown in a collapsed sidebar.
+
+    The language control was previously behind a sidebar most readers never
+    opened, which made six of the seven translations unreachable in practice.
+    A globe is the one icon everybody already reads as "language", and the
+    current language sits next to it so the control says what it does before
+    it is clicked.
+    """
+    current = st.session_state.get("language", DEFAULT_LANGUAGE)
+    codes = list(UI_LANGUAGES)
+    with st.popover(UI_LANGUAGES[current], icon=":material/language:", use_container_width=True):
+        return st.radio(
+            t("language_menu", current),
+            options=codes,
+            index=codes.index(current),
+            format_func=lambda code: UI_LANGUAGES[code],
+            key="language",
+            label_visibility="collapsed",
+        )
+
+
+def _masthead(lang: str) -> None:
+    name_col, language_col = st.columns([5, 1], vertical_alignment="center")
+    with name_col:
+        st.markdown(
+            f'<div class="axr-masthead">'
+            f'<h1 class="axr-wordmark">ATS Resume X-Ray</h1>'
+            f'<p class="axr-tagline">{t("tagline", lang)}</p>'
+            f"</div>",
+            unsafe_allow_html=True,
+        )
+    with language_col:
+        _pick_language()
+
+
+def _jump_links(lang: str) -> None:
+    st.markdown(
+        '<nav class="axr-jump">'
+        f'<a href="#zone-document">{t("jump_document", lang)}</a>'
+        f'<a href="#zone-match">{t("jump_match", lang)}</a>'
+        f'<a href="#zone-fixes">{t("jump_fixes", lang)}</a>'
+        "</nav>",
+        unsafe_allow_html=True,
+    )
+
+
+def _zone(number: str, title: str, note: str, anchor: str) -> None:
+    st.markdown(
+        f'<div class="axr-zone" id="{anchor}">'
+        f'<span class="axr-zone-number">{number}</span>'
+        f'<h2 class="axr-zone-title">{title}</h2>'
+        f"</div>"
+        f'<p class="axr-zone-note">{note}</p>',
+        unsafe_allow_html=True,
+    )
+
+
 def _show_update_notice(lang: str) -> None:
     update = _cached_update_check()
     if update is None:
         return
     st.info(
         t("update_available", lang, latest=update.latest, current=update.current, url=update.url),
-        icon="⬆️",
+        icon=":material/upgrade:",
     )
 
 
-def _pick_language() -> str:
-    codes = list(UI_LANGUAGES)
-    default_index = codes.index(DEFAULT_LANGUAGE)
-    with st.sidebar:
-        return st.selectbox(
-            t("language_label", st.session_state.get("language", DEFAULT_LANGUAGE)),
-            options=codes,
-            index=default_index,
-            format_func=lambda code: UI_LANGUAGES[code],
-            key="language",
+# --------------------------------------------------------------------------
+# Zone 1 — the file
+# --------------------------------------------------------------------------
+
+
+def _upload_zone(lang: str):
+    _zone("01", t("zone_upload_title", lang), t("zone_upload_note", lang), "zone-upload")
+    # A stable key keeps the upload across the rerun a language change
+    # triggers; without it, switching language silently discards the file.
+    with st.container(key="axr-upload"):
+        return st.file_uploader(
+            t("upload_label", lang), type=["pdf", "docx"], key="resume", label_visibility="collapsed"
         )
 
 
-def _render_score(breakdown, lang: str) -> None:
-    st.subheader(t("score_heading", lang))
-    st.caption(t("score_caption", lang))
+def _empty_state(lang: str) -> None:
+    """What the reader gets, in one sentence, and nothing else.
 
-    score_col, detail_col = st.columns([1, 3])
-    with score_col:
-        st.metric(label=t(breakdown.rating_key, lang), value=f"{breakdown.total}/100")
-    with detail_col:
-        if breakdown.cap_key:
-            st.warning(t(breakdown.cap_key, lang, **breakdown.cap_params))
-        for component in breakdown.components:
-            name = t(component.name_key, lang)
-            detail = t(component.detail_key, lang, **component.detail_params)
-            if component.weight == 0:
-                st.caption(f"**{name}** — {t('not_scored', lang)}. {detail}")
-                continue
-            st.progress(
-                component.score / 100,
-                text=f"**{name}** {component.score:.0f}/100 "
-                f"({t('weight', lang)} {component.weight}%) — {detail}",
-            )
+    The privacy promise is not repeated here: the zone note above the
+    dropzone already says the file is deleted within seconds, and saying it
+    twice in the same eyeful reads as protesting. The full wording stands in
+    the footer, where it is a standing statement rather than a reassurance
+    aimed at one moment.
+    """
+    st.markdown(
+        f'<p class="axr-zone-note" style="margin-left:0">{t("empty_hint", lang)}</p>',
+        unsafe_allow_html=True,
+    )
 
 
-def _sources_url(rule, lang: str) -> str:
-    """Deep link to this rule's entry in the sources file, in the language
-    the reader is currently using. The anchors are identical across
-    translations, so only the filename changes."""
-    return f"{BLOB_URL}/{sources_path(lang)}#{rule.source}"
+# --------------------------------------------------------------------------
+# Zone 2 — the document
+# --------------------------------------------------------------------------
 
 
-def _render_findings(findings, lang: str) -> None:
-    st.subheader(t("findings_heading", lang))
-    if not findings:
-        st.success(t("no_findings", lang))
-        return
-
-    for finding in sorted(findings, key=lambda f: SEVERITY_ORDER[f.severity]):
-        description = rule_description(finding.rule.id, lang, finding.rule.description)
-        severity_label = t(f"severity_{finding.severity}", lang)
-        SEVERITY_RENDERER[finding.severity](f"**[{severity_label}]** {description}")
-
-        # The headline says what is wrong; everything a reader needs to act
-        # on it lives one click away, so a resume with several findings
-        # stays skimmable instead of turning into a wall of advice.
-        with st.expander(t("details_expander", lang)):
-            detail = rule_detail(finding.rule.id, lang)
-            if detail:
-                st.write(detail)
-
-            fixes = rule_fixes(finding.rule.id, lang)
-            if fixes:
-                st.markdown(f"**{t('how_to_fix', lang)}**")
-                st.markdown("\n".join(f"{i}. {fix}" for i, fix in enumerate(fixes, 1)))
-
-            evidence = t(finding.evidence_key, lang, **finding.evidence_params)
-            st.caption(f"{t('evidence', lang)}: {evidence}")
-            st.caption(
-                f"{t('source', lang)}: [{t('read_more', lang)}]"
-                f"({_sources_url(finding.rule, lang)})"
-            )
+def _legend(lang: str) -> str:
+    names = {"high": t("severity_high", lang), "medium": t("severity_medium", lang),
+             "low": t("severity_low", lang)}
+    swatches = "".join(
+        f'<span><span class="axr-swatch" style="background:rgb{SEVERITY_COLORS[severity]}"></span>'
+        f"{names[severity]}</span>"
+        for severity in ("high", "medium", "low")
+        if severity in SEVERITY_COLORS
+    )
+    return f'<div class="axr-legend">{swatches}</div>'
 
 
 def _render_pages(pages, is_pdf: bool, lang: str) -> None:
-    st.subheader(t("pages_heading", lang))
-
     if not pages:
         if not is_pdf:
             st.info(t("docx_no_libreoffice", lang))
         return
 
-    legend = "  ".join(
-        f":{name}[■] {severity}"
-        for severity, name in (("high", "red"), ("medium", "orange"), ("low", "blue"))
-        if severity in SEVERITY_COLORS
-    )
-    caption = f"{t('legend', lang)} {legend}"
+    # The swatches carry the colours overlay.py drew, not the theme's, so a
+    # dark-mode reader still sees the legend match the boxes on the page.
+    st.markdown(_legend(lang), unsafe_allow_html=True)
     if not is_pdf:
-        caption += "  \n" + t("docx_layout_note", lang)
-    st.caption(caption)
+        st.caption(t("docx_layout_note", lang))
 
     for page in pages:
         label = f"{t('page', lang)} {page.page_number}"
@@ -157,17 +214,54 @@ def _render_pages(pages, is_pdf: bool, lang: str) -> None:
             label += " — " + ", ".join(sorted({f.rule.id for f in page.marked_findings}))
         else:
             label += f" — {t('nothing_flagged', lang)}"
-        # Held to a page-like width: a resume shown at full container width
-        # reads as a billboard rather than a document.
-        st.image(page.image, caption=label, width=PAGE_PREVIEW_WIDTH)
+        st.image(page.image, caption=label, use_container_width=True)
 
 
+def _render_scorecard(breakdown, findings, lang: str) -> None:
+    st.metric(label=t(breakdown.rating_key, lang), value=f"{breakdown.total}/100")
+    st.caption(t("score_caption", lang))
 
-@st.cache_data(show_spinner=False)
-def _parse_vacancy_cached(ad_text: str):
-    """Parsing is pure and the same text is re-parsed on every widget
-    interaction, so cache on the text itself."""
-    return parse_vacancy(ad_text)
+    tally = {severity: sum(1 for f in findings if f.severity == severity)
+             for severity in ("high", "medium", "low")}
+    st.markdown(
+        f'<p class="axr-zone-note" style="margin-left:0">{t("issue_tally", lang, **tally)}</p>',
+        unsafe_allow_html=True,
+    )
+
+    if breakdown.cap_key:
+        st.warning(t(breakdown.cap_key, lang, **breakdown.cap_params))
+
+    for component in breakdown.components:
+        name = t(component.name_key, lang)
+        detail = t(component.detail_key, lang, **component.detail_params)
+        if component.weight == 0:
+            st.caption(f"**{name}** — {t('not_scored', lang)}. {detail}")
+            continue
+        st.progress(
+            component.score / 100,
+            text=f"**{name}** {component.score:.0f}/100 ({t('weight', lang)} {component.weight}%)",
+        )
+        st.caption(detail)
+
+
+def _document_zone(result, is_pdf: bool, lang: str) -> None:
+    _zone("02", t("pages_heading", lang), t("zone_document_note", lang), "zone-document")
+
+    with st.container(key="axr-split"):
+        pages_col, score_col = st.columns([3, 2], gap="large")
+        with pages_col:
+            _render_pages(result.rendered_pages, is_pdf, lang)
+            with st.expander(t("naive_expander", lang)):
+                st.text(result.naive_text)
+            with st.expander(t("aware_expander", lang)):
+                st.text(result.aware_text)
+        with score_col:
+            _render_scorecard(result.score, result.findings, lang)
+
+
+# --------------------------------------------------------------------------
+# Zone 3 — the job ad
+# --------------------------------------------------------------------------
 
 
 def _requirement_key(text: str) -> str:
@@ -183,9 +277,8 @@ def _requirement_key(text: str) -> str:
 def _keyword_editor(profile, lang: str) -> list:
     """Show what was extracted and let the reader correct it.
 
-    Extraction is the tool's guess, and a guess the reader cannot overrule
-    is worse than no guess: they know the job, the parser only has the
-    text. Everything here is editable before anything is scored.
+    Extraction is the tool's guess, and a guess the reader cannot overrule is
+    worse than no guess: they know the job, the parser only has the text.
     """
     stamp = _requirement_key(st.session_state.get("job_ad", ""))
     by_label = {r.label: r for r in profile.requirements}
@@ -196,20 +289,18 @@ def _keyword_editor(profile, lang: str) -> list:
 
     with st.expander(t("match_keywords_expander", lang), expanded=True):
         st.caption(t("match_add_hint", lang))
-        chosen_must = st.multiselect(
-            t("match_must_label", lang),
-            options=must_default,
-            default=must_default,
-            accept_new_options=True,
-            key=f"must_{stamp}",
-        )
-        chosen_nice = st.multiselect(
-            t("match_nice_label", lang),
-            options=nice_default,
-            default=nice_default,
-            accept_new_options=True,
-            key=f"nice_{stamp}",
-        )
+        with st.container(key="axr-split-keywords"):
+            must_col, nice_col = st.columns(2, gap="large")
+            with must_col:
+                chosen_must = st.multiselect(
+                    t("match_must_label", lang), options=must_default, default=must_default,
+                    accept_new_options=True, key=f"must_{stamp}",
+                )
+            with nice_col:
+                chosen_nice = st.multiselect(
+                    t("match_nice_label", lang), options=nice_default, default=nice_default,
+                    accept_new_options=True, key=f"nice_{stamp}",
+                )
 
         kept_others = []
         if others:
@@ -217,9 +308,7 @@ def _keyword_editor(profile, lang: str) -> list:
             for index, requirement in enumerate(others):
                 weight = t("match_must_label" if requirement.must else "match_nice_label", lang)
                 if st.checkbox(
-                    f"{requirement.label} — {weight}",
-                    value=True,
-                    key=f"other_{stamp}_{index}",
+                    f"{requirement.label} — {weight}", value=True, key=f"other_{stamp}_{index}"
                 ):
                     kept_others.append(requirement)
 
@@ -238,41 +327,50 @@ def _keyword_editor(profile, lang: str) -> list:
     return selected
 
 
-def _render_outcome_group(outcomes, heading: str, renderer, lang: str) -> None:
+def _outcome_list(outcomes, lang: str) -> None:
     if not outcomes:
+        st.caption("—")
         return
-    renderer(f"**{heading}** ({len(outcomes)})")
     for outcome in outcomes:
-        line = f"{STATUS_ICON[outcome.status]} **{outcome.requirement.label}**"
+        line = f"**{outcome.requirement.label}**"
         if outcome.note_key:
-            line += f" — {t(outcome.note_key, lang, **outcome.note_params)}"
+            line += f"  \n{t(outcome.note_key, lang, **outcome.note_params)}"
         st.markdown(line)
-        if outcome.evidence and outcome.status != "missing":
-            st.caption(f"{t('evidence', lang)}: {outcome.evidence}")
 
 
 def _render_match_report(report, lang: str) -> None:
-    st.subheader(t("match_score_heading", lang))
-    st.caption(t("match_score_caption", lang))
+    with st.container(key="axr-split-score"):
+        score_col, verdict_col = st.columns([1, 3], gap="large")
+        with score_col:
+            st.metric(label=t(report.rating_key, lang), value=f"{report.score}/100")
+        with verdict_col:
+            if report.missing_must:
+                st.error(t("match_missing_must_warning", lang, count=len(report.missing_must)))
+            else:
+                st.success(t("match_all_must_covered", lang))
+            st.caption(t("match_score_caption", lang))
 
-    score_col, detail_col = st.columns([1, 3])
-    with score_col:
-        st.metric(label=t(report.rating_key, lang), value=f"{report.score}/100")
-    with detail_col:
-        if report.missing_must:
-            st.error(t("match_missing_must_warning", lang, count=len(report.missing_must)))
-        else:
-            st.success(t("match_all_must_covered", lang))
-
-    _render_outcome_group(report.of_status("missing"), t("match_missing_heading", lang), st.error, lang)
-    _render_outcome_group(report.of_status("partial"), t("match_partial_heading", lang), st.warning, lang)
-    _render_outcome_group(report.of_status("met"), t("match_met_heading", lang), st.success, lang)
+    with st.container(key="axr-split-outcomes"):
+        missing_col, partial_col, met_col = st.columns(3, gap="large")
+        for column, status, heading in (
+            (missing_col, "missing", "match_missing_heading"),
+            (partial_col, "partial", "match_partial_heading"),
+            (met_col, "met", "match_met_heading"),
+        ):
+            with column:
+                outcomes = report.of_status(status)
+                st.markdown(
+                    f'<p class="axr-severity axr-severity-'
+                    f'{ {"missing": "high", "partial": "medium", "met": "low"}[status] }">'
+                    f"{t(heading, lang)} ({len(outcomes)})</p>",
+                    unsafe_allow_html=True,
+                )
+                _outcome_list(outcomes, lang)
 
     if report.at_risk:
         st.warning(f"**{t('match_at_risk_heading', lang)}** ({len(report.at_risk)})")
         st.caption(t("match_at_risk_caption", lang))
-        for outcome in report.at_risk:
-            st.markdown(f"- {outcome.requirement.label}")
+        st.markdown(", ".join(o.requirement.label for o in report.at_risk))
 
     if report.extras:
         with st.expander(f"{t('match_extras_heading', lang)} ({len(report.extras)})"):
@@ -280,16 +378,12 @@ def _render_match_report(report, lang: str) -> None:
             st.markdown(", ".join(label_for(skill_id) for skill_id in report.extras))
 
 
-def _render_match(analysis, lang: str) -> None:
-    st.divider()
-    st.subheader(t("match_heading", lang))
-    st.caption(t("match_intro", lang))
+def _match_zone(analysis, lang: str) -> None:
+    _zone("03", t("match_heading", lang), t("match_intro", lang), "zone-match")
 
     ad_text = st.text_area(
-        t("match_paste_label", lang),
-        key="job_ad",
-        height=JOB_AD_HEIGHT,
-        placeholder=t("match_paste_placeholder", lang),
+        t("match_paste_label", lang), key="job_ad", height=JOB_AD_HEIGHT,
+        placeholder=t("match_paste_placeholder", lang), label_visibility="collapsed",
     )
     if not ad_text.strip():
         return
@@ -313,23 +407,85 @@ def _render_match(analysis, lang: str) -> None:
     if report is not None:
         _render_match_report(report, lang)
 
-language = _pick_language()
 
-st.title("ATS Resume X-Ray")
+# --------------------------------------------------------------------------
+# Zone 4 — findings and fixes
+# --------------------------------------------------------------------------
+
+
+def _sources_url(rule, lang: str) -> str:
+    """Deep link to this rule's entry in the sources file, in the language the
+    reader is currently using. The anchors are identical across translations,
+    so only the filename changes."""
+    return f"{BLOB_URL}/{sources_path(lang)}#{rule.source}"
+
+
+def _render_finding(finding, lang: str) -> None:
+    description = rule_description(finding.rule.id, lang, finding.rule.description)
+    severity = finding.severity
+    st.markdown(
+        f'<div class="axr-finding axr-finding-{severity}">'
+        f'<span class="axr-severity axr-severity-{severity}">{t(f"severity_{severity}", lang)}</span>'
+        f'<p class="axr-finding-text">{description}</p>'
+        f"</div>",
+        unsafe_allow_html=True,
+    )
+
+    # The headline says what is wrong; everything needed to act on it lives
+    # one click away, so a CV with five findings stays skimmable.
+    with st.expander(t("details_expander", lang)):
+        detail = rule_detail(finding.rule.id, lang)
+        if detail:
+            st.write(detail)
+
+        fixes = rule_fixes(finding.rule.id, lang)
+        if fixes:
+            st.markdown(f"**{t('how_to_fix', lang)}**")
+            st.markdown("\n".join(f"{i}. {fix}" for i, fix in enumerate(fixes, 1)))
+
+        evidence = t(finding.evidence_key, lang, **finding.evidence_params)
+        st.caption(f"{t('evidence', lang)}: {evidence}")
+        st.caption(
+            f"{t('source', lang)}: [{t('read_more', lang)}]({_sources_url(finding.rule, lang)})"
+        )
+
+
+def _fixes_zone(findings, lang: str) -> None:
+    _zone("04", t("findings_heading", lang), t("zone_fixes_note", lang), "zone-fixes")
+
+    if not findings:
+        st.success(t("no_findings", lang))
+        return
+
+    ordered = sorted(findings, key=lambda f: SEVERITY_ORDER[f.severity])
+    with st.container(key="axr-split-fixes"):
+        columns = st.columns(2, gap="large")
+        for index, finding in enumerate(ordered):
+            with columns[index % 2]:
+                with st.container(border=True):
+                    _render_finding(finding, lang)
+
+
+# --------------------------------------------------------------------------
+# Page
+# --------------------------------------------------------------------------
+
+st.markdown(f"<style>{_stylesheet()}</style>", unsafe_allow_html=True)
+
+# The masthead draws the language control, so the chosen language is only
+# known after it has run; everything below the masthead uses that value.
+_masthead(st.session_state.get("language", DEFAULT_LANGUAGE))
+language = st.session_state.get("language", DEFAULT_LANGUAGE)
+_jump_links(language)
 _show_update_notice(language)
-st.write(t("intro", language, sources_url=f"{BLOB_URL}/{sources_path(language)}"))
-st.caption(t("privacy", language))
 
-# A stable key keeps the upload across the rerun that a language change
-# triggers; without it, switching language silently discards the file and
-# the reader has to upload again to see the same result in another language.
-uploaded_file = st.file_uploader(t("upload_label", language), type=["pdf", "docx"], key="resume")
-
+uploaded_file = _upload_zone(language)
 analysis = None
 
-if uploaded_file is not None:
+if uploaded_file is None:
+    _empty_state(language)
+else:
     is_pdf = uploaded_file.name.lower().endswith(".pdf")
-
     try:
         with st.spinner(t("analyzing", language)):
             result = analyze_bytes(uploaded_file.getvalue(), uploaded_file.name, render=True)
@@ -338,25 +494,21 @@ if uploaded_file is not None:
     except Exception:
         # Log the real cause server-side while showing the reader a plain
         # message. Swallowing it entirely made a production failure
-        # undiagnosable from the deployment logs: all they showed was that
-        # something went wrong, never what.
+        # undiagnosable from the deployment logs.
         logger.exception("Analysis failed for an uploaded %s file", "PDF" if is_pdf else "DOCX")
         st.error(t("error_unreadable", language))
     else:
         analysis = result
-        _render_score(result.score, language)
-        _render_findings(result.findings, language)
-        _render_pages(result.rendered_pages, is_pdf, language)
+        st.caption(
+            t("file_loaded", language, name=uploaded_file.name, pages=len(result.rendered_pages))
+        )
+        _document_zone(result, is_pdf, language)
 
-        naive_col, aware_col = st.columns(2)
-        with naive_col:
-            with st.expander(t("naive_expander", language)):
-                st.text(result.naive_text)
-        with aware_col:
-            with st.expander(t("aware_expander", language)):
-                st.text(result.aware_text)
+_match_zone(analysis, language)
 
-_render_match(analysis, language)
+if analysis is not None:
+    _fixes_zone(analysis.findings, language)
 
 st.divider()
+st.caption(t("privacy", language))
 st.caption(f"{t('open_source', language)}: [{REPO_URL.removeprefix('https://')}]({REPO_URL})")

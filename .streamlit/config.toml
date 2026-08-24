@@ -6,3 +6,72 @@ gatherUsageStats = false
 # more; this rejects oversized uploads at the server layer before they
 # even reach our code.
 maxUploadSize = 50
+
+# --------------------------------------------------------------------------
+# Theme
+#
+# The severity colours below are the same values overlay.py draws onto the
+# page images (SEVERITY_COLORS). A legend swatch that does not match the box
+# it explains is worse than no legend, so the two are kept in step by hand.
+#
+# The primary colour is deliberately not red. Streamlit's default #FF4B4B
+# both marks every app as a Streamlit demo and collides with the red that
+# means "this will break your application" -- an accent must not compete
+# with the one colour in the interface that carries a warning.
+#
+# Heading sizes replace Streamlit's defaults, which start at 2.75rem. That
+# is a size for a slide, not for a tool someone works in: it pushes the
+# first useful thing below the fold and makes every screen feel like a
+# landing page. The scale here is a 1.25 ratio off a 16px base.
+# --------------------------------------------------------------------------
+
+[theme]
+base = "light"
+font = "sans-serif"
+baseFontSize = 16
+baseRadius = "8px"
+buttonRadius = "8px"
+showWidgetBorder = true
+linkUnderline = false
+headingFontSizes = ["1.75rem", "1.375rem", "1.125rem", "1rem", "0.9375rem", "0.9375rem"]
+headingFontWeights = [700, 600, 600, 600, 600, 600]
+metricValueFontSize = "2.25rem"
+metricValueFontWeight = 700
+
+[theme.light]
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F5F6F8"
+textColor = "#1A1D21"
+primaryColor = "#14606B"
+linkColor = "#14606B"
+borderColor = "#E3E6EA"
+# Matched to the drawn boxes: high, medium, low.
+redColor = "#DC2626"
+orangeColor = "#D97706"
+blueColor = "#2563EB"
+greenColor = "#15803D"
+redBackgroundColor = "#FDF2F2"
+orangeBackgroundColor = "#FDF6EC"
+blueBackgroundColor = "#EFF4FE"
+greenBackgroundColor = "#F0FAF3"
+grayBackgroundColor = "#F5F6F8"
+
+[theme.dark]
+backgroundColor = "#0F1216"
+secondaryBackgroundColor = "#171B21"
+textColor = "#E6E9EE"
+primaryColor = "#4FB3C4"
+linkColor = "#6FC5D6"
+borderColor = "#262C36"
+# Lightened for legibility on a dark ground. The boxes themselves keep the
+# light-mode hues, because they are drawn onto a white page image; the
+# legend swatches are rendered with those exact values rather than these.
+redColor = "#F87171"
+orangeColor = "#FBBF24"
+blueColor = "#60A5FA"
+greenColor = "#4ADE80"
+redBackgroundColor = "#2A1618"
+orangeBackgroundColor = "#2A2014"
+blueBackgroundColor = "#151E2E"
+greenBackgroundColor = "#132218"
+grayBackgroundColor = "#171B21"
