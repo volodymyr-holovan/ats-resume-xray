@@ -14,10 +14,13 @@ raising, and callers fall back to the text-only view.
 import os
 import shutil
 import subprocess
+import time
 import tempfile
 from pathlib import Path
 
 CONVERSION_TIMEOUT_SECONDS = 90
+
+RETRY_PAUSE_SECONDS = 2
 
 CONVERSION_ATTEMPTS = 2
 """How many times to ask LibreOffice before giving up.
@@ -73,10 +76,14 @@ def convert_docx_to_pdf(docx_path: str, out_dir: str) -> str | None:
     # LibreOffice fails transiently under load even with its own profile:
     # it exits cleanly having written nothing. One retry turns that from a
     # missing page preview into a slightly slower one.
-    for _ in range(CONVERSION_ATTEMPTS):
+    for attempt in range(CONVERSION_ATTEMPTS):
         produced = _run_conversion(soffice, source, out_dir)
         if produced is not None:
             return produced
+        if attempt + 1 < CONVERSION_ATTEMPTS:
+            # A moment for whatever the last instance was still holding to be
+            # released. Retrying immediately tends to hit the same contention.
+            time.sleep(RETRY_PAUSE_SECONDS)
     return None
 
 

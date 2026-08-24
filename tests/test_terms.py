@@ -87,3 +87,29 @@ def test_the_number_of_guesses_is_capped():
     generic = [r for r in parse_vacancy(noisy).requirements if r.key.startswith("term:")]
 
     assert len(generic) <= MAX_TERMS_PER_AD
+
+
+def test_an_article_cannot_bite_into_the_following_word():
+    """The Spanish article "el" was matched inside German "Elektronik" and
+    the requirement came back as "ektronik". Articles are whole words."""
+    found = extract_terms("- Fundierte Kenntnisse in Elmshorner Anlagentechnik", "de")
+
+    assert not any(term.lower().startswith("mshorn") for term in found)
+    assert any("Elmshorner" in term for term in found)
+
+
+def test_the_tail_of_an_elided_compound_is_not_a_requirement():
+    """"Fehlersuche und -behebung" means Fehlerbehebung; the hyphen stands in
+    for the head. "behebung" on its own names nothing."""
+    found = {term.lower() for term in extract_terms("- Bohrarbeit und -pruefung im Feld", "de")}
+
+    assert "pruefung" not in found
+
+
+def test_a_partly_known_phrase_keeps_its_unknown_words_whole():
+    """Filtering the covered words used to work on folded tokens while
+    rebuilding from the original ones, and the two lists did not line up:
+    "IT-Systemen" is one word before folding and two after."""
+    found = extract_terms("- Erfahrung mit Docker und Hochregallagertechnik", "de")
+
+    assert any(term == "Hochregallagertechnik" for term in found)

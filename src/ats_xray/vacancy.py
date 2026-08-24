@@ -30,9 +30,15 @@ from .terms import MAX_TERMS_PER_AD, extract_terms
 
 BLOCK_HEADINGS_BY_LANGUAGE: dict[str, dict[str, tuple[str, ...]]] = {
     "de": {
-        "profile": ("ihr profil", "dein profil", "das bringen sie mit", "das bringst du mit", "was sie mitbringen", "was du mitbringst", "anforderungen", "anforderungsprofil", "qualifikationen", "ihre qualifikationen", "voraussetzungen", "unsere erwartungen", "das zeichnet sie aus", "damit ueberzeugen sie uns", "ihr koennen", "fachliche anforderungen"),
-        "tasks": ("ihre aufgaben", "deine aufgaben", "aufgabengebiet", "ihr aufgabengebiet", "taetigkeiten", "ihre taetigkeiten", "was sie erwartet", "was dich erwartet", "stellenbeschreibung", "ihre rolle", "aufgabenschwerpunkte"),
-        "offer": ("wir bieten", "was wir bieten", "das bieten wir", "unsere benefits", "ihre vorteile", "deine vorteile", "wir freuen uns", "unser angebot", "was wir ihnen bieten", "darauf koennen sie sich freuen"),
+        # German adverts invent their own headings, and half of them address
+        # the reader informally. "Zeichnet aus" alone covers "Das zeichnet
+        # Sie aus", "Dich zeichnet aus" and "Was dich auszeichnet".
+        "profile": ("ihr profil", "dein profil", "das bringen sie mit", "das bringst du mit", "was sie mitbringen", "was du mitbringst", "das solltest du mitbringen", "anforderungen", "anforderungsprofil", "qualifikationen", "ihre qualifikationen", "deine qualifikationen", "voraussetzungen", "unsere erwartungen", "zeichnet aus", "auszeichnet", "ueberzeugen sie uns", "ueberzeugst du uns", "ihr koennen", "dein koennen", "fachliche anforderungen", "wen wir suchen", "wen suchen wir", "das wuenschen wir uns", "ihr hintergrund"),
+        "tasks": ("ihre aufgaben", "deine aufgaben", "aufgabengebiet", "taetigkeiten", "stellenbeschreibung", "ihre rolle", "deine rolle", "aufgabenschwerpunkte", "ihr taetigkeitsfeld", "diese aufgaben", "das sind ihre aufgaben", "das machst du"),
+        # "Was Sie erwartet" reads as the offer far more often than as the
+        # duties, and benefit lines mined as requirements are the more
+        # visible mistake.
+        "offer": ("wir bieten", "was wir bieten", "das bieten wir", "wir bieten dir", "wir bieten ihnen", "unsere benefits", "deine benefits", "ihre vorteile", "deine vorteile", "wir freuen uns", "unser angebot", "was wir ihnen bieten", "darauf koennen sie sich freuen", "darauf kannst du dich freuen", "was sie erwartet", "was dich erwartet", "das erwartet sie", "das erwartet dich", "in deinem neuen job", "in ihrem neuen job", "das bekommst du", "deine perspektiven", "unsere leistungen"),
     },
     "en": {
         "profile": ("your profile", "requirements", "what you bring", "qualifications", "about you", "your skills", "who you are", "what we expect"),
@@ -56,7 +62,10 @@ BLOCK_HEADINGS_BY_LANGUAGE: dict[str, dict[str, tuple[str, ...]]] = {
     },
     "uk": {
         "profile": ("ваш профіль", "вимоги", "наші вимоги", "що ми очікуємо", "кваліфікація"),
-        "tasks": ("ваші завдання", "обов", "посадові обов", "опис вакансії"),
+        # "обов" alone matched "є обов'язковою" in the middle of a
+        # requirement line and split the advert there, losing the whole
+        # requirements block. Headings are whole words.
+        "tasks": ("ваші завдання", "обов'язки", "посадові обов'язки", "опис вакансії", "функції"),
         "offer": ("ми пропонуємо", "що ми пропонуємо", "умови роботи", "переваги"),
     },
     "ru": {
@@ -85,7 +94,7 @@ MUST_CUES_BY_LANGUAGE: dict[str, tuple[str, ...]] = {
     "es": ("imprescindible", "obligatorio", "requisito indispensable", "se requiere"),
     "nl": ("vereist", "noodzakelijk", "must", "verplicht"),
     "fr": ("exige", "obligatoire", "indispensable", "requis"),
-    "uk": ("обов", "вимагається", "необхідн", "мусить"),
+    "uk": ("обов'язков", "вимагається", "необхідн", "мусить", "є обов"),
     "ru": ("обязательн", "требуется", "необходим"),
 }
 
@@ -197,6 +206,24 @@ SCANNED_BLOCKS = ("profile", "tasks", "intro")
 gives, not what the candidate needs."""
 
 
+def _blocks_worth_scanning(blocks: dict[str, str]) -> dict[str, str]:
+    """The parts of the advert that can state a requirement.
+
+    The intro is only worth reading when the advert has no labelled blocks
+    at all -- someone who pasted a bare requirements list. In an advert that
+    does label its blocks, the intro is the company describing itself, and
+    mining it produces exactly the nouns you would expect: the hospital's
+    name, its district, its bed count and its founding order.
+    """
+    if "profile" not in blocks:
+        # No requirements block was recognised, so they are somewhere in the
+        # text this parser did not label. Dropping the intro here would throw
+        # away the only place they can be, which is how an advert headed
+        # "Dich zeichnet aus" came back with no requirements at all.
+        return {name: body for name, body in blocks.items() if name in SCANNED_BLOCKS}
+    return {name: body for name, body in blocks.items() if name in ("profile", "tasks")}
+
+
 def parse_vacancy(text: str, language: str | None = None) -> VacancyProfile:
     """Read an advert into weighted requirements.
 
@@ -207,7 +234,7 @@ def parse_vacancy(text: str, language: str | None = None) -> VacancyProfile:
     """
     language = language or detect_language(text)
     blocks = split_blocks(text, language)
-    scanned = {name: body for name, body in blocks.items() if name in SCANNED_BLOCKS}
+    scanned = _blocks_worth_scanning(blocks)
     requirements: dict[str, Requirement] = {}
 
     def add(requirement: Requirement) -> None:
