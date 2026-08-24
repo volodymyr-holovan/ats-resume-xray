@@ -57,6 +57,56 @@ Available as a web app (`streamlit run app.py`) or a CLI (`atsxray`).
 
 6. **Scores parse readiness** — see below.
 
+7. **Matches your CV against a job ad** — see below.
+
+## Matching a CV against a job ad
+
+Paste a job advert and the requirements are read out of it, then compared
+against what the CV actually contains.
+
+**The advert is read as three blocks, not as one bag of words.** German ads
+label them ("Ihre Aufgaben", "Ihr Profil", "Wir bieten") and the labels mean
+different things: the profile block states requirements, the tasks block only
+implies them, and the offer block describes the employer. The offer block is
+never scanned, which is what stops a company's Kubernetes training budget from
+being reported as a skill you are missing.
+
+**Requirements are weighted by how the ad phrases them.** "Zwingend
+erforderlich" and "von Vorteil" are separated by cue phrase, and a required
+item counts three times a preferred one. Where a line carries both kinds of
+cue the softer reading wins, because overstating a blocking gap is the more
+alarming error.
+
+**Not everything is a keyword.** Degrees, years of experience, language levels
+and driving licences compare by their own rules:
+
+| Requirement | How it compares |
+|---|---|
+| Education | By level, so a Master satisfies an ad asking for a Bachelor. "Oder vergleichbare Qualifikation" turns the degree from a gate into a preference. Field of study is checked separately, and a level match in the wrong field scores partial. |
+| Experience | Date ranges inside the experience section are summed, with overlapping periods merged rather than added. Study dates are not counted as work. |
+| Languages | By CEFR level, reading the level whether it sits before the language ("verhandlungssichere Deutschkenntnisse") or after it ("Deutsch – B2"). One level short scores partial. |
+| Licence | Class is read where the ad names one, defaulting to B. |
+
+**Extraction is a guess, and the guess is editable.** Everything found is shown
+in an expandable list before anything is scored; you can delete what the parser
+got wrong and type in what the ad only implied. Keywords you add yourself are
+searched in the CV as phrases, with the same tolerance for German inflection
+the built-in lexicon gets.
+
+**A match only counts if a parser can see it.** Because the tool already knows
+which parts of a CV survive a layout-blind read, a requirement met only in the
+layout-aware text is reported as *at risk*: a human reader would find it, the
+software filtering the pile might not.
+
+The lexicon deliberately leaves out names that collide with ordinary words.
+"Go" and "R" are real languages, but an ad saying "go live" should not acquire
+a Go requirement, so they are reachable through "Golang" and "R-Programmierung"
+instead.
+
+This is keyword and rule matching, not a judgement of your work. It reports
+whether the ad's requirements are findable in your CV, and it says so on the
+page.
+
 ## The parse readiness score
 
 Commercial checkers blend two different things into one number: whether your
