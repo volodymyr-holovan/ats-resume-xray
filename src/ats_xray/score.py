@@ -99,17 +99,24 @@ to "how readable is this CV" for something that is not a CV is not a number."""
 
 
 def looks_like_a_resume(aware_fields: dict) -> bool:
-    """Whether the document has anything that marks it as a CV at all.
+    """Whether the document has enough about it to be a CV.
 
-    The bar is deliberately low -- one contact detail or one recognised
-    section heading -- because a real CV in an unusual shape must still get
-    through. What it stops is the document that has neither: no email, no
-    phone, and nothing the section recogniser knows in any of seven
-    languages.
+    Two signals, not one. A single contact detail is far too weak on its
+    own: an invoice carries an accounts email, a menu carries a booking
+    number, and a job advert -- the document this tool most invites someone
+    to upload by mistake, since the next zone asks them to paste one --
+    carries both. Every one of those scored respectably under the one-signal
+    rule, and the invoice reached 100/100.
+
+    So: a contact detail *and* a recognised section, or two recognised
+    sections with no contact at all. A real CV in an unusual shape still
+    gets through -- it is hard to write one that has neither a way to reach
+    you nor two of Experience, Education and Skills -- while a letter with
+    an address block in it does not.
     """
     has_contact = aware_fields["email"]["found"] or aware_fields["phone"]["found"]
-    has_section = any(field["found"] for field in aware_fields["sections"].values())
-    return has_contact or has_section
+    sections_found = sum(1 for field in aware_fields["sections"].values() if field["found"])
+    return (has_contact and sections_found >= 1) or sections_found >= 2
 
 
 def score_resume(aware_fields: dict, naive_fields: dict, findings: list[Finding]) -> ScoreBreakdown:
@@ -147,9 +154,10 @@ def score_resume(aware_fields: dict, naive_fields: dict, findings: list[Finding]
             total=cap,
             components=components,
             uncapped_total=uncapped,
-            # Separate keys rather than an English plural rule: languages
-            # here pluralise differently and some need three forms.
-            cap_key="cap_reason_one" if high_count == 1 else "cap_reason_many",
+            # A stem, not a finished key: how many forms the sentence needs
+            # depends on the reader's language, which the score does not know.
+            # ``i18n.tn`` picks between them at render time.
+            cap_key="cap_reason",
             cap_params={"cap": cap, "count": high_count, "uncapped": uncapped},
         )
 
