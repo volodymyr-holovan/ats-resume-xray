@@ -57,6 +57,93 @@ Available as a web app (`streamlit run app.py`) or a CLI (`atsxray`).
 
 6. **Scores parse readiness** — see below.
 
+7. **Matches your CV against a job ad** — see below.
+
+## Matching a CV against a job ad
+
+Paste a job advert and the requirements are read out of it, then compared
+against what the CV actually contains.
+
+**The advert is read as three blocks, not as one bag of words.** German ads
+label them ("Ihre Aufgaben", "Ihr Profil", "Wir bieten") and the labels mean
+different things: the profile block states requirements, the tasks block only
+implies them, and the offer block describes the employer. The offer block is
+never scanned, which is what stops a company's Kubernetes training budget from
+being reported as a skill you are missing.
+
+**Requirements are weighted by how the ad phrases them.** "Zwingend
+erforderlich" and "von Vorteil" are separated by cue phrase, and a required
+item counts three times a preferred one. Where a line carries both kinds of
+cue the softer reading wins, because overstating a blocking gap is the more
+alarming error.
+
+**Every profession, not just IT.** The gazetteer in
+[`src/ats_xray/skills_data.py`](src/ats_xray/skills_data.py) holds around 400
+skills across roughly fifty categories: care and medicine, the building
+trades, logistics and driving, hospitality, cleaning and facilities, retail
+and sales, finance and banking, law, consulting, design and media, teaching,
+religious work, agriculture, textiles, security, production and office work,
+alongside the software stack. Adding a trade means adding a line to that file
+and nothing else.
+
+**What the gazetteer does not know is guessed at.** A curated list is
+accurate and finite; an advert for a job nobody thought to add would
+otherwise come back empty, which is worse than a rough list because the
+reader has nothing to correct. Two cheap signals fill the gap: German
+capitalises its nouns, which is a better part-of-speech tagger than anything
+that would fit in this project's dependencies, and every language announces
+requirements with the same few phrases ("Kenntnisse in", "experience with",
+"conocimiento de", "досвід роботи з"). The hard part is rejection, not
+detection: a German bullet starts with a capital letter whatever word is
+there, so "Abgeschlossene", "Gute" and "Mindestens" all look like nouns until
+a stoplist says otherwise.
+
+**The language is detected once, then only that language is read.** A CV and
+the advert measured against it are written in one language, with English
+turning up inside both. Reading all seven vocabularies at once was not merely
+wasteful, it was wrong: Spanish "diploma" sits inside German "Diplomatie",
+and Dutch "promotie" means a doctorate in Dutch and a sales campaign in
+German. Detection is a function-word count with two extra signals, because a
+CV is not prose -- a terse German one can contain as few as two German
+function words, so section headings ("Berufserfahrung") and letters only one
+language uses (ä, ö, ü, ß) count as evidence too.
+
+**Case never matters.** Adverts arrive shouted, lower-cased and everything
+between; all matching runs over a folded form, and an all-capitals line is
+skipped by the noun heuristic rather than treated as a page of German nouns.
+
+**Not everything is a keyword.** Degrees, years of experience, language levels
+and driving licences compare by their own rules:
+
+| Requirement | How it compares |
+|---|---|
+| Education | By level, so a Master satisfies an ad asking for a Bachelor. "Oder vergleichbare Qualifikation" turns the degree from a gate into a preference, and "Quereinsteiger willkommen" drops it entirely. Field of study is checked separately, and a level match in the wrong field scores partial. |
+| Experience | Date ranges inside the experience section are summed, with overlapping periods merged rather than added. Study dates are not counted as work. Numbers written as words count too: "mindestens zwei Jahre" is as common as "mindestens 2 Jahre". |
+| Languages | By CEFR level, reading the level whether it sits before the language ("verhandlungssichere Deutschkenntnisse") or after it ("Deutsch – B2"), and reading the language's name in whatever language the ad is written in. One level short scores partial. |
+| Licence | Class is read where the ad names one, defaulting to B. |
+
+**Extraction is a guess, and the guess is editable.** Everything found is shown
+in an expandable list before anything is scored; you can delete what the parser
+got wrong and type in what the ad only implied. Keywords you add yourself are
+searched in the CV as phrases, with the same tolerance for German inflection
+the built-in lexicon gets.
+
+**A match only counts if a parser can see it.** Because the tool already knows
+which parts of a CV survive a layout-blind read, a requirement met only in the
+layout-aware text is reported as *at risk*: a human reader would find it, the
+software filtering the pile might not.
+
+The lexicon deliberately leaves out names that collide with ordinary words.
+"Go" and "R" are real languages, but an ad saying "go live" should not acquire
+a Go requirement, so they are reachable through "Golang" and "R-Programmierung"
+instead. Abbreviations are held to word boundaries for the same reason: "bsc"
+sits inside "Abschlussstärke" and "m sc" inside "zum Schichtdienst", and both
+once invented a degree that the advert never asked for.
+
+This is keyword and rule matching, not a judgement of your work. It reports
+whether the ad's requirements are findable in your CV, and it says so on the
+page.
+
 ## The parse readiness score
 
 Commercial checkers blend two different things into one number: whether your
