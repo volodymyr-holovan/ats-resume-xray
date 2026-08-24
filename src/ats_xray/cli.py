@@ -15,6 +15,7 @@ from .i18n import (
     rule_fixes,
     sources_path,
     t,
+    tn,
 )
 from .pipeline import extract_text
 from .score import score_resume
@@ -115,7 +116,7 @@ def main() -> None:
 def _format_score(breakdown, language: str = DEFAULT_LANGUAGE) -> str:
     lines = [f"{breakdown.total}/100 - {t(breakdown.rating_key, language)}"]
     if breakdown.cap_key:
-        lines.append(f"  {t(breakdown.cap_key, language, **breakdown.cap_params)}")
+        lines.append(f"  {tn(breakdown.cap_key, breakdown.cap_params.get("count", 1), language, **breakdown.cap_params)}")
     lines.append("")
     for component in breakdown.components:
         weight = (

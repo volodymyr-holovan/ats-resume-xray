@@ -49,14 +49,14 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         ),
         "uk": (
             "Завантажте резюме (PDF або DOCX), щоб побачити, що з нього насправді видобуває "
-            "програма розбору — не таємничий бал, а реальне порівняння. Знахідки — це "
+            "програма розбору — не таємничий бал, а реальне порівняння. Зауваження — це "
             "задокументовані типові збої ([джерела]({sources_url})), а не гарантія поведінки "
             "системи конкретного роботодавця."
         ),
         "ru": (
             "Загрузите резюме (PDF или DOCX), чтобы увидеть, что из него на самом деле "
             "извлекает программа разбора — не загадочный балл, а реальное сравнение. "
-            "Находки — это задокументированные типичные сбои ([источники]({sources_url})), "
+            "Замечания — это задокументированные типичные сбои ([источники]({sources_url})), "
             "а не гарантия поведения системы конкретного работодателя."
         ),
         "es": (
@@ -191,7 +191,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "uk": "Зауваження та виправлення",
         "ru": "Замечания и исправления",
         "es": "Observaciones y correcciones",
-        "nl": "Opmerkingen en oplossingen",
+        "nl": "Opmerkingen en verbeteringen",
         "fr": "Remarques et corrections",
     },
     "no_findings": {
@@ -227,7 +227,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "uk": "Що це означає і як це виправити",
         "ru": "Что это значит и как это исправить",
         "es": "Qué significa y cómo solucionarlo",
-        "nl": "Wat dit betekent en hoe u het oplost",
+        "nl": "Wat dit betekent en hoe je het oplost",
         "fr": "Ce que cela signifie et comment le corriger",
     },
     "how_to_fix": {
@@ -236,7 +236,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "uk": "Як це виправити",
         "ru": "Как это исправить",
         "es": "Cómo solucionarlo",
-        "nl": "Hoe u het oplost",
+        "nl": "Hoe je het oplost",
         "fr": "Comment le corriger",
     },
     "read_more": {
@@ -287,8 +287,8 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
     "legend": {
         "en": "Boxes mark the exact area each finding refers to.",
         "de": "Die Rahmen markieren den genauen Bereich jedes Befunds.",
-        "uk": "Рамки позначають точну ділянку, якої стосується кожна знахідка.",
-        "ru": "Рамки отмечают точный участок, к которому относится каждая находка.",
+        "uk": "Рамки позначають точну ділянку, якого стосується кожне зауваження.",
+        "ru": "Рамки отмечают точный участок, к которому относится каждое замечание.",
         "es": "Los recuadros marcan el área exacta a la que se refiere cada hallazgo.",
         "nl": "De kaders markeren precies het gebied waar elke bevinding op slaat.",
         "fr": "Les cadres marquent la zone exacte visée par chaque constat.",
@@ -336,13 +336,13 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         ),
         "uk": (
             "Перегляд сторінок для DOCX потребує LibreOffice, якого тут немає. DOCX зберігає "
-            "вміст, але не позиції на сторінці, тож його спершу треба зверстати. Знахідки "
+            "вміст, але не позиції на сторінці, тож його спершу треба зверстати. Зауваження "
             "вище лишаються чинними."
         ),
         "ru": (
             "Просмотр страниц для DOCX требует LibreOffice, которого здесь нет. DOCX хранит "
             "содержимое, но не позиции на странице, поэтому его сначала нужно сверстать. "
-            "Находки выше остаются в силе."
+            "Замечания выше остаются в силе."
         ),
         "es": (
             "La vista previa de páginas para DOCX necesita LibreOffice, que no está "
@@ -434,7 +434,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "de": "Erreichbarkeit",
         "uk": "Доступність контактів",
         "ru": "Доступность контактов",
-        "es": "Localizabilidad de contacto",
+        "es": "Contacto localizable",
         "nl": "Bereikbaarheid",
         "fr": "Joignabilité",
     },
@@ -463,7 +463,8 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "ru": "Читается чисто",
         "es": "Se analiza sin problemas",
         "nl": "Wordt schoon gelezen",
-        "fr": "Analyse sans souci",
+        "fr": "S'analyse sans problème",
+
     },
     "rating_mostly": {
         "en": "Mostly parses, some risk",
@@ -472,7 +473,8 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "ru": "В основном читается, есть риск",
         "es": "Se analiza en su mayor parte, con riesgo",
         "nl": "Grotendeels leesbaar, enig risico",
-        "fr": "Analyse en grande partie, avec risque",
+        "fr": "S'analyse en grande partie, avec un risque",
+
     },
     "rating_significant": {
         "en": "Significant parsing risk",
@@ -502,13 +504,14 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "fr": "E-mail et téléphone retrouvés par une lecture simple, aveugle à la mise en page",
     },
     "detail_contact_one": {
-        "en": "Found {found}, but no {missing}",
-        "de": "{found} gefunden, aber kein {missing}",
-        "uk": "Знайдено {found}, але немає {missing}",
-        "ru": "Найдено {found}, но нет {missing}",
-        "es": "Se encontró {found}, pero no {missing}",
-        "nl": "{found} gevonden, maar geen {missing}",
-        "fr": "{found} trouvé, mais pas de {missing}",
+        "en": "Found: {found}. Not found: {missing}.",
+        "de": "Gefunden: {found}. Nicht gefunden: {missing}.",
+        "uk": "Знайдено: {found}. Не знайдено: {missing}.",
+        "ru": "Найдено: {found}. Не найдено: {missing}.",
+        "es": "Encontrado: {found}. No encontrado: {missing}.",
+        "nl": "Gevonden: {found}. Niet gevonden: {missing}.",
+        "fr": "Trouvé : {found}. Introuvable : {missing}.",
+
     },
     "detail_contact_none": {
         "en": "Neither email nor phone could be recovered",
@@ -529,22 +532,24 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "fr": "Aucun intitulé de section standard trouvé, il n'y a rien à comparer",
     },
     "detail_sections_all": {
-        "en": "{survived} of {total} sections survive a layout-blind read",
-        "de": "{survived} von {total} Abschnitten überstehen ein layoutblindes Lesen",
-        "uk": "{survived} з {total} розділів переживають читання, сліпе до верстки",
-        "ru": "{survived} из {total} разделов переживают чтение, слепое к вёрстке",
-        "es": "{survived} de {total} secciones sobreviven a una lectura ciega al diseño",
-        "nl": "{survived} van {total} secties overleven een opmaak-blinde lezing",
-        "fr": "{survived} sections sur {total} survivent à une lecture aveugle à la mise en page",
+        "en": "All {total} sections survive layout-blind reading",
+        "de": "Alle {total} Abschnitte überstehen ein layoutblindes Lesen",
+        "uk": "Усі розділи ({total}) переживають читання, сліпе до верстки",
+        "ru": "Все разделы ({total}) переживают чтение, слепое к вёрстке",
+        "es": "Las {total} secciones sobreviven a la lectura ciega al diseño",
+        "nl": "Alle {total} secties overleven layoutblind lezen",
+        "fr": "Toutes les sections ({total}) survivent à la lecture aveugle à la mise en page",
+
     },
     "detail_sections_lost": {
-        "en": "{survived} of {total} sections survive a layout-blind read (lost: {lost})",
-        "de": "{survived} von {total} Abschnitten überstehen ein layoutblindes Lesen (verloren: {lost})",
-        "uk": "{survived} з {total} розділів переживають читання, сліпе до верстки (втрачено: {lost})",
-        "ru": "{survived} из {total} разделов переживают чтение, слепое к вёрстке (потеряно: {lost})",
-        "es": "{survived} de {total} secciones sobreviven a una lectura ciega al diseño (perdidas: {lost})",
-        "nl": "{survived} van {total} secties overleven een opmaak-blinde lezing (verloren: {lost})",
-        "fr": "{survived} sections sur {total} survivent à une lecture aveugle (perdues : {lost})",
+        "en": "Layout-blind reading keeps {survived} of {total} sections (lost: {lost})",
+        "de": "Layoutblindes Lesen bewahrt {survived} von {total} Abschnitten (verloren: {lost})",
+        "uk": "Читання, сліпе до верстки, зберігає розділів: {survived} з {total} (втрачено: {lost})",
+        "ru": "Чтение, слепое к вёрстке, сохраняет разделов: {survived} из {total} (потеряно: {lost})",
+        "es": "La lectura ciega al diseño conserva {survived} de {total} secciones (perdidas: {lost})",
+        "nl": "Layoutblind lezen behoudt {survived} van {total} secties (verloren: {lost})",
+        "fr": "Sections conservées à la lecture aveugle à la mise en page : {survived} sur {total} (perdues : {lost})",
+
     },
     "detail_structure_clean": {
         "en": "No structural parsing risks detected",
@@ -560,27 +565,32 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "de": "Abzüge: {deductions}",
         "uk": "Віднято: {deductions}",
         "ru": "Вычтено: {deductions}",
-        "es": "Descuentos: {deductions}",
+        "es": "Penalizaciones: {deductions}",
         "nl": "Aftrek: {deductions}",
-        "fr": "Déductions : {deductions}",
+        "fr": "Points retirés : {deductions}",
+
     },
     "cap_reason_one": {
-        "en": "Capped at {cap}: 1 high-severity finding puts content at risk of being lost (before the cap: {uncapped})",
-        "de": "Auf {cap} begrenzt: 1 schwerwiegender Befund gefährdet Inhalte (vor der Begrenzung: {uncapped})",
-        "uk": "Обмежено до {cap}: 1 критична знахідка ставить вміст під загрозу втрати (до обмеження: {uncapped})",
-        "ru": "Ограничено до {cap}: 1 критическая находка ставит содержимое под угрозу потери (до ограничения: {uncapped})",
-        "es": "Limitado a {cap}: 1 hallazgo grave pone el contenido en riesgo de perderse (antes del límite: {uncapped})",
-        "nl": "Begrensd op {cap}: 1 ernstige bevinding zet inhoud op het spel (voor de begrenzing: {uncapped})",
-        "fr": "Plafonné à {cap} : 1 constat grave met le contenu en risque de perte (avant plafond : {uncapped})",
+        "en": "Capped at {cap}: {count} high-severity issue puts content at risk of being lost (before the cap: {uncapped})",
+        "de": "Auf {cap} begrenzt: {count} schwerwiegender Hinweis gefährdet Inhalte (vor der Begrenzung: {uncapped})",
+        "uk": "Обмежено до {cap}: {count} критичне зауваження ставить вміст під загрозу втрати (до обмеження: {uncapped})",
+        "ru": "Ограничено до {cap}: {count} критическое замечание ставит содержимое под угрозу потери (до ограничения: {uncapped})",
+        "es": "Limitado a {cap}: {count} observación grave pone el contenido en riesgo de perderse (antes del límite: {uncapped})",
+        "nl": "Begrensd op {cap}: {count} ernstige opmerking zet inhoud op het spel (voor de begrenzing: {uncapped})",
+        "fr": "Plafonné à {cap} : {count} remarque grave met le contenu en risque de perte (avant plafond : {uncapped})",
+    },
+    "cap_reason_few": {
+        "uk": "Обмежено до {cap}: {count} критичні зауваження ставлять вміст під загрозу втрати (до обмеження: {uncapped})",
+        "ru": "Ограничено до {cap}: {count} критических замечания ставят содержимое под угрозу потери (до ограничения: {uncapped})",
     },
     "cap_reason_many": {
-        "en": "Capped at {cap}: {count} high-severity findings put content at risk of being lost (before the cap: {uncapped})",
-        "de": "Auf {cap} begrenzt: {count} schwerwiegende Befunde gefährden Inhalte (vor der Begrenzung: {uncapped})",
-        "uk": "Обмежено до {cap}: {count} критичні знахідки ставлять вміст під загрозу втрати (до обмеження: {uncapped})",
-        "ru": "Ограничено до {cap}: {count} критические находки ставят содержимое под угрозу потери (до ограничения: {uncapped})",
-        "es": "Limitado a {cap}: {count} hallazgos graves ponen el contenido en riesgo de perderse (antes del límite: {uncapped})",
-        "nl": "Begrensd op {cap}: {count} ernstige bevindingen zetten inhoud op het spel (voor de begrenzing: {uncapped})",
-        "fr": "Plafonné à {cap} : {count} constats graves mettent le contenu en risque de perte (avant plafond : {uncapped})",
+        "en": "Capped at {cap}: {count} high-severity issues put content at risk of being lost (before the cap: {uncapped})",
+        "de": "Auf {cap} begrenzt: {count} schwerwiegende Hinweise gefährden Inhalte (vor der Begrenzung: {uncapped})",
+        "uk": "Обмежено до {cap}: {count} критичних зауважень ставлять вміст під загрозу втрати (до обмеження: {uncapped})",
+        "ru": "Ограничено до {cap}: {count} критических замечаний ставят содержимое под угрозу потери (до ограничения: {uncapped})",
+        "es": "Limitado a {cap}: {count} observaciones graves ponen el contenido en riesgo de perderse (antes del límite: {uncapped})",
+        "nl": "Begrensd op {cap}: {count} ernstige opmerkingen zetten inhoud op het spel (voor de begrenzing: {uncapped})",
+        "fr": "Plafonné à {cap} : {count} remarques graves mettent le contenu en risque de perte (avant plafond : {uncapped})",
     },
     "not_scored": {
         "en": "not scored",
@@ -705,7 +715,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "uk": "Вставте опис вакансії. Ключові слова зчитуються з нього автоматично; перед оцінюванням їх можна відредагувати.",
         "ru": "Вставьте описание вакансии. Ключевые слова считываются из него автоматически; перед оценкой их можно отредактировать.",
         "es": "Pega una oferta de empleo. Las palabras clave se extraen automáticamente; puedes editarlas antes de puntuar.",
-        "nl": "Plak een vacaturetekst. De trefwoorden worden er automatisch uit gelezen; u kunt ze vóór de beoordeling aanpassen.",
+        "nl": "Plak een vacaturetekst. De trefwoorden worden er automatisch uit gelezen; je kunt ze vóór de beoordeling aanpassen.",
         "fr": "Collez une offre d'emploi. Les mots-clés en sont extraits automatiquement ; vous pouvez les modifier avant l'évaluation.",
     },
     "match_paste_label": {
@@ -795,7 +805,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "uk": "Рахує те, що є в обох текстах. Не оцінює, наскільки добре ви працювали, лише чи можна знайти вимоги вакансії у вашому резюме.",
         "ru": "Считает то, что есть в обоих текстах. Не оценивает, насколько хорошо вы работали, только можно ли найти требования вакансии в вашем резюме.",
         "es": "Cuenta lo que aparece en ambos textos. No juzga lo bien que trabajaste, solo si los requisitos de la oferta se encuentran en tu CV.",
-        "nl": "Telt wat in beide teksten voorkomt. Het beoordeelt niet hoe goed u uw werk deed, alleen of de eisen uit de vacature in uw cv te vinden zijn.",
+        "nl": "Telt wat in beide teksten voorkomt. Het beoordeelt niet hoe goed jij je werk deed, alleen of de eisen uit de vacature in je cv te vinden zijn.",
         "fr": "Compte ce qui figure dans les deux textes. N'évalue pas la qualité de votre travail, seulement si les exigences de l'offre se trouvent dans votre CV.",
     },
     "match_rating_strong": {
@@ -837,8 +847,8 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
     "match_met_heading": {
         "en": "Covered",
         "de": "Abgedeckt",
-        "uk": "Закрито",
-        "ru": "Закрыто",
+        "uk": "Є в резюме",
+        "ru": "Есть в резюме",
         "es": "Cubierto",
         "nl": "Gedekt",
         "fr": "Couvert",
@@ -858,17 +868,30 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "uk": "Не знайдено у вашому резюме",
         "ru": "Не найдено в вашем резюме",
         "es": "No encontrado en tu CV",
-        "nl": "Niet gevonden in uw cv",
+        "nl": "Niet gevonden in je cv",
         "fr": "Introuvable dans votre CV",
     },
-    "match_missing_must_warning": {
-        "en": "{count} required item(s) could not be found in your CV.",
+    "match_missing_must_warning_many": {
+        "en": "{count} required items could not be found in your CV.",
         "de": "{count} erforderliche Punkte konnten in Ihrem Lebenslauf nicht gefunden werden.",
         "uk": "{count} обов'язкових пунктів не знайдено у вашому резюме.",
         "ru": "{count} обязательных пунктов не найдено в вашем резюме.",
         "es": "No se encontraron {count} requisitos obligatorios en tu CV.",
-        "nl": "{count} vereiste punten zijn niet in uw cv gevonden.",
+        "nl": "{count} vereiste punten zijn niet in je cv gevonden.",
         "fr": "{count} exigences obligatoires sont introuvables dans votre CV.",
+    },
+    "match_missing_must_warning_one": {
+        "en": "{count} required item could not be found in your CV.",
+        "de": "{count} erforderlicher Punkt konnte in Ihrem Lebenslauf nicht gefunden werden.",
+        "uk": "{count} обов'язкового пункту не знайдено у вашому резюме.",
+        "ru": "{count} обязательного пункта не найдено в вашем резюме.",
+        "es": "No se encontró {count} requisito obligatorio en tu CV.",
+        "nl": "{count} vereist punt is niet in je cv gevonden.",
+        "fr": "{count} exigence obligatoire est introuvable dans votre CV.",
+    },
+    "match_missing_must_warning_few": {
+        "uk": "{count} обов'язкових пункти не знайдено у вашому резюме.",
+        "ru": "{count} обязательных пункта не найдено в вашем резюме.",
     },
     "match_all_must_covered": {
         "en": "Every required item was found in your CV.",
@@ -876,7 +899,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "uk": "Усі обов'язкові пункти знайдено у вашому резюме.",
         "ru": "Все обязательные пункты найдены в вашем резюме.",
         "es": "Se encontraron todos los requisitos obligatorios en tu CV.",
-        "nl": "Alle vereiste punten zijn in uw cv gevonden.",
+        "nl": "Alle vereiste punten zijn in je cv gevonden.",
         "fr": "Toutes les exigences obligatoires figurent dans votre CV.",
     },
     "match_at_risk_heading": {
@@ -899,11 +922,11 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
     },
     "match_extras_heading": {
         "en": "In your CV but not asked for",
-        "de": "In Ihrem Lebenslauf, aber nicht gefordert",
+        "de": "Im Lebenslauf, nicht gefordert",
         "uk": "Є у резюме, але не вимагається",
         "ru": "Есть в резюме, но не требуется",
         "es": "En tu CV pero no solicitado",
-        "nl": "Wel in uw cv, niet gevraagd",
+        "nl": "Wel in je cv, niet gevraagd",
         "fr": "Dans votre CV mais non demandé",
     },
     "match_extras_caption": {
@@ -912,7 +935,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "uk": "Це не проблема. Корисно при адаптації резюме: саме ця вакансія цих пунктів не оцінює.",
         "ru": "Это не проблема. Полезно при адаптации резюме: именно эта вакансия эти пункты не оценивает.",
         "es": "No es un problema. Útil al adaptar el CV: son las partes que esta oferta concreta no valora.",
-        "nl": "Geen probleem. Nuttig bij het toespitsen van uw cv: deze onderdelen beloont juist deze vacature niet.",
+        "nl": "Geen probleem. Nuttig bij het toespitsen van je cv: deze onderdelen beloont juist deze vacature niet.",
         "fr": "Ce n'est pas un problème. Utile pour adapter le CV : cette offre précise ne valorise pas ces éléments.",
     },
     "match_no_requirements": {
@@ -943,13 +966,14 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "fr": "{skill} n'a été trouvé qu'en lecture attentive à la mise en page.",
     },
     "match_note_experience": {
-        "en": "Your CV shows about {have} years; the ad asks for {want}.",
-        "de": "Ihr Lebenslauf zeigt etwa {have} Jahre; die Anzeige verlangt {want}.",
-        "uk": "У вашому резюме близько {have} років; вакансія просить {want}.",
-        "ru": "В вашем резюме около {have} лет; вакансия просит {want}.",
-        "es": "Tu CV muestra unos {have} años; la oferta pide {want}.",
-        "nl": "Uw cv toont ongeveer {have} jaar; de vacature vraagt {want}.",
+        "en": "Your CV shows about {have} years; the ad asks for {want} years.",
+        "de": "Ihr Lebenslauf zeigt etwa {have} Jahre; die Anzeige verlangt {want} Jahre.",
+        "uk": "У вашому резюме близько {have} років; вакансія просить {want} років.",
+        "ru": "В вашем резюме около {have} лет; вакансия просит {want} лет.",
+        "es": "Tu CV muestra unos {have} años; la oferta pide {want} años.",
+        "nl": "Je cv toont ongeveer {have} jaar; de vacature vraagt {want} jaar.",
         "fr": "Votre CV indique environ {have} ans ; l'offre en demande {want}.",
+
     },
     "match_note_education_ok": {
         "en": "Your {have} covers the requested {want}.",
@@ -957,7 +981,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "uk": "Ваш рівень ({have}) покриває потрібний ({want}).",
         "ru": "Ваш уровень ({have}) покрывает требуемый ({want}).",
         "es": "Tu {have} cubre el {want} solicitado.",
-        "nl": "Uw {have} dekt het gevraagde {want}.",
+        "nl": "Je {have} dekt het gevraagde {want}.",
         "fr": "Votre {have} couvre le {want} demandé.",
     },
     "match_note_education_lower": {
@@ -966,7 +990,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "uk": "Вакансія просить {want}; у резюме вказано {have}.",
         "ru": "Вакансия просит {want}; в резюме указано {have}.",
         "es": "La oferta pide {want}; tu CV muestra {have}.",
-        "nl": "De vacature vraagt {want}; uw cv toont {have}.",
+        "nl": "De vacature vraagt {want}; je cv toont {have}.",
         "fr": "L'offre demande {want} ; votre CV indique {have}.",
     },
     "match_note_education_missing": {
@@ -975,7 +999,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "uk": "У резюме не знайдено освіти; вакансія просить {want}.",
         "ru": "В резюме не найдено образования; вакансия просит {want}.",
         "es": "No se encontró titulación en tu CV; la oferta pide {want}.",
-        "nl": "In uw cv is geen opleiding gevonden; de vacature vraagt {want}.",
+        "nl": "In je cv is geen opleiding gevonden; de vacature vraagt {want}.",
         "fr": "Aucun diplôme n'a été trouvé dans votre CV ; l'offre demande {want}.",
     },
     "match_note_education_field": {
@@ -984,7 +1008,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "uk": "Рівень підходить, але вакансія називає {want}, а резюме — {have}.",
         "ru": "Уровень подходит, но вакансия называет {want}, а резюме — {have}.",
         "es": "El nivel encaja, pero la oferta nombra {want} y tu CV dice {have}.",
-        "nl": "Het niveau past, maar de vacature noemt {want} en uw cv {have}.",
+        "nl": "Het niveau past, maar de vacature noemt {want} en je cv {have}.",
         "fr": "Le niveau convient, mais l'offre nomme {want} et votre CV indique {have}.",
     },
     "match_note_language": {
@@ -993,7 +1017,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "uk": "{lang}: у резюме {have}, вакансія просить {want}.",
         "ru": "{lang}: в резюме {have}, вакансия просит {want}.",
         "es": "{lang}: tu CV muestra {have}, la oferta pide {want}.",
-        "nl": "{lang}: uw cv toont {have}, de vacature vraagt {want}.",
+        "nl": "{lang}: je cv toont {have}, de vacature vraagt {want}.",
         "fr": "{lang} : votre CV indique {have}, l'offre demande {want}.",
     },
     "match_note_language_missing": {
@@ -1002,7 +1026,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "uk": "{lang} вимагається, але рівня в резюме не знайдено.",
         "ru": "{lang} требуется, но уровня в резюме не найдено.",
         "es": "Se pide {lang} pero no se encontró ningún nivel en tu CV.",
-        "nl": "{lang} wordt gevraagd, maar in uw cv is geen niveau gevonden.",
+        "nl": "{lang} wordt gevraagd, maar in je cv is geen niveau gevonden.",
         "fr": "{lang} est demandé mais aucun niveau n'a été trouvé dans votre CV.",
     },
     "tagline": {
@@ -1029,7 +1053,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "uk": "Ваше резюме",
         "ru": "Ваше резюме",
         "es": "Tu CV",
-        "nl": "Uw cv",
+        "nl": "Je cv",
         "fr": "Votre CV",
     },
     "zone_upload_note": {
@@ -1044,19 +1068,19 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
     "zone_document_note": {
         "en": "Your pages as the parser sees them. Boxes mark the exact area each finding refers to.",
         "de": "Ihre Seiten, wie der Parser sie sieht. Die Rahmen markieren den genauen Bereich jedes Befunds.",
-        "uk": "Ваші сторінки очима парсера. Рамки позначають точну ділянку кожної знахідки.",
-        "ru": "Ваши страницы глазами парсера. Рамки отмечают точный участок каждой находки.",
+        "uk": "Ваші сторінки очима парсера. Рамки позначають точну ділянку кожного зауваження.",
+        "ru": "Ваши страницы глазами парсера. Рамки отмечают точный участок каждого замечания.",
         "es": "Tus páginas como las ve el analizador. Los recuadros marcan el área exacta de cada hallazgo.",
-        "nl": "Uw pagina's zoals de parser ze ziet. De kaders markeren precies het gebied van elke bevinding.",
+        "nl": "Je pagina's zoals de parser ze ziet. De kaders markeren precies het gebied van elke bevinding.",
         "fr": "Vos pages telles que l'analyseur les voit. Les cadres marquent la zone exacte de chaque constat.",
     },
     "zone_fixes_note": {
         "en": "Every finding, what it does to your file, and the steps that fix it.",
         "de": "Jeder Befund, seine Wirkung auf Ihre Datei und die Schritte, die ihn beheben.",
-        "uk": "Кожна знахідка, що вона робить із вашим файлом, і кроки, які це виправляють.",
-        "ru": "Каждая находка, что она делает с вашим файлом, и шаги, которые это исправляют.",
+        "uk": "Кожне зауваження, що воно робить із вашим файлом, і кроки, які це виправляють.",
+        "ru": "Каждое замечание, что оно делает с вашим файлом, и шаги, которые это исправляют.",
         "es": "Cada hallazgo, qué le hace a tu archivo y los pasos que lo corrigen.",
-        "nl": "Elke bevinding, wat die met uw bestand doet en de stappen die het oplossen.",
+        "nl": "Elke bevinding, wat die met je bestand doet en de stappen die het oplossen.",
         "fr": "Chaque constat, son effet sur votre fichier et les étapes qui le corrigent.",
     },
     "jump_document": {
@@ -1106,11 +1130,11 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
     },
     "issue_tally": {
         "en": "{high} serious · {medium} moderate · {low} minor",
-        "de": "{high} schwer · {medium} mittel · {low} gering",
+        "de": "{high} schwerwiegende · {medium} mittlere · {low} geringe",
         "uk": "{high} серйозних · {medium} середніх · {low} незначних",
         "ru": "{high} серьёзных · {medium} средних · {low} незначительных",
         "es": "{high} graves · {medium} moderados · {low} leves",
-        "nl": "{high} ernstig · {medium} matig · {low} gering",
+        "nl": "{high} ernstige · {medium} matige · {low} geringe",
         "fr": "{high} graves · {medium} moyens · {low} mineurs",
     },
     "empty_hint": {
@@ -1119,14 +1143,14 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "uk": "Щойно файл завантажено, ви побачите сторінки з обведеними проблемними місцями, оцінку читабельності та, якщо вставите вакансію, наскільки резюме її покриває.",
         "ru": "Как только файл загружен, вы увидите страницы с обведёнными проблемными местами, оценку читаемости и, если вставите вакансию, насколько резюме её покрывает.",
         "es": "Cuando cargues un archivo verás sus páginas con las zonas problemáticas recuadradas, una puntuación de legibilidad y, si pegas una oferta, cuánto cubre tu CV.",
-        "nl": "Zodra een bestand geladen is ziet u de pagina's met omkaderde probleemgebieden, een leesbaarheidsscore en, als u een vacature plakt, hoeveel daarvan uw cv dekt.",
+        "nl": "Zodra een bestand geladen is zie je de pagina's met omkaderde probleemgebieden, een leesbaarheidsscore en, als je een vacature plakt, hoeveel daarvan je cv dekt.",
         "fr": "Une fois un fichier chargé, vous verrez vos pages avec les zones problématiques encadrées, un score de lisibilité et, si vous collez une offre, ce que votre CV en couvre.",
     },
     "match_gaps_heading": {
         "en": "Not covered",
         "de": "Nicht abgedeckt",
-        "uk": "Не закрито",
-        "ru": "Не закрыто",
+        "uk": "Немає в резюме",
+        "ru": "Нет в резюме",
         "es": "Sin cubrir",
         "nl": "Niet gedekt",
         "fr": "Non couvert",
@@ -1164,11 +1188,187 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "uk": "Вакансія вимагає посвідчення водія, у резюме його не знайдено.",
         "ru": "Вакансия требует водительское удостоверение, в резюме его не найдено.",
         "es": "La oferta pide carné de conducir y no se encontró ninguno en tu CV.",
-        "nl": "De vacature vraagt een rijbewijs; in uw cv is er geen gevonden.",
+        "nl": "De vacature vraagt een rijbewijs; in je cv is er geen gevonden.",
         "fr": "L'offre demande un permis de conduire, introuvable dans votre CV.",
     },
 }
 
+
+VOCABULARY: dict[str, dict[str, str]] = {
+    "email": {
+        "en": "email address",
+        "de": "E-Mail-Adresse",
+        "uk": "електронна пошта",
+        "ru": "электронная почта",
+        "es": "correo electrónico",
+        "nl": "e-mailadres",
+        "fr": "adresse e-mail",
+    },
+    "phone": {
+        "en": "phone number",
+        "de": "Telefonnummer",
+        "uk": "номер телефону",
+        "ru": "номер телефона",
+        "es": "número de teléfono",
+        "nl": "telefoonnummer",
+        "fr": "numéro de téléphone",
+    },
+    "header": {
+        "en": "header",
+        "de": "Kopfzeile",
+        "uk": "верхній колонтитул",
+        "ru": "верхний колонтитул",
+        "es": "encabezado",
+        "nl": "koptekst",
+        "fr": "en-tête",
+    },
+    "footer": {
+        "en": "footer",
+        "de": "Fußzeile",
+        "uk": "нижній колонтитул",
+        "ru": "нижний колонтитул",
+        "es": "pie de página",
+        "nl": "voettekst",
+        "fr": "pied de page",
+    },
+    "experience": {
+        "en": "Experience",
+        "de": "Berufserfahrung",
+        "uk": "Досвід",
+        "ru": "Опыт",
+        "es": "Experiencia",
+        "nl": "Werkervaring",
+        "fr": "Expérience",
+    },
+    "education": {
+        "en": "Education",
+        "de": "Ausbildung",
+        "uk": "Освіта",
+        "ru": "Образование",
+        "es": "Formación",
+        "nl": "Opleiding",
+        "fr": "Formation",
+    },
+    "skills": {
+        "en": "Skills",
+        "de": "Kenntnisse",
+        "uk": "Навички",
+        "ru": "Навыки",
+        "es": "Competencias",
+        "nl": "Vaardigheden",
+        "fr": "Compétences",
+    },
+    "ausbildung": {
+        "en": "vocational training",
+        "de": "Ausbildung",
+        "uk": "профтехосвіта",
+        "ru": "профобразование",
+        "es": "formación profesional",
+        "nl": "beroepsopleiding",
+        "fr": "formation professionnelle",
+    },
+    "bachelor": {
+        "en": "Bachelor",
+        "de": "Bachelor",
+        "uk": "бакалавр",
+        "ru": "бакалавр",
+        "es": "grado",
+        "nl": "bachelor",
+        "fr": "licence",
+    },
+    "master": {
+        "en": "Master",
+        "de": "Master",
+        "uk": "магістр",
+        "ru": "магистр",
+        "es": "máster",
+        "nl": "master",
+        "fr": "master",
+    },
+    "doctorate": {
+        "en": "doctorate",
+        "de": "Promotion",
+        "uk": "докторський ступінь",
+        "ru": "докторская степень",
+        "es": "doctorado",
+        "nl": "doctoraat",
+        "fr": "doctorat",
+    },
+    "informatik": {
+        "en": "computer science",
+        "de": "Informatik",
+        "uk": "інформатика",
+        "ru": "информатика",
+        "es": "informática",
+        "nl": "informatica",
+        "fr": "informatique",
+    },
+    "engineering": {
+        "en": "engineering",
+        "de": "Ingenieurwesen",
+        "uk": "інженерія",
+        "ru": "инженерия",
+        "es": "ingeniería",
+        "nl": "techniek",
+        "fr": "ingénierie",
+    },
+    "mathematics": {
+        "en": "mathematics",
+        "de": "Mathematik",
+        "uk": "математика",
+        "ru": "математика",
+        "es": "matemáticas",
+        "nl": "wiskunde",
+        "fr": "mathématiques",
+    },
+    "business": {
+        "en": "business studies",
+        "de": "Betriebswirtschaft",
+        "uk": "економіка",
+        "ru": "экономика",
+        "es": "empresariales",
+        "nl": "bedrijfskunde",
+        "fr": "gestion",
+    },
+}
+"""Internal identifiers that end up inside a translated sentence.
+
+The findings and the score carry evidence as data -- which section was
+lost, which contact detail was missing, which zone a repeated line sat in
+-- and those values are the words the code uses, in English and lowercase.
+They were being interpolated straight into every locale, so a German
+reader was told "email gefunden, aber kein phone" and a Ukrainian one
+"Знайдено email, але немає phone".
+
+Translating at render time rather than at analysis time is what keeps the
+analysis language-independent: the same Finding renders in seven
+languages."""
+
+TRANSLATED_PARAMS = frozenset({"found", "missing", "zone", "have", "want", "lost", "section"})
+"""Which placeholders hold vocabulary rather than free text.
+
+Named explicitly so a font called "Master" or a keyword someone typed can
+never be silently rewritten on its way to the screen."""
+
+
+def term(token: str, language: str) -> str:
+    """One vocabulary token in the reader's language, or the token itself."""
+    entry = VOCABULARY.get(token)
+    if entry is None:
+        return token
+    return entry.get(language) or entry.get(DEFAULT_LANGUAGE) or token
+
+
+def _translate_params(params: dict, language: str) -> dict:
+    translated = {}
+    for name, value in params.items():
+        if name in TRANSLATED_PARAMS and isinstance(value, str):
+            # A list of sections arrives already joined, so each piece is
+            # translated and the separator is put back.
+            translated[name] = ", ".join(term(part.strip(), language) for part in value.split(","))
+        else:
+            translated[name] = value
+    return translated
 
 def t(key: str, language: str, **kwargs) -> str:
     """Return the translated string, falling back to English when a language
@@ -1176,12 +1376,49 @@ def t(key: str, language: str, **kwargs) -> str:
     raising, so a typo shows up in the interface instead of taking the page
     down mid-render.
     """
+    kwargs = _translate_params(kwargs, language)
     entry = TRANSLATIONS.get(key)
     if entry is None:
         return f"[{key}]"
 
     text = entry.get(language) or entry.get(DEFAULT_LANGUAGE, f"[{key}]")
     return text.format(**kwargs) if kwargs else text
+
+
+PLURAL_FEW_LANGUAGES = frozenset({"uk", "ru"})
+"""Languages with a distinct form for 2-4 alongside 1 and 5+."""
+
+
+def _plural_form(count: int, language: str) -> str:
+    """Which of one/few/many ``count`` takes in ``language``."""
+    if language not in PLURAL_FEW_LANGUAGES:
+        return "one" if count == 1 else "many"
+    units, tens = count % 10, count % 100
+    if units == 1 and tens != 11:
+        return "one"
+    if 2 <= units <= 4 and not 12 <= tens <= 14:
+        return "few"
+    return "many"
+
+
+def tn(stem: str, count: int, language: str, **kwargs) -> str:
+    """Translate a sentence whose wording depends on a count.
+
+    English needs two forms, Ukrainian and Russian three, and picking
+    between them in the calling code would mean writing the rule out again
+    at every call site -- which is how "1 required item(s)" and "1 критична
+    знахідка ставлять" got shipped. Callers pass the number; this picks the
+    key.
+
+    Falls back to ``stem_many`` when a language declares no form for the
+    count, and to ``stem`` itself when there are no plural forms at all, so
+    a key that never needed the machinery still resolves.
+    """
+    kwargs.setdefault("count", count)
+    for candidate in (f"{stem}_{_plural_form(count, language)}", f"{stem}_many", stem):
+        if candidate in TRANSLATIONS:
+            return t(candidate, language, **kwargs)
+    return f"[{stem}]"
 
 
 RULE_DESCRIPTIONS: dict[str, dict[str, str]] = {
@@ -1198,12 +1435,12 @@ RULE_DESCRIPTIONS: dict[str, dict[str, str]] = {
         ),
         "uk": (
             "Шрифт, використаний у PDF, не вбудований і не належить до 14 стандартних "
-            "шрифтів PDF. Такі шрифти ризикують дати збій відповідності символів, через що "
+            "шрифтів PDF. Такі шрифти можуть спричинити збій відповідності символів, через що "
             "текст при розборі спотворюється або зникає."
         ),
         "ru": (
             "Шрифт, использованный в PDF, не встроен и не входит в число 14 стандартных "
-            "шрифтов PDF. Такие шрифты рискуют дать сбой соответствия символов, из-за чего "
+            "шрифтов PDF. Такие шрифты могут вызвать сбой соответствия символов, из-за чего "
             "текст при разборе искажается или пропадает."
         ),
         "es": (
@@ -1308,13 +1545,13 @@ RULE_DESCRIPTIONS: dict[str, dict[str, str]] = {
             "geht, oder überspringen Tabelleninhalte ganz."
         ),
         "uk": (
-            "Вміст резюме розміщено в таблиці DOCX. Багато парсерів розгортають рядки "
-            "таблиці так, що плутається, яке значення до якої назви належить, або пропускають "
+            "Вміст резюме розміщено в таблиці DOCX. Багато парсерів зводять рядки "
+            "таблиці в один так, що плутається, яке значення до якої назви належить, або пропускають "
             "вміст таблиць повністю."
         ),
         "ru": (
-            "Содержимое резюме размещено в таблице DOCX. Многие парсеры разворачивают строки "
-            "таблицы так, что путается, какое значение к какому названию относится, либо "
+            "Содержимое резюме размещено в таблице DOCX. Многие парсеры сворачивают строки "
+            "таблицы в одну так, что путается, какое значение к какому названию относится, либо "
             "пропускают содержимое таблиц полностью."
         ),
         "es": (
@@ -1323,7 +1560,7 @@ RULE_DESCRIPTIONS: dict[str, dict[str, str]] = {
             "o se saltan el contenido de las tablas por completo."
         ),
         "nl": (
-            "Cv-inhoud staat in een DOCX-tabel. Veel parsers plooien tabelrijen zo plat dat "
+            "Cv-inhoud staat in een DOCX-tabel. Veel parsers slaan tabelrijen zo plat dat "
             "onduidelijk wordt welke waarde bij welk label hoort, of slaan tabelinhoud "
             "helemaal over."
         ),
@@ -1457,7 +1694,7 @@ RULE_DESCRIPTIONS: dict[str, dict[str, str]] = {
             "значит, под угрозу этот раздел ставит форматирование, а не содержимое."
         ),
         "es": (
-            "Una sección (Experiencia/Educación/Habilidades) se reconoce al leer el archivo "
+            "Una sección (Experiencia/Formación/Competencias) se reconoce al leer el archivo "
             "teniendo en cuenta el diseño, pero desaparece por completo al leerlo como lo "
             "haría un analizador ciego al diseño — es el formato, no el contenido, lo que "
             "pone en riesgo esta sección."
@@ -1520,11 +1757,11 @@ RULE_DETAILS: dict[str, dict[str, str]] = {
     },
     "docx_table_content": {
         "en": 'Tables are a tidy way to line up a two-column CV on screen, and a common way to scramble it on the way in. Many parsers flatten a table row into one line, so the label and the value from different columns end up welded together — or the table is skipped outright.',
-        "de": 'Tabellen sind eine saubere Art, einen zweispaltigen Lebenslauf am Bildschirm auszurichten — und eine häufige Art, ihn beim Einlesen zu zerlegen. Viele Parser plätten eine Tabellenzeile zu einer Zeile, sodass Bezeichnung und Wert aus verschiedenen Spalten verschweißt werden — oder die Tabelle wird ganz übersprungen.',
+        "de": 'Tabellen sind eine saubere Art, einen zweispaltigen Lebenslauf am Bildschirm auszurichten — und eine häufige Art, ihn beim Einlesen zu zerlegen. Viele Parser reduzieren eine Tabellenzeile auf eine einzige Zeile, sodass Bezeichnung und Wert aus verschiedenen Spalten verschweißt werden — oder die Tabelle wird ganz übersprungen.',
         "uk": 'Таблиці — охайний спосіб вирівняти двоколонкове резюме на екрані й водночас поширений спосіб зіпсувати його при читанні. Багато парсерів згортають рядок таблиці в один рядок тексту, і назва зі значенням із різних колонок зростаються — або таблицю пропускають узагалі.',
         "ru": 'Таблицы — аккуратный способ выровнять двухколоночное резюме на экране и одновременно распространённый способ испортить его при чтении. Многие парсеры сворачивают строку таблицы в одну строку текста, и название со значением из разных колонок срастаются — либо таблицу пропускают вовсе.',
         "es": 'Las tablas son una forma limpia de alinear un CV a dos columnas en pantalla, y una forma habitual de desordenarlo al leerlo. Muchos analizadores aplanan una fila en una sola línea, de modo que la etiqueta y el valor de columnas distintas quedan soldados — o la tabla se omite por completo.',
-        "nl": 'Tabellen zijn een nette manier om een cv met twee kolommen uit te lijnen op het scherm, en een veelvoorkomende manier om het bij het inlezen te verhaspelen. Veel parsers plooien een tabelrij tot één regel, waardoor label en waarde uit verschillende kolommen aan elkaar vastzitten — of de tabel wordt helemaal overgeslagen.',
+        "nl": 'Tabellen zijn een nette manier om een cv met twee kolommen uit te lijnen op het scherm, en een veelvoorkomende manier om het bij het inlezen te verhaspelen. Veel parsers slaan een tabelrij plat tot één regel, waardoor label en waarde uit verschillende kolommen aan elkaar vastzitten — of de tabel wordt helemaal overgeslagen.',
         "fr": "Les tableaux sont une manière propre d'aligner un CV sur deux colonnes à l'écran, et une manière courante de le brouiller à la lecture. Beaucoup d'analyseurs aplatissent une ligne de tableau en une seule ligne, soudant ainsi le libellé et la valeur de colonnes différentes — ou ignorent le tableau entièrement.",
     },
     "docx_header_footer_content": {
@@ -1533,7 +1770,7 @@ RULE_DETAILS: dict[str, dict[str, str]] = {
         "uk": 'Колонтитул Word зберігається в окремій частині файлу, поза тілом документа. Програми, що обходять тіло — а це більшість — до нього не дістаються. Швидка перевірка: натисніть Ctrl+A у Word. Те, що не виділилось, парсер приблизно так само не побачить.',
         "ru": 'Колонтитул Word хранится в отдельной части файла, вне тела документа. Программы, обходящие тело — а это большинство — до него не добираются. Быстрая проверка: нажмите Ctrl+A в Word. То, что не выделилось, парсер примерно так же не увидит.',
         "es": 'Un encabezado o pie de Word se guarda en su propia parte del archivo, fuera del cuerpo del documento. Los lectores que recorren el cuerpo — casi todos — nunca llegan ahí. Comprobación rápida: pulsa Ctrl+A en Word. Lo que no se resalte es más o menos lo que un analizador no verá.',
-        "nl": 'Een Word-kop- of voettekst zit in een eigen deel van het bestand, buiten het documentlichaam. Lezers die het lichaam doorlopen — de meeste dus — komen er nooit. Snelle test: druk Ctrl+A in Word. Wat niet oplicht, ziet een parser ongeveer ook niet.',
+        "nl": 'Een Word-kop- of voettekst zit in een eigen deel van het bestand, buiten de hoofdtekst. Lezers die de hoofdtekst doorlopen — de meeste dus — komen er nooit. Snelle test: druk Ctrl+A in Word. Wat niet oplicht, ziet een parser ongeveer ook niet.',
         "fr": "Un en-tête ou pied de page Word est stocké dans sa propre partie du fichier, hors du corps du document. Les lecteurs qui parcourent le corps — la plupart — n'y accèdent jamais. Test rapide : appuyez sur Ctrl+A dans Word. Ce qui ne se surligne pas est à peu près ce qu'un analyseur ne verra pas.",
     },
     "docx_text_box_content": {
@@ -1548,11 +1785,11 @@ RULE_DETAILS: dict[str, dict[str, str]] = {
     "missing_contact_field": {
         "en": 'Neither an email address nor a phone number could be recovered, even reading the file at its best. Whatever else is right, an employer who cannot reach you cannot invite you — this is the one finding that makes the rest moot.',
         "de": 'Weder E-Mail-Adresse noch Telefonnummer waren zu finden, selbst beim bestmöglichen Lesen der Datei. Was sonst auch stimmt: Wer Sie nicht erreichen kann, kann Sie nicht einladen — dieser Befund macht alle anderen gegenstandslos.',
-        "uk": "Не вдалося дістати ні електронну пошту, ні номер телефону — навіть при найкращому читанні файлу. Що б не було правильним в іншому, роботодавець, який не може з вами зв'язатися, не може вас запросити — саме ця знахідка знецінює всі решта.",
-        "ru": 'Не удалось получить ни адрес электронной почты, ни номер телефона — даже при наилучшем чтении файла. Что бы ни было правильным в остальном, работодатель, который не может с вами связаться, не может вас пригласить — именно эта находка обесценивает все остальные.',
+        "uk": "Не вдалося дістати ні електронну пошту, ні номер телефону — навіть при найкращому читанні файлу. Що б не було правильним в іншому, роботодавець, який не може з вами зв'язатися, не може вас запросити — саме це зауваження знецінює всі інші.",
+        "ru": 'Не удалось получить ни адрес электронной почты, ни номер телефона — даже при наилучшем чтении файла. Что бы ни было правильным в остальном, работодатель, который не может с вами связаться, не может вас пригласить — именно это замечание обесценивает все остальные.',
         "es": 'No se ha podido recuperar ni un correo electrónico ni un teléfono, ni siquiera leyendo el archivo en su mejor caso. Por bien que esté todo lo demás, quien no puede contactarte no puede invitarte: este hallazgo deja sin sentido a los demás.',
         "nl": 'Er kon geen e-mailadres en geen telefoonnummer worden achterhaald, zelfs niet bij de best mogelijke lezing. Wat er verder ook klopt: wie je niet kan bereiken, kan je niet uitnodigen — deze bevinding maakt de rest irrelevant.',
-        "fr": "Ni adresse e-mail ni numéro de téléphone n'ont pu être retrouvés, même en lisant le fichier au mieux. Quoi que vaille le reste, un employeur qui ne peut pas vous joindre ne peut pas vous convier — ce constat rend les autres sans objet.",
+        "fr": "Ni adresse e-mail ni numéro de téléphone n'ont pu être retrouvés, même en lisant le fichier au mieux. Quoi que vaille le reste, un employeur qui ne peut pas vous joindre ne peut pas vous inviter — ce constat rend les autres sans objet.",
     },
     "section_missing_under_naive_parsing": {
         "en": 'Your file has this section, and reading it with the columns understood finds it. Reading it the plain way — left to right across the whole page, which is what a layout-blind parser does — merges your heading with whatever sits beside it, and the heading stops being a heading. The content is fine; the layout is what puts it at risk.',
@@ -1653,17 +1890,17 @@ RULE_FIXES: dict[str, dict[str, list[str]]] = {
         ],
         "uk": [
             'Якщо це банер з іменем, титульна смуга чи діаграма навичок — наберіть це справжнім текстом, і проблему вичерпано.',
-            'Якщо це портретне фото, тексту воно не коштує. Лишати чи ні — залежить від ринку: у Німеччині та більшості Європи звично, у США, Британії та Ірландії зазвичай не додають.',
+            'Якщо це портретне фото, жодного тексту через нього не втрачається. Лишати чи ні — залежить від ринку: у Німеччині та більшості Європи звично, у США, Британії та Ірландії зазвичай не додають.',
             'Перевірте, що саме там: відкрийте PDF і натисніть Ctrl+A. Усе, що не виділилось, — зображення, а не текст.',
         ],
         "ru": [
             'Если это баннер с именем, титульная полоса или диаграмма навыков — наберите это настоящим текстом, и проблема исчерпана.',
-            'Если это портретное фото, текста оно не стоит. Оставлять или нет — зависит от рынка: в Германии и большей части Европы привычно, в США, Британии и Ирландии обычно не добавляют.',
+            'Если это портретное фото, никакого текста из-за него не теряется. Оставлять или нет — зависит от рынка: в Германии и большей части Европы привычно, в США, Британии и Ирландии обычно не добавляют.',
             'Проверьте, что именно там: откройте PDF и нажмите Ctrl+A. Всё, что не выделилось, — изображение, а не текст.',
         ],
         "es": [
             'Si la imagen es un rótulo con el nombre, una barra de título o un gráfico de competencias, vuelve a escribirlo como texto real: ahí acaba el problema.',
-            'Si es una foto de retrato, no te cuesta ningún texto. Mantenerla o no depende del mercado: habitual en Alemania y buena parte de Europa, normalmente se omite en EE. UU., Reino Unido e Irlanda.',
+            'Si es una foto de retrato, no supone ninguna pérdida de texto. Mantenerla o no depende del mercado: habitual en Alemania y buena parte de Europa, normalmente se omite en EE. UU., Reino Unido e Irlanda.',
             'Comprueba cuál es: abre el PDF y pulsa Ctrl+A. Lo que no se resalte es una imagen, no texto.',
         ],
         "nl": [
@@ -1686,7 +1923,7 @@ RULE_FIXES: dict[str, dict[str, list[str]]] = {
         "de": [
             'Wandeln Sie die Tabelle in Text um: hineinklicken, dann Tabellenlayout → In Text konvertieren → mit Absatzmarken trennen.',
             'Bauen Sie die Ausrichtung mit Tabstopps oder einfachen Zeilenumbrüchen statt mit einer Tabelle nach.',
-            'Tabellen nur für echte Tabellendaten verwenden. Ein zweispaltiges Seitenlayout sind keine Tabellendaten.',
+            'Tabellen nur für echte Tabellendaten verwenden. Ein zweispaltiges Seitenlayout ist kein Tabelleninhalt.',
         ],
         "uk": [
             'Перетворіть таблицю на текст: клацніть у ній, далі Макет таблиці → Перетворити на текст → розділяти знаками абзацу.',
@@ -1701,7 +1938,7 @@ RULE_FIXES: dict[str, dict[str, list[str]]] = {
         "es": [
             'Convierte la tabla en texto: haz clic dentro y ve a Disposición de tabla → Convertir en texto → separar con marcas de párrafo.',
             'Rehaz la alineación con tabuladores o saltos de línea normales en lugar de una tabla.',
-            'Reserva las tablas para datos realmente tabulares. Una maquetación a dos columnas no son datos tabulares.',
+            'Reserva las tablas para datos realmente tabulares. Una maquetación a dos columnas no es contenido tabular.',
         ],
         "nl": [
             'Zet de tabel om naar tekst: klik erin en ga naar Tabelindeling → Converteren naar tekst → scheiden met alineamarkeringen.',
@@ -1741,9 +1978,9 @@ RULE_FIXES: dict[str, dict[str, list[str]]] = {
             'Comprueba que funcionó: pulsa Ctrl+A en Word. Si un texto no se resalta, no está en el cuerpo y es probable que un analizador lo pase por alto.',
         ],
         "nl": [
-            'Verplaats alles wat gelezen moet worden naar het documentlichaam — in kop- en voettekst hoort niets wat je zou missen.',
+            'Verplaats alles wat gelezen moet worden naar de hoofdtekst — in kop- en voettekst hoort niets wat je zou missen.',
             "Zet je contactgegevens als gewone alinea's in de eerste regels onder je naam.",
-            'Controleer het: druk Ctrl+A in Word. Licht tekst niet op, dan staat die niet in het lichaam en mist een parser die waarschijnlijk.',
+            'Controleer het: druk Ctrl+A in Word. Licht tekst niet op, dan staat die niet in de hoofdtekst en mist een parser die waarschijnlijk.',
         ],
         "fr": [
             "Déplacez dans le corps du document tout ce qui doit être lu — l'en-tête et le pied de page ne doivent rien contenir dont la perte compte.",
@@ -1811,7 +2048,7 @@ RULE_FIXES: dict[str, dict[str, list[str]]] = {
         ],
         "es": [
             'Pon tu correo y tu teléfono como texto plano en las tres primeras líneas, justo bajo tu nombre.',
-            'No los dejes solo en un encabezado, dentro de una imagen o en un cuadro de texto: son los tres sitios que un analizador tiene más papeletas de omitir.',
+            'No los dejes solo en un encabezado, dentro de una imagen o en un cuadro de texto: son los tres sitios que un analizador tiene más probabilidades de omitir.',
             'Escríbelos de forma sencilla: nombre@ejemplo.com y +34 600 123 456, no "nombre [arroba] ejemplo [punto] com".',
         ],
         "nl": [

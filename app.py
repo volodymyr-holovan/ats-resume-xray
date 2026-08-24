@@ -15,6 +15,7 @@ two-pane review on a phone is two unreadable slivers.
 Run locally with: streamlit run app.py
 """
 
+import html
 import logging
 from dataclasses import replace
 from pathlib import Path
@@ -29,6 +30,7 @@ from ats_xray.i18n import (
     rule_fixes,
     sources_path,
     t,
+    tn,
 )
 from ats_xray.match import evaluate_match
 from ats_xray.normalize import fold
@@ -232,7 +234,7 @@ def _render_scorecard(breakdown, findings, lang: str) -> None:
     )
 
     if breakdown.cap_key:
-        st.warning(t(breakdown.cap_key, lang, **breakdown.cap_params))
+        st.warning(tn(breakdown.cap_key, breakdown.cap_params.get("count", 1), lang, **breakdown.cap_params))
 
     for component in breakdown.components:
         name = t(component.name_key, lang)
@@ -362,7 +364,11 @@ def _outcome_pane(heading_key: str, tone: str, outcomes, lang: str, extras=None)
             st.caption("—")
             return
         for outcome in outcomes:
-            label = outcome.requirement.label
+            # Escaped before anything is appended. This label can be a
+            # keyword the reader typed into the multiselect, and it can be a
+            # term lifted out of a pasted advert; neither is ours to trust
+            # in a sink that renders markup.
+            label = html.escape(outcome.requirement.label)
             if outcome.status == "partial":
                 # A partial belongs with the gaps -- it is something to act
                 # on -- but the reader has to see that it is not a blank.
@@ -379,7 +385,7 @@ def _render_match_report(report, lang: str) -> None:
             st.metric(label=t(report.rating_key, lang), value=f"{report.score}/100")
         with verdict_col:
             if report.missing_must:
-                st.error(t("match_missing_must_warning", lang, count=len(report.missing_must)))
+                st.error(tn("match_missing_must_warning", len(report.missing_must), lang))
             else:
                 st.success(t("match_all_must_covered", lang))
             st.caption(t("match_score_caption", lang))
@@ -528,8 +534,15 @@ else:
         st.error(t("error_unreadable", language))
     else:
         analysis = result
+        # In backticks: a filename is arbitrary text and st.caption renders
+        # Markdown, so an asterisk or a bracket pair would reformat the line.
         st.caption(
-            t("file_loaded", language, name=uploaded_file.name, pages=len(result.rendered_pages))
+            t(
+                "file_loaded",
+                language,
+                name=f"`{uploaded_file.name}`",
+                pages=len(result.rendered_pages),
+            )
         )
         _document_zone(result, is_pdf, language)
 
