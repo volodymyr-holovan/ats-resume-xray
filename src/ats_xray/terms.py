@@ -77,6 +77,17 @@ _MODIFIERS = (
     "advanced", "working", "outstanding", "ideally", "preferably", "several",
     "willingness", "passion", "familiarity", "proficiency", "hands-on",
     "completed", "afgeronde", "vloeiend", "diplome", "estudios",
+    # Infinitives that open a German task bullet. They are capitalised there
+    # by sentence position and look exactly like nouns.
+    "führen", "betreuen", "durchführen", "erstellen", "pflegen", "unterstützen",
+    "bearbeiten", "planen", "koordinieren", "überwachen", "sicherstellen",
+    "mitwirken", "umsetzen", "analysieren", "beraten", "dokumentieren",
+    "organisieren", "verwalten", "entwickeln", "warten", "prüfen", "begleiten",
+    "steuern", "leiten", "abstimmen", "erfassen", "auswerten", "montieren",
+    # The people a job serves are not a skill.
+    "bewohner", "patienten", "patient", "gäste", "gast", "klienten", "nutzer",
+    "anwender", "besucher", "bewerber", "schüler", "teilnehmer", "personen",
+    "menschen", "bürger", "mandanten", "gemeinde", "kinder", "jugendliche",
 )
 
 _FRAMING_WORDS = (
