@@ -155,14 +155,52 @@ def test_touch_targets_are_declared_at_44px():
         assert "44px" in block[1][:200], f"{selector} does not declare a 44px target"
 
 
-def test_every_source_file_parses_on_the_oldest_supported_python():
-    """CI runs 3.10 and 3.12; development happens on 3.12. Nested quotes of
-    the same kind inside an f-string are legal from 3.12 and a SyntaxError
-    before it, so a line that works locally can take the whole suite down
-    on the older interpreter -- which is a collection error, not a test
-    failure, so it reports as every test failing at once."""
-    import ast
+FSTRING_START = re.compile(r"""(?<![\w'"])(?:[fF][rRbB]?|[rRbB][fF])('''|\"\"\"|'|")""")
 
+
+def _reuses_its_own_delimiter(source: str) -> list[int]:
+    """Line numbers of f-strings that repeat their delimiter inside a
+    replacement field.
+
+    PEP 701 made that legal in 3.12. Before it, the string simply ends at
+    the inner quote and the remainder is a syntax error.
+
+    Hand-rolled rather than handed to ast.parse, because feature_version
+    does not help here: it does not change how f-strings are tokenised, so
+    a 3.12 interpreter accepts them however old a floor you ask it for.
+    That is exactly why this class of mistake reaches CI.
+    """
+    found = []
+    for match in FSTRING_START.finditer(source):
+        delimiter = match.group(1)
+        index, depth = match.end(), 0
+        while index < len(source):
+            char = source[index]
+            if char == "\\":
+                index += 2
+                continue
+            if char == "{":
+                if source[index + 1 : index + 2] == "{":   # a literal brace
+                    index += 2
+                    continue
+                depth += 1
+            elif char == "}":
+                depth = max(0, depth - 1)
+            elif source.startswith(delimiter, index):
+                if depth > 0:
+                    found.append(source.count("\n", 0, index) + 1)
+                break
+            elif char == "\n" and len(delimiter) == 1:
+                break
+            index += 1
+    return found
+
+
+def test_no_f_string_reuses_its_own_quote():
+    """This took CI down twice. A SyntaxError at import time is a
+    collection error rather than a test result, so the run reports as every
+    test failing at once and says nothing about which line. Both times the
+    line worked perfectly on the 3.12 it was written on."""
     broken = []
     sources = (
         list((ROOT / "src").rglob("*.py"))
@@ -170,12 +208,10 @@ def test_every_source_file_parses_on_the_oldest_supported_python():
         + [ROOT / "app.py"]
     )
     for path in sources:
-        try:
-            ast.parse(path.read_text(encoding="utf-8"), feature_version=(3, 10))
-        except SyntaxError as exc:
-            broken.append(f"{path.relative_to(ROOT)}:{exc.lineno}: {exc.msg}")
+        for line in _reuses_its_own_delimiter(path.read_text(encoding="utf-8")):
+            broken.append(f"{path.relative_to(ROOT)}:{line}")
 
-    assert not broken, "syntax newer than Python 3.10:\n" + "\n".join(broken)
+    assert not broken, "f-strings that need Python 3.12:\n" + "\n".join(broken)
 
 
 def test_the_declared_python_floor_matches_what_the_code_needs():
