@@ -274,6 +274,19 @@ def _render_pages(pages, is_pdf: bool, lang: str) -> None:
             st.image(page.image, caption=label, use_container_width=True)
 
 
+def _extraction(text: str, lang: str) -> None:
+    """One extraction pane, or a sentence saying why it is empty.
+
+    A CV built entirely inside a Word table yields nothing at all from the
+    naive read -- which is exactly the finding, and exactly what an empty
+    grey box fails to say. Reported as a bug twice.
+    """
+    if text.strip():
+        st.text(text)
+    else:
+        st.warning(t("extraction_empty", lang))
+
+
 def _render_scorecard(breakdown, findings, lang: str) -> None:
     st.metric(label=t(breakdown.rating_key, lang), value=f"{breakdown.total}/100")
     st.caption(t("score_caption", lang))
@@ -309,9 +322,9 @@ def _document_zone(result, is_pdf: bool, lang: str) -> None:
         with pages_col:
             _render_pages(result.rendered_pages, is_pdf, lang)
             with st.expander(t("naive_expander", lang)):
-                st.text(result.naive_text)
+                _extraction(result.naive_text, lang)
             with st.expander(t("aware_expander", lang)):
-                st.text(result.aware_text)
+                _extraction(result.aware_text, lang)
         with score_col:
             _render_scorecard(result.score, result.findings, lang)
 
@@ -456,7 +469,7 @@ def _render_match_report(report, lang: str) -> None:
         with met_col:
             _outcome_pane("match_met_heading", "low", report.of_status("met"), lang)
         with extras_col:
-            _outcome_pane("match_extras_heading", "neutral", [], lang, extras=report.extras)
+            _outcome_pane("match_extras_heading", "medium", [], lang, extras=report.extras)
             st.caption(t("match_extras_caption", lang))
 
     if report.at_risk:

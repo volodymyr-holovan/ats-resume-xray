@@ -252,8 +252,6 @@
   margin-left: 0.25rem;
 }
 
-.axr-severity-neutral { color: inherit; opacity: 0.75; }
-
 /* A partial is a gap the reader can act on, listed with the other gaps.
    The tag is what stops it reading as a plain miss. */
 .axr-partly {

@@ -261,3 +261,19 @@ def test_the_page_clears_streamlit_toolbar():
         "calc(var(--axr-header) + ...) so the reason travels with the value"
     )
     assert re.search(r"--axr-header:\s*\d+px", CSS), "--axr-header is not defined"
+
+
+def test_no_severity_tone_is_declared_without_a_user():
+    """The extras column was neutral-toned until it became amber, and the
+    neutral rule then sat in the file describing nothing. A tone class the
+    app never asks for reads like a design decision and is dead weight."""
+    declared = set(re.findall(r"\.axr-severity-([\w-]+)\b", CSS))
+    used = set(re.findall(r'_outcome_pane\([^,]+,\s*"(\w+)"', APP)) | set(
+        re.findall(r'axr-severity-\{?(\w+)', APP)
+    )
+    # The findings list styles itself from Finding.severity, which the rule
+    # engine constrains to these three.
+    used |= {"high", "medium", "low"}
+    orphans = sorted(declared - used)
+
+    assert not orphans, f"severity tones nothing uses: {orphans}"
