@@ -16,12 +16,14 @@ Run locally with: streamlit run app.py
 """
 
 import html
+import json
 from contextlib import nullcontext
 import logging
 from dataclasses import replace
 from pathlib import Path
 
 import streamlit as st
+import streamlit.components.v1 as components
 
 from ats_xray.i18n import (
     DEFAULT_LANGUAGE,
@@ -156,6 +158,26 @@ def _zone(number: str, title: str, note: str, anchor: str) -> None:
         f"</div>"
         f'<p class="axr-zone-note">{note}</p>',
         unsafe_allow_html=True,
+    )
+
+
+def _declare_page_language(lang: str) -> None:
+    """Tell assistive technology which language the page is in.
+
+    Streamlit hard-codes lang="en" on the document and offers no way to
+    change it, so a screen reader pronounced every German, Ukrainian and
+    Russian string with English phonemes -- which is WCAG 3.1.1, and worse
+    than it sounds: "Lebenslauf" read as English is not a word.
+
+    A components iframe is the only reach into the parent document that
+    Streamlit provides. Height zero and no content: it is a side effect,
+    not an element.
+    """
+    components.html(
+        "<script>"
+        f"window.parent.document.documentElement.lang = {json.dumps(lang)};"
+        "</script>",
+        height=0,
     )
 
 
@@ -541,6 +563,7 @@ st.markdown(f"<style>{_stylesheet()}</style>", unsafe_allow_html=True)
 # known after it has run; everything below the masthead uses that value.
 _masthead(st.session_state.get("language", DEFAULT_LANGUAGE))
 language = st.session_state.get("language", DEFAULT_LANGUAGE)
+_declare_page_language(language)
 _jump_links(language, st.session_state.get("resume") is not None)
 _show_update_notice(language)
 
