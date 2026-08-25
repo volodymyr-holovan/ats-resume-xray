@@ -40,6 +40,23 @@ SKILLS_BY_ID: dict[str, Skill] = {skill.id: skill for skill in SKILLS}
 AMBIGUOUS_ALIASES = frozenset({
     "go", "r", "c", "ad", "ai", "ki", "qa", "hr", "au", "hu", "bar", "din", "iso",
     "sap fi", "sap co",
+    # Units and ordinary words that a curated list is supposed to keep out
+    # and did not. Every one below was reported from a real sentence:
+    "ml",       # "Infusionen bis 500 ml" -- Machine Learning, in five languages
+    "safe",     # "safe handling of chemicals" -- Scrum
+    "daily",    # "daily cleaning of offices" -- Scrum
+    "solid",    # "solid experience with..." -- Design Patterns
+    "rest",     # "keep the rest of the workroom tidy" -- REST
+    "teams",    # "Führung von Teams" -- Microsoft 365
+    "chef",     # "Chef de rang" -- Puppet
+    "san",      # "Calle San Juan 14" -- TrueNAS
+    "basel",    # "4051 Basel" -- Risikomanagement
+    "maya",     # a given name on line 1 -- 3D-Modellierung
+    "mag",      # "wer Kinder mag", and the Austrian Mag. title -- Schweißen
+    "fonds",    # "Ansetzen von Fonds und Saucen" -- Anlageberatung
+    "depot",    # a bus depot -- Anlageberatung
+    "satz",     # "ein Satz Werkzeuge", "Steuersatz" -- Grafikdesign
+    "optik",    # German for appearance -- Physik
 })
 """Spellings that are never treated as a skill mention even though they are
 the real name of one.
