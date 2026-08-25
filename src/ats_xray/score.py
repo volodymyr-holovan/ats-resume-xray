@@ -32,7 +32,6 @@ its parameters so the same breakdown renders in any supported language.
 
 from dataclasses import dataclass, field
 
-from .credentials import find_experience_months
 from .engine import Finding
 
 CONTACT_WEIGHT = 30
@@ -76,78 +75,26 @@ class ScoreBreakdown:
 
     @property
     def rating_key(self) -> str:
-        # "Parses poorly" would be the wrong thing to say about a document
-        # that is not a CV: it parsed fine, it just is not one.
-        if self.cap_key == "cap_reason_not_a_resume":
-            return "rating_not_a_resume"
         for threshold, key in RATING_THRESHOLDS:
             if self.total >= threshold:
                 return key
         return "rating_poor"
 
 
-NOT_A_RESUME_SCORE = 0
-"""What a document scores when nothing in it says "CV".
-
-Reported after someone uploaded a blank character sheet and got a
-respectable number back. The structure component was the cause: a document
-with no columns, no tables and no images triggers no rules, so it scored
-full marks for being cleanly parseable -- which was true and useless. A form
-with nothing on it parses perfectly and is not a CV.
-
-Zero rather than a low score, with an explanation, because the honest answer
-to "how readable is this CV" for something that is not a CV is not a number."""
-
-
-def looks_like_a_resume(aware_fields: dict, text: str) -> bool:
-    """Whether the document has enough about it to be a CV.
-
-    Contact details and section headings are not enough on their own. A job
-    advert -- the document this tool most invites someone to upload by
-    mistake, since the next zone asks them to paste one -- has both: it
-    lists "Qualifications" and "Skills" because it is asking for them, and
-    it prints an email because it wants replies. Under the two-signal rule
-    an advert scored 100/100 in all seven languages, which is worse than
-    the invoice that prompted the rule, because it is the likelier mistake.
-
-    The signal that actually separates the two is employment dates. A CV
-    says when each job ran; an advert describes one that has not started.
-    Nothing else in either document is as hard to fake by accident.
-
-    So: dated history, plus either a way to reach the person or one
-    recognised section. That last clause is what lets a one-page designer
-    CV through -- name, role, contact and a column of dates, no section
-    words anywhere -- which the section-counting rule scored as zero.
-    """
-    if find_experience_months(text) <= 0:
-        return False
-    has_contact = aware_fields["email"]["found"] or aware_fields["phone"]["found"]
-    sections_found = sum(1 for field in aware_fields["sections"].values() if field["found"])
-    return has_contact or sections_found >= 1
-
-
-def score_resume(
-    aware_fields: dict, naive_fields: dict, findings: list[Finding], text: str
-) -> ScoreBreakdown:
+def score_resume(aware_fields: dict, naive_fields: dict, findings: list[Finding]) -> ScoreBreakdown:
     """Compute the parse readiness score and the components behind it.
 
-    ``text`` is the layout-aware extraction. It is only read to decide
-    whether the document is a CV at all -- see :func:`looks_like_a_resume`
-    -- and never scored."""
-    if not looks_like_a_resume(aware_fields, text):
-        components = [
-            _contact_component(naive_fields),
-            _sections_component(aware_fields, naive_fields),
-            _structure_component(findings),
-        ]
-        return ScoreBreakdown(
-            total=NOT_A_RESUME_SCORE,
-            components=components,
-            uncapped_total=NOT_A_RESUME_SCORE,
-            cap_key="cap_reason_not_a_resume",
-            cap_params={},
-        )
+    Every document gets a number. There was briefly a gate here that
+    returned zero and "not a CV" for anything without dated employment
+    history, and it was wrong twice over: it answered a question nobody
+    asked the tool, and it answered it badly -- a real CV in an unusual
+    shape got zero and no readability report at all, which is precisely
+    the reader who most needs one.
 
+    A document that is not a CV still gets an honest parse-readiness
+    score, because that is all this measures. What it must never do is
+    invent content that is not there; that belongs to the lexicon, not
+    here."""
     components = [
         _contact_component(naive_fields),
         _sections_component(aware_fields, naive_fields),

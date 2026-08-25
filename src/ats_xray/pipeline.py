@@ -66,7 +66,7 @@ def analyze_path(file_path: str, render: bool = False) -> AnalysisResult:
     findings = run_rules(file_path, naive_text, aware_text)
     aware_fields = build_field_report(aware_text)
     naive_fields = build_field_report(naive_text)
-    breakdown = score_resume(aware_fields, naive_fields, findings, aware_text)
+    breakdown = score_resume(aware_fields, naive_fields, findings)
 
     rendered: list = []
     if render:
