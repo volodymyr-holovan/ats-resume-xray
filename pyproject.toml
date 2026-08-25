@@ -3,7 +3,11 @@ name = "ats-resume-xray"
 version = "0.3.0"
 description = "Shows what a resume-parsing pipeline actually extracts from a PDF/DOCX resume, so you can see and fix what breaks before an ATS does."
 readme = "README.md"
-requires-python = ">=3.9"
+# 3.10, not 3.9: ten modules annotate with `X | None` and none imports
+# `from __future__ import annotations`, so on 3.9 the package installs
+# cleanly and then raises TypeError on the first import. CI has only ever
+# tested 3.10 and 3.12.
+requires-python = ">=3.10"
 license = { text = "MIT" }
 dependencies = [
     "pdfplumber>=0.10",

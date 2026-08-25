@@ -153,3 +153,49 @@ def test_touch_targets_are_declared_at_44px():
         block = CSS.split(selector, 1)
         assert len(block) == 2, f"no rule for {selector}"
         assert "44px" in block[1][:200], f"{selector} does not declare a 44px target"
+
+
+def test_every_source_file_parses_on_the_oldest_supported_python():
+    """CI runs 3.10 and 3.12; development happens on 3.12. Nested quotes of
+    the same kind inside an f-string are legal from 3.12 and a SyntaxError
+    before it, so a line that works locally can take the whole suite down
+    on the older interpreter -- which is a collection error, not a test
+    failure, so it reports as every test failing at once."""
+    import ast
+
+    broken = []
+    sources = (
+        list((ROOT / "src").rglob("*.py"))
+        + list((ROOT / "tests").rglob("*.py"))
+        + [ROOT / "app.py"]
+    )
+    for path in sources:
+        try:
+            ast.parse(path.read_text(encoding="utf-8"), feature_version=(3, 10))
+        except SyntaxError as exc:
+            broken.append(f"{path.relative_to(ROOT)}:{exc.lineno}: {exc.msg}")
+
+    assert not broken, "syntax newer than Python 3.10:\n" + "\n".join(broken)
+
+
+def test_the_declared_python_floor_matches_what_the_code_needs():
+    """pyproject said >=3.9 while ten modules annotate with `X | None` and
+    none imports `from __future__ import annotations`. On 3.9 that installs
+    cleanly and raises TypeError on the first import -- the worst shape a
+    version constraint can have, because pip reports success."""
+    pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    workflow = next((ROOT / ".github" / "workflows").glob("*.yml")).read_text(encoding="utf-8")
+
+    declared = re.search(r'requires-python\s*=\s*">=(\d+)\.(\d+)"', pyproject)
+    assert declared, "pyproject declares no python floor"
+    floor = (int(declared.group(1)), int(declared.group(2)))
+
+    tested = sorted(
+        tuple(int(part) for part in version.split("."))
+        for version in re.findall(r'"(\d+\.\d+)"', re.search(r"python-version:.*", workflow).group())
+    )
+    assert tested, "the workflow tests no python versions"
+    assert floor == tested[0], (
+        f"pyproject requires >={floor[0]}.{floor[1]} but CI's oldest is "
+        f"{tested[0][0]}.{tested[0][1]}: one of them is untrue"
+    )

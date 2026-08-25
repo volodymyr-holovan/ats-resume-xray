@@ -139,9 +139,11 @@ def _jump_links(lang: str, loaded: bool) -> None:
         else f'<span class="axr-jump-pending">{t(key, lang)}</span>'
         for anchor, key, live in zones
     )
+    # Bound outside the f-string: nested quotes of the same kind are only
+    # legal from 3.12, and this runs on 3.10 too.
+    nav_label = html.escape(t("jump_nav_label", lang))
     st.markdown(
-        f'<nav class="axr-jump" aria-label="{html.escape(t("jump_nav_label", lang))}">'
-        f"{items}</nav>",
+        f'<nav class="axr-jump" aria-label="{nav_label}">{items}</nav>',
         unsafe_allow_html=True,
     )
 
