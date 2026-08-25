@@ -17,7 +17,7 @@ consultados en agosto de 2026 y mantenidos en inglés: los artículos lo son.
 
 ## ats-fonts
 
-Las fuentes no estándar o no incrustadas arriesgan ser mal leídas, sustituidas o descartadas por completo, produciendo texto ilegible o ausente.
+Las fuentes no estándar o no incrustadas pueden ser mal leídas, sustituidas o descartadas por completo, produciendo texto ilegible o ausente.
 
 - [How ATS Handles Fonts: Complete Guide to Resume Formatting](https://hireflow.net/blog/how-ats-handles-fonts)
 
@@ -48,4 +48,4 @@ Los currículums exportados como imágenes (habitual en plantillas de herramient
 
 ## practical-necessity
 
-No es una cita externa: un currículum en el que quien recluta no encuentra datos de contacto es inalcanzable, por bien que un analizador haya extraído lo demás. Esta regla existe por motivos prácticos, no de investigación.
+No es una cita externa: quien no pone datos de contacto en el currículum queda ilocalizable para quien recluta, por bien que un analizador haya extraído lo demás. Esta regla existe por motivos prácticos, no de investigación.

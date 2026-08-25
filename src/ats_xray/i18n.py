@@ -49,13 +49,13 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         ),
         "uk": (
             "Завантажте резюме (PDF або DOCX), щоб побачити, що з нього насправді видобуває "
-            "програма розбору — не таємничий бал, а реальне порівняння. Зауваження — це "
+            "парсер — не таємничий бал, а реальне порівняння. Зауваження — це "
             "задокументовані типові збої ([джерела]({sources_url})), а не гарантія поведінки "
             "системи конкретного роботодавця."
         ),
         "ru": (
             "Загрузите резюме (PDF или DOCX), чтобы увидеть, что из него на самом деле "
-            "извлекает программа разбора — не загадочный балл, а реальное сравнение. "
+            "извлекает парсер — не загадочный балл, а реальное сравнение. "
             "Замечания — это задокументированные типичные сбои ([источники]({sources_url})), "
             "а не гарантия поведения системы конкретного работодателя."
         ),
@@ -149,7 +149,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
             "derived from evidence in your file, shown in full."
         ),
         "de": (
-            "Wie viel von diesem Lebenslauf eine maschinelle Lesung übersteht. Das ist "
+            "Wie viel von diesem Lebenslauf ein maschinelles Lesen übersteht. Das ist "
             "**kein** Keyword-Abgleich mit einer Stellenanzeige: dafür bräuchte es die "
             "Anzeige und die Gewichtung des Arbeitgebers. Jede Zahl unten stammt aus "
             "Belegen in Ihrer Datei und wird vollständig gezeigt."
@@ -199,7 +199,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "de": "Keine dokumentierten Parsing-Risiken ausgelöst.",
         "uk": "Жодного задокументованого ризику розбору не виявлено.",
         "ru": "Ни одного задокументированного риска разбора не выявлено.",
-        "es": "No se ha activado ningún riesgo de análisis documentado.",
+        "es": "No se ha detectado ningún riesgo de análisis documentado.",
         "nl": "Geen gedocumenteerde parsing-risico's aangetroffen.",
         "fr": "Aucun risque d'analyse documenté déclenché.",
     },
@@ -287,7 +287,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
     "legend": {
         "en": "Boxes mark the exact area each finding refers to.",
         "de": "Die Rahmen markieren den genauen Bereich jedes Befunds.",
-        "uk": "Рамки позначають точну ділянку, якого стосується кожне зауваження.",
+        "uk": "Рамки позначають точну ділянку, якої стосується кожне зауваження.",
         "ru": "Рамки отмечают точный участок, к которому относится каждое замечание.",
         "es": "Los recuadros marcan el área exacta a la que se refiere cada hallazgo.",
         "nl": "De kaders markeren precies het gebied waar elke bevinding op slaat.",
@@ -302,14 +302,8 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
             "Dieses DOCX wurde mit LibreOffice gesetzt, um Seiten zu erzeugen; Ihr eigenes "
             "Textprogramm bricht Zeilen möglicherweise etwas anders um."
         ),
-        "uk": (
-            "Цей DOCX було зверстано через LibreOffice, щоб отримати сторінки; ваш власний "
-            "текстовий редактор може переносити рядки трохи інакше."
-        ),
-        "ru": (
-            "Этот DOCX был свёрстан через LibreOffice, чтобы получить страницы; ваш "
-            "текстовый редактор может переносить строки немного иначе."
-        ),
+        "uk": "Цей DOCX було зверстано у LibreOffice, щоб отримати сторінки; ваш власний текстовий редактор може переносити рядки трохи інакше.",
+        "ru": "Этот DOCX был свёрстан в LibreOffice, чтобы получить страницы; ваш текстовый редактор может переносить строки немного иначе.",
         "es": (
             "Este DOCX se maquetó con LibreOffice para generar páginas; tu procesador de "
             "textos puede cortar las líneas de forma algo distinta."
@@ -384,7 +378,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "uk": "Наївний розбір — що бачить простий парсер, сліпий до верстки",
         "ru": "Наивный разбор — что видит простой парсер, слепой к вёрстке",
         "es": "Extracción ingenua — lo que ve un analizador ciego al diseño",
-        "nl": "Naïeve extractie — wat een simpele, opmaak-blinde parser ziet",
+        "nl": "Naïeve extractie — wat een simpele, layoutblinde parser ziet",
         "fr": "Extraction naïve — ce que voit un analyseur aveugle à la mise en page",
     },
     "aware_expander": {
@@ -471,9 +465,9 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "de": "Weitgehend lesbar, mit Risiko",
         "uk": "Здебільшого читається, є ризик",
         "ru": "В основном читается, есть риск",
-        "es": "Se analiza en su mayor parte, con riesgo",
+        "es": "Se analiza casi todo, con riesgo",
         "nl": "Grotendeels leesbaar, enig risico",
-        "fr": "S'analyse en grande partie, avec un risque",
+        "fr": "Analyse correcte, avec un risque",
 
     },
     "rating_significant": {
@@ -500,7 +494,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "uk": "І пошту, і телефон вдалося дістати простим читанням, сліпим до верстки",
         "ru": "И почту, и телефон удалось получить простым чтением, слепым к вёрстке",
         "es": "Se recuperan correo y teléfono en una lectura simple, ciega al diseño",
-        "nl": "E-mail en telefoon beide gevonden bij een eenvoudige, opmaak-blinde lezing",
+        "nl": "E-mail en telefoon beide gevonden bij een eenvoudige, layoutblinde lezing",
         "fr": "E-mail et téléphone retrouvés par une lecture simple, aveugle à la mise en page",
     },
     "detail_contact_one": {
@@ -532,20 +526,20 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "fr": "Aucun intitulé de section standard trouvé, il n'y a rien à comparer",
     },
     "detail_sections_all": {
-        "en": "All {total} sections survive layout-blind reading",
-        "de": "Alle {total} Abschnitte überstehen ein layoutblindes Lesen",
+        "en": "All sections ({total}) survive layout-blind reading",
+        "de": "Alle Abschnitte ({total}) überstehen ein layoutblindes Lesen",
         "uk": "Усі розділи ({total}) переживають читання, сліпе до верстки",
         "ru": "Все разделы ({total}) переживают чтение, слепое к вёрстке",
-        "es": "Las {total} secciones sobreviven a la lectura ciega al diseño",
-        "nl": "Alle {total} secties overleven layoutblind lezen",
+        "es": "Todas las secciones ({total}) sobreviven a la lectura ciega al diseño",
+        "nl": "Alle secties ({total}) overleven layoutblind lezen",
         "fr": "Toutes les sections ({total}) survivent à la lecture aveugle à la mise en page",
 
     },
     "detail_sections_lost": {
         "en": "Layout-blind reading keeps {survived} of {total} sections (lost: {lost})",
         "de": "Layoutblindes Lesen bewahrt {survived} von {total} Abschnitten (verloren: {lost})",
-        "uk": "Читання, сліпе до верстки, зберігає розділів: {survived} з {total} (втрачено: {lost})",
-        "ru": "Чтение, слепое к вёрстке, сохраняет разделов: {survived} из {total} (потеряно: {lost})",
+        "uk": "Читання, сліпе до верстки, зберігає {survived} з {total} розділів (втрачено: {lost})",
+        "ru": "Чтение, слепое к вёрстке, сохраняет {survived} из {total} разделов (потеряно: {lost})",
         "es": "La lectura ciega al diseño conserva {survived} de {total} secciones (perdidas: {lost})",
         "nl": "Layoutblind lezen behoudt {survived} van {total} secties (verloren: {lost})",
         "fr": "Sections conservées à la lecture aveugle à la mise en page : {survived} sur {total} (perdues : {lost})",
@@ -577,7 +571,8 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "ru": "Ограничено до {cap}: {count} критическое замечание ставит содержимое под угрозу потери (до ограничения: {uncapped})",
         "es": "Limitado a {cap}: {count} observación grave pone el contenido en riesgo de perderse (antes del límite: {uncapped})",
         "nl": "Begrensd op {cap}: {count} ernstige opmerking zet inhoud op het spel (voor de begrenzing: {uncapped})",
-        "fr": "Plafonné à {cap} : {count} remarque grave met le contenu en risque de perte (avant plafond : {uncapped})",
+        "fr": "Plafonné à {cap} : {count} remarque grave expose le contenu à un risque de perte (avant plafond : {uncapped})",
+
     },
     "cap_reason_few": {
         "uk": "Обмежено до {cap}: {count} критичні зауваження ставлять вміст під загрозу втрати (до обмеження: {uncapped})",
@@ -590,7 +585,8 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "ru": "Ограничено до {cap}: {count} критических замечаний ставят содержимое под угрозу потери (до ограничения: {uncapped})",
         "es": "Limitado a {cap}: {count} observaciones graves ponen el contenido en riesgo de perderse (antes del límite: {uncapped})",
         "nl": "Begrensd op {cap}: {count} ernstige opmerkingen zetten inhoud op het spel (voor de begrenzing: {uncapped})",
-        "fr": "Plafonné à {cap} : {count} remarques graves mettent le contenu en risque de perte (avant plafond : {uncapped})",
+        "fr": "Plafonné à {cap} : {count} remarques graves exposent le contenu à un risque de perte (avant plafond : {uncapped})",
+
     },
     "not_scored": {
         "en": "not scored",
@@ -630,7 +626,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
     },
     "evidence_repeated_line": {
         "en": "[{zone}] \"{text}\" on pages {pages}",
-        "de": "[{zone}] \"{text}\" auf Seiten {pages}",
+        "de": "[{zone}] \"{text}\" auf den Seiten {pages}",
         "uk": "[{zone}] \"{text}\" на сторінках {pages}",
         "ru": "[{zone}] \"{text}\" на страницах {pages}",
         "es": "[{zone}] \"{text}\" en las páginas {pages}",
@@ -650,7 +646,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "en": "One or more table cells contain resume content",
         "de": "Eine oder mehrere Tabellenzellen enthalten Inhalte des Lebenslaufs",
         "uk": "Одна або кілька комірок таблиці містять вміст резюме",
-        "ru": "Одна или несколько ячеек таблицы содержат содержимое резюме",
+        "ru": "Одна или несколько ячеек таблицы содержат текст резюме",
         "es": "Una o más celdas de tabla contienen contenido del currículum",
         "nl": "Een of meer tabelcellen bevatten cv-inhoud",
         "fr": "Une ou plusieurs cellules de tableau contiennent du contenu du CV",
@@ -669,8 +665,8 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "de": "Abschnitt {sections} wird layoutbewusst erkannt, fehlt aber beim naiven Parsen",
         "uk": "Розділ {sections} розпізнано з урахуванням верстки, але при наївному розборі його немає",
         "ru": "Раздел {sections} распознан с учётом вёрстки, но при наивном разборе его нет",
-        "es": "La sección {sections} se detecta con el diseño en cuenta, pero falta en el análisis ingenuo",
-        "nl": "Sectie {sections} wordt opmaak-bewust herkend, maar ontbreekt bij naïeve parsing",
+        "es": "La sección {sections} se detecta al leer teniendo en cuenta el diseño, pero falta en el análisis ingenuo",
+        "nl": "Sectie {sections} wordt layoutbewust herkend, maar ontbreekt bij naïeve parsing",
         "fr": "La section {sections} est détectée avec la mise en page, mais absente à l'analyse naïve",
     },
     "evidence_sections_lost_many": {
@@ -678,8 +674,8 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "de": "Abschnitte {sections} werden layoutbewusst erkannt, fehlen aber beim naiven Parsen",
         "uk": "Розділи {sections} розпізнано з урахуванням верстки, але при наївному розборі їх немає",
         "ru": "Разделы {sections} распознаны с учётом вёрстки, но при наивном разборе их нет",
-        "es": "Las secciones {sections} se detectan con el diseño en cuenta, pero faltan en el análisis ingenuo",
-        "nl": "Secties {sections} worden opmaak-bewust herkend, maar ontbreken bij naïeve parsing",
+        "es": "Las secciones {sections} se detectan al leer teniendo en cuenta el diseño, pero faltan en el análisis ingenuo",
+        "nl": "Secties {sections} worden layoutbewust herkend, maar ontbreken bij naïeve parsing",
         "fr": "Les sections {sections} sont détectées avec la mise en page, mais absentes à l'analyse naïve",
     },
     "update_available": {
@@ -698,7 +694,8 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "ru": "Открытый код",
         "es": "Código abierto",
         "nl": "Open source",
-        "fr": "Code ouvert",
+        "fr": "Open source",
+
     },
     "match_heading": {
         "en": "Match against a job ad",
@@ -874,23 +871,25 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
     "match_missing_must_warning_many": {
         "en": "{count} required items could not be found in your CV.",
         "de": "{count} erforderliche Punkte konnten in Ihrem Lebenslauf nicht gefunden werden.",
-        "uk": "{count} обов'язкових пунктів не знайдено у вашому резюме.",
+        "uk": "У вашому резюме не знайдено {count} обов'язкових пунктів.",
         "ru": "{count} обязательных пунктов не найдено в вашем резюме.",
         "es": "No se encontraron {count} requisitos obligatorios en tu CV.",
         "nl": "{count} vereiste punten zijn niet in je cv gevonden.",
-        "fr": "{count} exigences obligatoires sont introuvables dans votre CV.",
+        "fr": "{count} critères obligatoires sont introuvables dans votre CV.",
+
     },
     "match_missing_must_warning_one": {
         "en": "{count} required item could not be found in your CV.",
         "de": "{count} erforderlicher Punkt konnte in Ihrem Lebenslauf nicht gefunden werden.",
-        "uk": "{count} обов'язкового пункту не знайдено у вашому резюме.",
+        "uk": "У вашому резюме не знайдено {count} обов'язковий пункт.",
         "ru": "{count} обязательного пункта не найдено в вашем резюме.",
         "es": "No se encontró {count} requisito obligatorio en tu CV.",
         "nl": "{count} vereist punt is niet in je cv gevonden.",
-        "fr": "{count} exigence obligatoire est introuvable dans votre CV.",
+        "fr": "{count} critère obligatoire est introuvable dans votre CV.",
+
     },
     "match_missing_must_warning_few": {
-        "uk": "{count} обов'язкових пункти не знайдено у вашому резюме.",
+        "uk": "У вашому резюме не знайдено {count} обов'язкові пункти.",
         "ru": "{count} обязательных пункта не найдено в вашем резюме.",
     },
     "match_all_must_covered": {
@@ -916,7 +915,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "de": "Diese passten nur beim layoutbewussten Lesen. Ein layoutblinder Parser sieht sie nicht, der Treffer würde also nicht zählen.",
         "uk": "Ці збіги знайдено лише при читанні з урахуванням верстки. Парсер, сліпий до верстки, їх не побачить, тож збіг не зарахується.",
         "ru": "Эти совпадения найдены только при чтении с учётом вёрстки. Парсер, слепой к вёрстке, их не увидит, и совпадение не засчитается.",
-        "es": "Solo coincidieron al leer el archivo con la maquetación en cuenta. Un analizador ciego al diseño no las vería, así que no contarían.",
+        "es": "Solo coincidieron al leer el archivo teniendo en cuenta el diseño. Un analizador ciego al diseño no las vería, así que no contarían.",
         "nl": "Deze kwamen alleen overeen bij layoutbewust lezen. Een layoutblinde parser ziet ze niet, dus de treffer zou niet meetellen.",
         "fr": "Elles n'ont correspondu qu'en lecture attentive à la mise en page. Un analyseur aveugle à la mise en page ne les verrait pas.",
     },
@@ -963,14 +962,15 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "ru": "{skill} найдено только при чтении с учётом вёрстки.",
         "es": "{skill} solo apareció en la lectura consciente del diseño.",
         "nl": "{skill} werd alleen bij layoutbewust lezen gevonden.",
-        "fr": "{skill} n'a été trouvé qu'en lecture attentive à la mise en page.",
+        "fr": "{skill} : trouvé uniquement en lecture attentive à la mise en page.",
+
     },
     "match_note_experience": {
-        "en": "Your CV shows about {have} years; the ad asks for {want} years.",
-        "de": "Ihr Lebenslauf zeigt etwa {have} Jahre; die Anzeige verlangt {want} Jahre.",
-        "uk": "У вашому резюме близько {have} років; вакансія просить {want} років.",
-        "ru": "В вашем резюме около {have} лет; вакансия просит {want} лет.",
-        "es": "Tu CV muestra unos {have} años; la oferta pide {want} años.",
+        "en": "Your CV shows about {have} years; the ad asks for {want}.",
+        "de": "Ihr Lebenslauf zeigt etwa {have} Jahre; gefordert: {want}.",
+        "uk": "Років досвіду в резюме: близько {have}; у вакансії: {want}.",
+        "ru": "Лет опыта в резюме: около {have}; в вакансии: {want}.",
+        "es": "Tu CV muestra unos {have} años; la oferta pide {want}.",
         "nl": "Je cv toont ongeveer {have} jaar; de vacature vraagt {want} jaar.",
         "fr": "Votre CV indique environ {have} ans ; l'offre en demande {want}.",
 
@@ -980,15 +980,16 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "de": "Ihr Abschluss ({have}) deckt die geforderte Stufe ({want}) ab.",
         "uk": "Ваш рівень ({have}) покриває потрібний ({want}).",
         "ru": "Ваш уровень ({have}) покрывает требуемый ({want}).",
-        "es": "Tu {have} cubre el {want} solicitado.",
-        "nl": "Je {have} dekt het gevraagde {want}.",
-        "fr": "Votre {have} couvre le {want} demandé.",
+        "es": "Tu nivel ({have}) cubre el nivel solicitado ({want}).",
+        "nl": "Je niveau ({have}) dekt het gevraagde niveau ({want}).",
+        "fr": "Votre niveau ({have}) couvre le niveau demandé ({want}).",
+
     },
     "match_note_education_lower": {
         "en": "The ad asks for {want}; your CV shows {have}.",
         "de": "Die Anzeige verlangt {want}; Ihr Lebenslauf zeigt {have}.",
-        "uk": "Вакансія просить {want}; у резюме вказано {have}.",
-        "ru": "Вакансия просит {want}; в резюме указано {have}.",
+        "uk": "Вакансія вимагає рівня «{want}»; у резюме — «{have}».",
+        "ru": "Вакансия требует уровня «{want}»; в резюме — «{have}».",
         "es": "La oferta pide {want}; tu CV muestra {have}.",
         "nl": "De vacature vraagt {want}; je cv toont {have}.",
         "fr": "L'offre demande {want} ; votre CV indique {have}.",
@@ -996,8 +997,8 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
     "match_note_education_missing": {
         "en": "No degree or completed training was found in your CV; the ad asks for {want}.",
         "de": "Im Lebenslauf wurde kein Abschluss gefunden; die Anzeige verlangt {want}.",
-        "uk": "У резюме не знайдено освіти; вакансія просить {want}.",
-        "ru": "В резюме не найдено образования; вакансия просит {want}.",
+        "uk": "У резюме не знайдено освіти; вакансія вимагає: {want}.",
+        "ru": "В резюме не найдено образования; вакансия требует: {want}.",
         "es": "No se encontró titulación en tu CV; la oferta pide {want}.",
         "nl": "In je cv is geen opleiding gevonden; de vacature vraagt {want}.",
         "fr": "Aucun diplôme n'a été trouvé dans votre CV ; l'offre demande {want}.",
@@ -1005,17 +1006,18 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
     "match_note_education_field": {
         "en": "The level fits, but the ad names {want} and your CV says {have}.",
         "de": "Die Stufe passt, aber die Anzeige nennt {want}, Ihr Lebenslauf {have}.",
-        "uk": "Рівень підходить, але вакансія називає {want}, а резюме — {have}.",
-        "ru": "Уровень подходит, но вакансия называет {want}, а резюме — {have}.",
-        "es": "El nivel encaja, pero la oferta nombra {want} y tu CV dice {have}.",
-        "nl": "Het niveau past, maar de vacature noemt {want} en je cv {have}.",
-        "fr": "Le niveau convient, mais l'offre nomme {want} et votre CV indique {have}.",
+        "uk": "Рівень підходить, але у вакансії — «{want}», а в резюме — «{have}».",
+        "ru": "Уровень подходит, но в вакансии — «{want}», а в резюме — «{have}».",
+        "es": "El nivel encaja, pero la oferta menciona {want} y tu CV dice {have}.",
+        "nl": "Het niveau past, maar de vacature vermeldt {want} en je cv {have}.",
+        "fr": "Le niveau convient, mais l'offre mentionne {want} et votre CV indique {have}.",
+
     },
     "match_note_language": {
         "en": "{lang}: your CV shows {have}, the ad asks for {want}.",
         "de": "{lang}: Ihr Lebenslauf zeigt {have}, die Anzeige verlangt {want}.",
-        "uk": "{lang}: у резюме {have}, вакансія просить {want}.",
-        "ru": "{lang}: в резюме {have}, вакансия просит {want}.",
+        "uk": "{lang}: у резюме {have}, вакансія вимагає {want}.",
+        "ru": "{lang}: в резюме {have}, вакансия требует {want}.",
         "es": "{lang}: tu CV muestra {have}, la oferta pide {want}.",
         "nl": "{lang}: je cv toont {have}, de vacature vraagt {want}.",
         "fr": "{lang} : votre CV indique {have}, l'offre demande {want}.",
@@ -1032,8 +1034,8 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
     "tagline": {
         "en": "See what a CV parser reads before an employer's does",
         "de": "Sehen Sie, was ein Lebenslauf-Parser liest, bevor es der eines Arbeitgebers tut",
-        "uk": "Побачте, що читає парсер резюме, раніше за роботодавця",
-        "ru": "Увидьте, что читает парсер резюме, раньше работодателя",
+        "uk": "Дізнайтеся, що читає парсер резюме, раніше за роботодавця",
+        "ru": "Узнайте, что читает парсер резюме, раньше работодателя",
         "es": "Comprueba qué lee un analizador de CV antes que el de la empresa",
         "nl": "Zie wat een cv-parser leest, voordat die van een werkgever dat doet",
         "fr": "Voyez ce qu'un analyseur de CV lit avant celui d'un employeur",
@@ -1130,12 +1132,13 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
     },
     "issue_tally": {
         "en": "{high} serious · {medium} moderate · {low} minor",
-        "de": "{high} schwerwiegende · {medium} mittlere · {low} geringe",
-        "uk": "{high} серйозних · {medium} середніх · {low} незначних",
-        "ru": "{high} серьёзных · {medium} средних · {low} незначительных",
-        "es": "{high} graves · {medium} moderados · {low} leves",
-        "nl": "{high} ernstige · {medium} matige · {low} geringe",
-        "fr": "{high} graves · {medium} moyens · {low} mineurs",
+        "de": "schwerwiegend: {high} · mittel: {medium} · gering: {low}",
+        "uk": "серйозні: {high} · середні: {medium} · незначні: {low}",
+        "ru": "серьёзные: {high} · средние: {medium} · незначительные: {low}",
+        "es": "graves: {high} · moderados: {medium} · leves: {low}",
+        "nl": "ernstig: {high} · matig: {medium} · gering: {low}",
+        "fr": "graves : {high} · moyens : {medium} · mineurs : {low}",
+
     },
     "empty_hint": {
         "en": "Once a file is loaded you will see its pages with the problem areas boxed, a readability score, and, if you paste a job ad, how much of that ad your CV covers.",
@@ -1324,8 +1327,8 @@ VOCABULARY: dict[str, dict[str, str]] = {
     "business": {
         "en": "business studies",
         "de": "Betriebswirtschaft",
-        "uk": "економіка",
-        "ru": "экономика",
+        "uk": "менеджмент",
+        "ru": "менеджмент",
         "es": "empresariales",
         "nl": "bedrijfskunde",
         "fr": "gestion",
@@ -1344,7 +1347,9 @@ Translating at render time rather than at analysis time is what keeps the
 analysis language-independent: the same Finding renders in seven
 languages."""
 
-TRANSLATED_PARAMS = frozenset({"found", "missing", "zone", "have", "want", "lost", "section"})
+TRANSLATED_PARAMS = frozenset(
+    {"found", "missing", "zone", "have", "want", "lost", "section", "sections"}
+)
 """Which placeholders hold vocabulary rather than free text.
 
 Named explicitly so a font called "Master" or a keyword someone typed can
@@ -1430,7 +1435,7 @@ RULE_DESCRIPTIONS: dict[str, dict[str, str]] = {
         ),
         "de": (
             "Eine im PDF verwendete Schrift ist nicht eingebettet und gehört nicht zu den 14 "
-            "PDF-Standardschriften. Solche Schriften riskieren Zeichenzuordnungsfehler, die "
+            "PDF-Standardschriften. Bei solchen Schriften drohen Zeichenzuordnungsfehler, die "
             "beim Parsen zu verstümmeltem oder fehlendem Text führen."
         ),
         "uk": (
@@ -1445,12 +1450,12 @@ RULE_DESCRIPTIONS: dict[str, dict[str, str]] = {
         ),
         "es": (
             "Una fuente usada en el PDF no está incrustada ni es una de las 14 fuentes base "
-            "estándar. Las fuentes no incrustadas arriesgan errores de correspondencia de "
+            "estándar. Las fuentes no incrustadas corren el riesgo de provocar errores de correspondencia de "
             "caracteres que producen texto ilegible o ausente al analizar."
         ),
         "nl": (
             "Een in de PDF gebruikt lettertype is niet ingesloten en behoort niet tot de 14 "
-            "standaard PDF-lettertypen. Zulke lettertypen riskeren fouten in de "
+            "standaard PDF-lettertypen. Bij zulke lettertypen dreigen fouten in de "
             "tekentoewijzing, waardoor tekst bij het parsen verminkt raakt of verdwijnt."
         ),
         "fr": (
@@ -1700,8 +1705,8 @@ RULE_DESCRIPTIONS: dict[str, dict[str, str]] = {
             "pone en riesgo esta sección."
         ),
         "nl": (
-            "Een sectie (Werkervaring/Opleiding/Vaardigheden) wordt herkend bij opmaak-bewust "
-            "lezen, maar verdwijnt volledig bij lezen zoals een opmaak-blinde parser doet — "
+            "Een sectie (Werkervaring/Opleiding/Vaardigheden) wordt herkend bij layoutbewust "
+            "lezen, maar verdwijnt volledig bij lezen zoals een layoutblinde parser doet — "
             "de opmaak, niet de inhoud, brengt deze sectie in gevaar."
         ),
         "fr": (
@@ -1766,7 +1771,7 @@ RULE_DETAILS: dict[str, dict[str, str]] = {
     },
     "docx_header_footer_content": {
         "en": 'A Word header or footer is stored in its own part of the file, outside the document body. Readers that walk the body — which is most of them — never reach it. A quick check: press Ctrl+A in Word. Whatever does not highlight is roughly what a parser will not see.',
-        "de": 'Eine Word-Kopf- oder Fußzeile liegt in einem eigenen Teil der Datei, außerhalb des Dokumentkörpers. Programme, die den Körper durchlaufen — also die meisten — erreichen sie nie. Schnelltest: Strg+A in Word drücken. Was nicht markiert wird, sieht ein Parser ungefähr auch nicht.',
+        "de": 'Eine Word-Kopf- oder Fußzeile liegt in einem eigenen Teil der Datei, außerhalb des Textkörpers. Programme, die den Textkörper durchlaufen — also die meisten — erreichen sie nie. Schnelltest: Strg+A in Word drücken. Was nicht markiert wird, sieht ein Parser ungefähr auch nicht.',
         "uk": 'Колонтитул Word зберігається в окремій частині файлу, поза тілом документа. Програми, що обходять тіло — а це більшість — до нього не дістаються. Швидка перевірка: натисніть Ctrl+A у Word. Те, що не виділилось, парсер приблизно так само не побачить.',
         "ru": 'Колонтитул Word хранится в отдельной части файла, вне тела документа. Программы, обходящие тело — а это большинство — до него не добираются. Быстрая проверка: нажмите Ctrl+A в Word. То, что не выделилось, парсер примерно так же не увидит.',
         "es": 'Un encabezado o pie de Word se guarda en su propia parte del archivo, fuera del cuerpo del documento. Los lectores que recorren el cuerpo — casi todos — nunca llegan ahí. Comprobación rápida: pulsa Ctrl+A en Word. Lo que no se resalte es más o menos lo que un analizador no verá.',
@@ -1785,10 +1790,10 @@ RULE_DETAILS: dict[str, dict[str, str]] = {
     "missing_contact_field": {
         "en": 'Neither an email address nor a phone number could be recovered, even reading the file at its best. Whatever else is right, an employer who cannot reach you cannot invite you — this is the one finding that makes the rest moot.',
         "de": 'Weder E-Mail-Adresse noch Telefonnummer waren zu finden, selbst beim bestmöglichen Lesen der Datei. Was sonst auch stimmt: Wer Sie nicht erreichen kann, kann Sie nicht einladen — dieser Befund macht alle anderen gegenstandslos.',
-        "uk": "Не вдалося дістати ні електронну пошту, ні номер телефону — навіть при найкращому читанні файлу. Що б не було правильним в іншому, роботодавець, який не може з вами зв'язатися, не може вас запросити — саме це зауваження знецінює всі інші.",
-        "ru": 'Не удалось получить ни адрес электронной почты, ни номер телефона — даже при наилучшем чтении файла. Что бы ни было правильным в остальном, работодатель, который не может с вами связаться, не может вас пригласить — именно это замечание обесценивает все остальные.',
+        "uk": "Не вдалося дістати ні електронну пошту, ні номер телефону — навіть при найкращому читанні файлу. Хоч би яким правильним було все інше, роботодавець, який не може з вами зв'язатися, не може вас запросити — саме це зауваження знецінює всі інші.",
+        "ru": 'Не удалось получить ни адрес электронной почты, ни номер телефона — даже при наилучшем чтении файла. Каким бы хорошим ни было всё остальное, работодатель, который не может с вами связаться, не может вас пригласить — именно это замечание обесценивает все остальные.',
         "es": 'No se ha podido recuperar ni un correo electrónico ni un teléfono, ni siquiera leyendo el archivo en su mejor caso. Por bien que esté todo lo demás, quien no puede contactarte no puede invitarte: este hallazgo deja sin sentido a los demás.',
-        "nl": 'Er kon geen e-mailadres en geen telefoonnummer worden achterhaald, zelfs niet bij de best mogelijke lezing. Wat er verder ook klopt: wie je niet kan bereiken, kan je niet uitnodigen — deze bevinding maakt de rest irrelevant.',
+        "nl": 'Er kon geen e-mailadres en geen telefoonnummer worden achterhaald, zelfs niet bij de best mogelijke lezing. Wat er verder ook klopt: wie jou niet kan bereiken, kan jou niet uitnodigen — deze bevinding maakt de rest irrelevant.',
         "fr": "Ni adresse e-mail ni numéro de téléphone n'ont pu être retrouvés, même en lisant le fichier au mieux. Quoi que vaille le reste, un employeur qui ne peut pas vous joindre ne peut pas vous inviter — ce constat rend les autres sans objet.",
     },
     "section_missing_under_naive_parsing": {
@@ -1797,7 +1802,7 @@ RULE_DETAILS: dict[str, dict[str, str]] = {
         "uk": 'Ваш файл містить цей розділ, і читання з урахуванням колонок його знаходить. Просте читання — зліва направо через усю сторінку, як робить парсер, сліпий до верстки — зливає ваш заголовок із тим, що стоїть поруч, і заголовок перестає бути заголовком. Зі вмістом усе гаразд; під загрозу його ставить верстка.',
         "ru": 'Ваш файл содержит этот раздел, и чтение с учётом колонок его находит. Простое чтение — слева направо через всю страницу, как делает парсер, слепой к вёрстке — сливает ваш заголовок с тем, что стоит рядом, и заголовок перестаёт быть заголовком. С содержимым всё в порядке; под угрозу его ставит вёрстка.',
         "es": 'Tu archivo tiene esta sección, y leerlo entendiendo las columnas la encuentra. Leerlo de forma simple — de izquierda a derecha por toda la página, como hace un analizador ciego al diseño — funde tu encabezado con lo que tenga al lado, y el encabezado deja de serlo. El contenido está bien; es el diseño lo que lo pone en riesgo.',
-        "nl": 'Je bestand bevat deze sectie, en lezen met begrip van de kolommen vindt haar. Simpel lezen — van links naar rechts over de hele pagina, zoals een opmaak-blinde parser doet — smelt je kop samen met wat ernaast staat, en de kop is geen kop meer. De inhoud is prima; de opmaak brengt haar in gevaar.',
+        "nl": 'Je bestand bevat deze sectie, en lezen met begrip van de kolommen vindt haar. Simpel lezen — van links naar rechts over de hele pagina, zoals een layoutblinde parser doet — smelt je kop samen met wat ernaast staat, en de kop is geen kop meer. De inhoud is prima; de opmaak brengt haar in gevaar.',
         "fr": "Votre fichier contient cette section, et une lecture qui comprend les colonnes la trouve. Une lecture simple — de gauche à droite sur toute la largeur, ce que fait un analyseur aveugle à la mise en page — fond votre intitulé avec ce qui l'entoure, et l'intitulé cesse d'en être un. Le contenu va bien ; c'est la mise en page qui le met en péril.",
     },
 }
@@ -1810,9 +1815,9 @@ RULE_FIXES: dict[str, dict[str, list[str]]] = {
             'Check it worked: open the PDF, then File → Properties → Fonts. Every entry should say "Embedded" or "Embedded Subset".',
         ],
         "de": [
-            'Neu aus Word exportieren: Datei → Speichern unter → PDF, unter Optionen "PDF/A-kompatibel" ankreuzen — das erzwingt das Einbetten aller Schriften.',
-            'Auf eine verbreitete Schrift umstellen (Arial, Calibri, Times New Roman, Georgia) und erneut exportieren.',
-            'Prüfen: PDF öffnen, dann Datei → Eigenschaften → Schriften. Bei jedem Eintrag sollte "Eingebettet" oder "Eingebettete Untergruppe" stehen.',
+            'Exportieren Sie neu aus Word: Datei → Speichern unter → PDF, und kreuzen Sie unter Optionen "PDF/A-kompatibel" an — das erzwingt das Einbetten aller Schriften.',
+            'Stellen Sie das Dokument auf eine verbreitete Schrift um (Arial, Calibri, Times New Roman, Georgia) und exportieren Sie erneut.',
+            'Prüfen Sie es: Öffnen Sie das PDF, dann Datei → Eigenschaften → Schriften. Bei jedem Eintrag sollte "Eingebettet" oder "Eingebettete Untergruppe" stehen.',
         ],
         "uk": [
             'Експортуйте з Word заново: Файл → Зберегти як → PDF, у Параметрах позначте "Сумісний з PDF/A" — це змусить вбудувати всі шрифти.',
@@ -1899,7 +1904,7 @@ RULE_FIXES: dict[str, dict[str, list[str]]] = {
             'Проверьте, что именно там: откройте PDF и нажмите Ctrl+A. Всё, что не выделилось, — изображение, а не текст.',
         ],
         "es": [
-            'Si la imagen es un rótulo con el nombre, una barra de título o un gráfico de competencias, vuelve a escribirlo como texto real: ahí acaba el problema.',
+            'Si la imagen es un rótulo con el nombre, una barra de título o un gráfico de competencias, vuelve a escribir su contenido como texto real: ahí acaba el problema.',
             'Si es una foto de retrato, no supone ninguna pérdida de texto. Mantenerla o no depende del mercado: habitual en Alemania y buena parte de Europa, normalmente se omite en EE. UU., Reino Unido e Irlanda.',
             'Comprueba cuál es: abre el PDF y pulsa Ctrl+A. Lo que no se resalte es una imagen, no texto.',
         ],
@@ -1958,7 +1963,7 @@ RULE_FIXES: dict[str, dict[str, list[str]]] = {
             'Check it worked: press Ctrl+A in Word. If text does not highlight, it is not in the body and a parser will likely miss it.',
         ],
         "de": [
-            'Verschieben Sie alles, was gelesen werden soll, in den Dokumentkörper — in Kopf- und Fußzeile gehört nichts, dessen Verlust schmerzt.',
+            'Verschieben Sie alles, was gelesen werden soll, in den Textkörper — in Kopf- und Fußzeile gehört nichts, dessen Verlust schmerzt.',
             'Setzen Sie Ihre Kontaktdaten als normale Absätze in die ersten Zeilen unter Ihrem Namen.',
             'Prüfen: Strg+A in Word drücken. Was nicht markiert wird, steht nicht im Körper und wird von einem Parser wahrscheinlich übersehen.',
         ],
