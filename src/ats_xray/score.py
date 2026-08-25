@@ -32,6 +32,7 @@ its parameters so the same breakdown renders in any supported language.
 
 from dataclasses import dataclass, field
 
+from .credentials import find_experience_months
 from .engine import Finding
 
 CONTACT_WEIGHT = 30
@@ -98,30 +99,42 @@ Zero rather than a low score, with an explanation, because the honest answer
 to "how readable is this CV" for something that is not a CV is not a number."""
 
 
-def looks_like_a_resume(aware_fields: dict) -> bool:
+def looks_like_a_resume(aware_fields: dict, text: str) -> bool:
     """Whether the document has enough about it to be a CV.
 
-    Two signals, not one. A single contact detail is far too weak on its
-    own: an invoice carries an accounts email, a menu carries a booking
-    number, and a job advert -- the document this tool most invites someone
-    to upload by mistake, since the next zone asks them to paste one --
-    carries both. Every one of those scored respectably under the one-signal
-    rule, and the invoice reached 100/100.
+    Contact details and section headings are not enough on their own. A job
+    advert -- the document this tool most invites someone to upload by
+    mistake, since the next zone asks them to paste one -- has both: it
+    lists "Qualifications" and "Skills" because it is asking for them, and
+    it prints an email because it wants replies. Under the two-signal rule
+    an advert scored 100/100 in all seven languages, which is worse than
+    the invoice that prompted the rule, because it is the likelier mistake.
 
-    So: a contact detail *and* a recognised section, or two recognised
-    sections with no contact at all. A real CV in an unusual shape still
-    gets through -- it is hard to write one that has neither a way to reach
-    you nor two of Experience, Education and Skills -- while a letter with
-    an address block in it does not.
+    The signal that actually separates the two is employment dates. A CV
+    says when each job ran; an advert describes one that has not started.
+    Nothing else in either document is as hard to fake by accident.
+
+    So: dated history, plus either a way to reach the person or one
+    recognised section. That last clause is what lets a one-page designer
+    CV through -- name, role, contact and a column of dates, no section
+    words anywhere -- which the section-counting rule scored as zero.
     """
+    if find_experience_months(text) <= 0:
+        return False
     has_contact = aware_fields["email"]["found"] or aware_fields["phone"]["found"]
     sections_found = sum(1 for field in aware_fields["sections"].values() if field["found"])
-    return (has_contact and sections_found >= 1) or sections_found >= 2
+    return has_contact or sections_found >= 1
 
 
-def score_resume(aware_fields: dict, naive_fields: dict, findings: list[Finding]) -> ScoreBreakdown:
-    """Compute the parse readiness score and the components behind it."""
-    if not looks_like_a_resume(aware_fields):
+def score_resume(
+    aware_fields: dict, naive_fields: dict, findings: list[Finding], text: str
+) -> ScoreBreakdown:
+    """Compute the parse readiness score and the components behind it.
+
+    ``text`` is the layout-aware extraction. It is only read to decide
+    whether the document is a CV at all -- see :func:`looks_like_a_resume`
+    -- and never scored."""
+    if not looks_like_a_resume(aware_fields, text):
         components = [
             _contact_component(naive_fields),
             _sections_component(aware_fields, naive_fields),

@@ -106,7 +106,10 @@ def main() -> None:
 
     if args.score:
         breakdown = score_resume(
-            build_field_report(aware), build_field_report(naive), run_rules(str(path), naive, aware)
+            build_field_report(aware),
+            build_field_report(naive),
+            run_rules(str(path), naive, aware),
+            aware,
         )
         print()
         print(SEPARATOR, "PARSE READINESS", SEPARATOR)
