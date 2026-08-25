@@ -235,3 +235,29 @@ def test_the_declared_python_floor_matches_what_the_code_needs():
         f"pyproject requires >={floor[0]}.{floor[1]} but CI's oldest is "
         f"{tested[0][0]}.{tested[0][1]}: one of them is untrue"
     )
+
+
+def test_the_page_clears_streamlit_toolbar():
+    """Streamlit pins its own toolbar -- the menu holding the theme switch,
+    and Deploy where it is shown -- across the top of the page: 60px tall,
+    opaque, at z-index 999990. It is not part of the document flow, so
+    nothing stops page content sliding underneath it.
+
+    Tightening the main container's top padding to 1.5rem during the
+    redesign did exactly that: the masthead moved up and the toolbar
+    painted over the top 16px of the language button. It read as a clipped
+    control and was a control drawn behind a bar.
+
+    Asserting the padding is expressed in terms of the toolbar height,
+    rather than checking a number, is what keeps the reason attached to the
+    value."""
+    frame = CSS.split('[data-testid="stMainBlockContainer"]', 1)
+    assert len(frame) == 2, "no rule for the main block container"
+    block = frame[1][: frame[1].index("}")]
+
+    assert "padding-top" in block, "the main container declares no top padding"
+    assert "--axr-header" in block, (
+        "the top padding does not clear Streamlit's toolbar: express it as "
+        "calc(var(--axr-header) + ...) so the reason travels with the value"
+    )
+    assert re.search(r"--axr-header:\s*\d+px", CSS), "--axr-header is not defined"

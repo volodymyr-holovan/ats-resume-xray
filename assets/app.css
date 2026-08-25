@@ -69,10 +69,31 @@
    Page frame
    -------------------------------------------------------------------------- */
 
+/* The top padding is not decoration: Streamlit's own toolbar -- the ⋮ menu
+   that holds the theme switch, and Deploy when it is shown -- is a 60px
+   bar pinned across the top of the page, opaque and at z-index 999990.
+   Tightening this padding to 1.5rem pulled the masthead underneath it, and
+   the toolbar painted over the top 16px of the language button. It looked
+   like a clipped control and was in fact a control drawn behind a bar.
+
+   So: clear the toolbar first, then add the space the page actually wants.
+   --axr-header is the measured height of that bar. */
+:root {
+  --axr-header: 60px;
+}
+
 [data-testid="stMainBlockContainer"] {
   max-width: 1440px;
-  padding-top: var(--axr-space-4);
+  padding-top: calc(var(--axr-header) + var(--axr-space-3));
   padding-bottom: var(--axr-space-5);
+}
+
+/* Nothing in the toolbar band belongs to this app except the ⋮ menu, and a
+   solid bar the width of the page only advertises Streamlit. Transparent,
+   so the page reads as one surface -- the buttons inside it keep their own
+   backgrounds and stay legible. */
+[data-testid="stHeader"] {
+  background: transparent;
 }
 
 /* Streamlit spaces every block equally, which flattens the hierarchy: a
