@@ -175,7 +175,9 @@ def _structure_component(findings: list[Finding]) -> Component:
     structural = [f for f in findings if f.rule.id not in _FIELD_RULES]
     penalty = sum(SEVERITY_PENALTY[f.severity] for f in structural)
 
-    deductions = ", ".join(f"{f.rule.id} (-{SEVERITY_PENALTY[f.severity]})" for f in structural)
+    # Pairs, not a sentence: which rules cost what is data until a language
+    # is chosen, and this runs before one is. i18n names them at render.
+    deductions = tuple((f.rule.id, SEVERITY_PENALTY[f.severity]) for f in structural)
 
     return Component(
         name_key="component_structure",

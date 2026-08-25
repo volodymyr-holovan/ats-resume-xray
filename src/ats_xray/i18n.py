@@ -1350,6 +1350,13 @@ languages."""
 TRANSLATED_PARAMS = frozenset(
     {"found", "missing", "zone", "have", "want", "lost", "section", "sections"}
 )
+
+RULE_LIST_PARAMS = frozenset({"deductions"})
+"""Placeholders holding (rule id, penalty) pairs rather than text.
+
+The score subtracts points per rule and has to say which rules, but it
+runs before a language is chosen -- so it passes the pairs through and
+they are named here, at render time, like every other token."""
 """Which placeholders hold vocabulary rather than free text.
 
 Named explicitly so a font called "Master" or a keyword someone typed can
@@ -1367,6 +1374,11 @@ def term(token: str, language: str) -> str:
 def _translate_params(params: dict, language: str) -> dict:
     translated = {}
     for name, value in params.items():
+        if name in RULE_LIST_PARAMS:
+            translated[name] = ", ".join(
+                f"{rule_name(rule_id, language)} (-{penalty})" for rule_id, penalty in value
+            )
+            continue
         if name in TRANSLATED_PARAMS and isinstance(value, str):
             # A list of sections arrives already joined, so each piece is
             # translated and the separator is put back.
@@ -1424,6 +1436,105 @@ def tn(stem: str, count: int, language: str, **kwargs) -> str:
         if candidate in TRANSLATIONS:
             return t(candidate, language, **kwargs)
     return f"[{stem}]"
+
+
+RULE_NAMES: dict[str, dict[str, str]] = {
+    "pdf_non_embedded_font": {
+        "en": "Font not embedded",
+        "de": "Schrift nicht eingebettet",
+        "uk": "Шрифт не вбудовано",
+        "ru": "Шрифт не встроен",
+        "es": "Fuente no incrustada",
+        "nl": "Lettertype niet ingesloten",
+        "fr": "Police non intégrée",
+    },
+    "pdf_repeated_header_footer_content": {
+        "en": "Header or footer repeats",
+        "de": "Kopf- oder Fußzeile wiederholt sich",
+        "uk": "Колонтитул повторюється",
+        "ru": "Колонтитул повторяется",
+        "es": "Encabezado o pie repetido",
+        "nl": "Kop- of voettekst herhaalt zich",
+        "fr": "En-tête ou pied répété",
+    },
+    "pdf_textless_image": {
+        "en": "Image carries no text",
+        "de": "Bild enthält keinen Text",
+        "uk": "Зображення без тексту",
+        "ru": "Изображение без текста",
+        "es": "Imagen sin texto",
+        "nl": "Afbeelding zonder tekst",
+        "fr": "Image sans texte",
+    },
+    "docx_table_content": {
+        "en": "Content inside a table",
+        "de": "Inhalt in einer Tabelle",
+        "uk": "Вміст усередині таблиці",
+        "ru": "Содержимое внутри таблицы",
+        "es": "Contenido dentro de una tabla",
+        "nl": "Inhoud in een tabel",
+        "fr": "Contenu dans un tableau",
+    },
+    "docx_header_footer_content": {
+        "en": "Content in a header or footer",
+        "de": "Inhalt in Kopf- oder Fußzeile",
+        "uk": "Вміст у колонтитулі",
+        "ru": "Содержимое в колонтитуле",
+        "es": "Contenido en encabezado o pie",
+        "nl": "Inhoud in kop- of voettekst",
+        "fr": "Contenu en en-tête ou pied",
+    },
+    "docx_text_box_content": {
+        "en": "Content inside a text box",
+        "de": "Inhalt in einem Textfeld",
+        "uk": "Вміст у текстовому полі",
+        "ru": "Содержимое в текстовом поле",
+        "es": "Contenido en un cuadro de texto",
+        "nl": "Inhoud in een tekstvak",
+        "fr": "Contenu dans une zone de texte",
+    },
+    "missing_contact_field": {
+        "en": "No way to reach you",
+        "de": "Keine Kontaktmöglichkeit",
+        "uk": "Немає як з вами зв'язатися",
+        "ru": "Нет способа с вами связаться",
+        "es": "Sin forma de contacto",
+        "nl": "Geen manier om je te bereiken",
+        "fr": "Aucun moyen de vous joindre",
+    },
+    "section_missing_under_naive_parsing": {
+        "en": "Section lost without the layout",
+        "de": "Abschnitt geht ohne Layout verloren",
+        "uk": "Розділ зникає без верстки",
+        "ru": "Раздел исчезает без вёрстки",
+        "es": "Sección perdida sin el diseño",
+        "nl": "Sectie verdwijnt zonder opmaak",
+        "fr": "Section perdue sans la mise en page",
+    },
+}
+"""A short name for each rule, for the places a reader meets one in
+passing rather than in full.
+
+The rule id is what the code calls it: lowercase, English, underscored.
+That is right in a stack trace and wrong under a page image, where it read
+as "Page 1 — section_missing_under_naive_parsing", and wrong again in the
+score breakdown, which listed "Abzüge: docx_table_content (-25)" to a
+German reader.
+
+Short enough to sit inside a caption, and phrased as what is wrong rather
+than as a category: "Content inside a table", not "Table content"."""
+
+
+def rule_name(rule_id: str, language: str) -> str:
+    """The reader's name for a rule, falling back to the id.
+
+    A rule with no entry shows its id rather than an empty caption, which
+    is ugly on purpose: the test suite fails on a missing name, so the only
+    way to see one is to have added a rule and not this."""
+    entry = RULE_NAMES.get(rule_id)
+    if entry is None:
+        return rule_id
+    return entry.get(language) or entry.get(DEFAULT_LANGUAGE) or rule_id
 
 
 RULE_DESCRIPTIONS: dict[str, dict[str, str]] = {

@@ -6,6 +6,7 @@ import docx
 from ats_xray.cli import _format_field_comparison, _format_rule_report, _format_structure_report
 from ats_xray.engine import Finding
 from ats_xray.field_report import build_field_report
+from ats_xray.i18n import rule_name
 from ats_xray.i18n import t as t_
 from ats_xray.rule import get_rule
 
@@ -80,7 +81,8 @@ def test_format_rule_report_includes_evidence_and_source():
 
     report = _format_rule_report([finding])
 
-    assert f"[{t_('severity_medium', 'en')}] pdf_non_embedded_font" in report
+    # The heading carries the reader's name for the rule, not its id.
+    assert f"[{t_('severity_medium', 'en')}] {rule_name('pdf_non_embedded_font', 'en')}" in report
     assert "Evidence: Non-embedded fonts: Calibri" in report
     assert "Source: research_sources.md#ats-fonts" in report
 
@@ -122,7 +124,7 @@ def test_format_rule_report_orders_high_severity_first():
 
     report = _format_rule_report([medium_finding, high_finding])
 
-    assert report.index("missing_contact_field") < report.index("pdf_non_embedded_font")
+    assert report.index(rule_name("missing_contact_field", "en")) < report.index(rule_name("pdf_non_embedded_font", "en"))
 
 
 def test_cli_handles_unicode_resume_content_without_crashing(tmp_path):

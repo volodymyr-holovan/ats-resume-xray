@@ -93,7 +93,9 @@ def test_structural_findings_deduct_by_severity():
     )
 
     assert structure.score == 90
-    assert "pdf_non_embedded_font (-10)" in structure.detail_params["deductions"]
+    # Pairs, not a rendered sentence: the list is built before a language
+    # is chosen, and i18n names the rules at render time.
+    assert structure.detail_params["deductions"] == (("pdf_non_embedded_font", 10),)
 
 
 def test_field_rules_are_not_double_counted_in_structure():

@@ -29,6 +29,7 @@ from ats_xray.i18n import (
     DEFAULT_LANGUAGE,
     UI_LANGUAGES,
     rule_description,
+    rule_name,
     rule_detail,
     rule_fixes,
     sources_path,
@@ -268,7 +269,8 @@ def _render_pages(pages, is_pdf: bool, lang: str) -> None:
         for page in pages:
             label = f"{t('page', lang)} {page.page_number}"
             if page.marked_findings:
-                label += " — " + ", ".join(sorted({f.rule.id for f in page.marked_findings}))
+                named = sorted({rule_name(f.rule.id, lang) for f in page.marked_findings})
+                label += " — " + ", ".join(named)
             else:
                 label += f" — {t('nothing_flagged', lang)}"
             st.image(page.image, caption=label, use_container_width=True)

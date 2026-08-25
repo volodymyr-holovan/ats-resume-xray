@@ -242,3 +242,42 @@ def test_no_internal_token_survives_into_a_rendered_sentence(language):
             f"{language}: {token} reached the reader untranslated"
         )
         assert translated in rendered
+
+
+@pytest.mark.parametrize("language", list(UI_LANGUAGES))
+def test_every_rule_has_a_readable_name_in_every_language(language):
+    """The rule id is what the code calls it -- lowercase, English,
+    underscored. It was reaching readers in two places: under each page
+    image ("Page 1 — section_missing_under_naive_parsing") and in the score
+    breakdown, which told a German reader "Abzüge: docx_table_content
+    (-25)". A rule added without a name would put it back."""
+    from ats_xray.i18n import RULE_NAMES, rule_name
+
+    missing = sorted(rule.id for rule in all_rules() if rule.id not in RULE_NAMES)
+    assert not missing, f"rules with no short name: {missing}"
+
+    untranslated = sorted(
+        rule.id for rule in all_rules() if language not in RULE_NAMES[rule.id]
+    )
+    assert not untranslated, f"{language} is missing rule names: {untranslated}"
+
+    for rule in all_rules():
+        name = rule_name(rule.id, language)
+        assert name != rule.id, f"{language}/{rule.id} falls back to the id"
+        assert "_" not in name, f"{language}/{rule.id} still reads like an identifier"
+        assert len(name) <= 40, f"{language}/{rule.id} is too long for a caption: {name!r}"
+
+
+def test_the_score_breakdown_names_its_rules(language="de"):
+    """The deduction list is built before a language is chosen, so it
+    carries pairs and is named at render time. If that wiring breaks it
+    fails loudly here rather than showing snake_case to a reader."""
+    rendered = t(
+        "detail_structure_deductions",
+        language,
+        deductions=(("docx_table_content", 25), ("pdf_textless_image", 10)),
+    )
+
+    assert "docx_table_content" not in rendered
+    assert "Inhalt in einer Tabelle (-25)" in rendered
+    assert "(-10)" in rendered
