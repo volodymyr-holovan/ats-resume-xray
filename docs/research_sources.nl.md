@@ -23,7 +23,7 @@ Niet-standaard of niet-ingesloten lettertypen lopen het risico verkeerd gelezen,
 
 ## ats-headers-footers
 
-Inhoud in de kop- of voettekst van een document wordt door ATS-parsers vaak volledig overgeslagen; zij zien het als opvulling buiten het documentlichaam.
+Inhoud in de kop- of voettekst van een document wordt door ATS-parsers vaak volledig overgeslagen; zij zien het als opvulling buiten de hoofdtekst van het document.
 
 - [How ATS Reads Headers and Footers: Complete Guide to Resume Parsing](https://hireflow.net/blog/how-ats-reads-headers-and-footers)
 
@@ -48,4 +48,4 @@ Cv's die als afbeelding zijn geëxporteerd (gebruikelijk bij sjablonen uit ontwe
 
 ## practical-necessity
 
-Geen externe bron: een cv waarop een recruiter geen contactgegevens vindt, is onbereikbaar, ongeacht wat een parser verder correct heeft gehaald. Deze regel bestaat om praktische, niet om onderzoeksredenen.
+Geen externe bron: wie geen contactgegevens in het cv zet, is voor een recruiter onbereikbaar, ongeacht wat een parser verder correct heeft gehaald. Deze regel bestaat om praktische, niet om onderzoeksredenen.

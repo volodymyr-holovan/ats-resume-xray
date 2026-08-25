@@ -5,6 +5,7 @@ import pytest
 import ats_xray.rules  # noqa: F401  (registers the rule set)
 from ats_xray.i18n import (
     DEFAULT_LANGUAGE,
+    PLURAL_FEW_LANGUAGES,
     RULE_DESCRIPTIONS,
     TRANSLATIONS,
     UI_LANGUAGES,
@@ -13,6 +14,7 @@ from ats_xray.i18n import (
     rule_fixes,
     sources_path,
     t,
+    tn,
 )
 from ats_xray.rule import all_rules
 from ats_xray.score import RATING_THRESHOLDS
@@ -25,9 +27,22 @@ def test_every_ui_string_is_translated_into_every_language(language):
     """A half-translated interface shows one language's text inside
     another's page, which reads worse than not offering the language.
     """
-    missing = sorted(key for key, entry in TRANSLATIONS.items() if language not in entry)
+    missing = sorted(
+        key
+        for key, entry in TRANSLATIONS.items()
+        if language not in entry and not _optional_for(key, language)
+    )
 
     assert not missing, f"{language} is missing: {missing}"
+
+
+def _optional_for(key: str, language: str) -> bool:
+    """Whether a language is allowed to have no entry for this key.
+
+    Only the 2-4 form: Ukrainian and Russian inflect it differently from
+    both 1 and 5+, and no other supported language has anywhere to put it.
+    """
+    return key.endswith("_few") and language not in PLURAL_FEW_LANGUAGES
 
 
 @pytest.mark.parametrize("language", list(UI_LANGUAGES))
@@ -67,7 +82,7 @@ def test_unknown_language_falls_back_to_english():
 def test_placeholders_are_filled():
     filled = t("detail_sections_lost", "en", survived=1, total=3, lost="skills")
 
-    assert "1" in filled and "3" in filled and "skills" in filled
+    assert "1" in filled and "3" in filled and "Skills" in filled
     assert "{" not in filled
 
 
@@ -80,7 +95,11 @@ def test_placeholder_names_match_across_languages(language):
     import string
 
     for key, entry in TRANSLATIONS.items():
-        english = entry[DEFAULT_LANGUAGE]
+        english = entry.get(DEFAULT_LANGUAGE)
+        if english is None:
+            # A 2-4 form exists only where a language needs one; the
+            # reference spelling lives on the 5+ form of the same stem.
+            english = TRANSLATIONS[key.rsplit("_", 1)[0] + "_many"][DEFAULT_LANGUAGE]
         translated = entry.get(language)
         if translated is None:
             continue
@@ -150,3 +169,115 @@ def test_every_severity_has_a_translated_label(severity):
         label = t(f"severity_{severity}", language)
 
         assert label and label.strip() == label
+
+
+PLURAL_STEMS = ("cap_reason", "match_missing_must_warning")
+
+
+@pytest.mark.parametrize("stem", PLURAL_STEMS)
+@pytest.mark.parametrize("language", list(UI_LANGUAGES))
+def test_every_count_resolves_to_a_real_sentence(stem, language):
+    """The resolver falls back rather than raising, so a missing form would
+    quietly show the wrong number agreement instead of failing. Walking the
+    counts is what catches it."""
+    for count in (1, 2, 4, 5, 11, 21, 22, 25, 101):
+        rendered = tn(stem, count, language, cap=59, uncapped=88)
+
+        assert rendered.startswith("[") is False, f"{stem}/{language}/{count} unresolved"
+        assert str(count) in rendered, f"{stem}/{language}/{count} lost the number"
+        assert "{" not in rendered
+
+
+@pytest.mark.parametrize("stem", PLURAL_STEMS)
+def test_slavic_counts_take_three_distinct_forms(stem):
+    """1, 3 and 7 decline differently in Ukrainian and Russian. If two of
+    them come back identical, a form is missing and the fallback covered
+    it."""
+    for language in PLURAL_FEW_LANGUAGES:
+        one, few, many = (
+            tn(stem, count, language, cap=59, uncapped=88).replace(str(count), "N")
+            for count in (1, 3, 7)
+        )
+
+        assert one != few != many != one, f"{stem}/{language} does not distinguish 1/3/7"
+
+
+def test_every_token_the_analysis_emits_has_a_translation():
+    """The gap this closes: the analysis names things in English lowercase
+    -- "email", "experience", "bachelor" -- and those names were being
+    interpolated straight into German and Ukrainian sentences. Anything the
+    code can put into a translated slot has to be in the vocabulary, and a
+    new education level or section added later has to fail here rather
+    than reach a reader."""
+    from ats_xray.credentials import EDUCATION_RANK, STUDY_FIELDS_BY_LANGUAGE
+    from ats_xray.field_report import EXPECTED_SECTIONS
+    from ats_xray.i18n import VOCABULARY
+
+    emitted = (
+        {"email", "phone", "header", "footer"}
+        | set(EXPECTED_SECTIONS)
+        | set(EDUCATION_RANK)
+        | {field for fields in STUDY_FIELDS_BY_LANGUAGE.values() for field in fields}
+    )
+    missing = sorted(emitted - set(VOCABULARY))
+
+    assert not missing, f"tokens with no translation: {missing}"
+
+
+@pytest.mark.parametrize("language", list(UI_LANGUAGES))
+def test_no_internal_token_survives_into_a_rendered_sentence(language):
+    import re
+
+    from ats_xray.i18n import VOCABULARY, term
+
+    for token in VOCABULARY:
+        translated = term(token, language)
+        if translated == token:
+            continue
+        rendered = t("detail_contact_one", language, found=token, missing=token)
+
+        # Whole words only: "phone" lives inside "telefoonnummer" and
+        # "telephone" without either being a leak.
+        assert not re.search(rf"{re.escape(token)}", rendered), (
+            f"{language}: {token} reached the reader untranslated"
+        )
+        assert translated in rendered
+
+
+@pytest.mark.parametrize("language", list(UI_LANGUAGES))
+def test_every_rule_has_a_readable_name_in_every_language(language):
+    """The rule id is what the code calls it -- lowercase, English,
+    underscored. It was reaching readers in two places: under each page
+    image ("Page 1 — section_missing_under_naive_parsing") and in the score
+    breakdown, which told a German reader "Abzüge: docx_table_content
+    (-25)". A rule added without a name would put it back."""
+    from ats_xray.i18n import RULE_NAMES, rule_name
+
+    missing = sorted(rule.id for rule in all_rules() if rule.id not in RULE_NAMES)
+    assert not missing, f"rules with no short name: {missing}"
+
+    untranslated = sorted(
+        rule.id for rule in all_rules() if language not in RULE_NAMES[rule.id]
+    )
+    assert not untranslated, f"{language} is missing rule names: {untranslated}"
+
+    for rule in all_rules():
+        name = rule_name(rule.id, language)
+        assert name != rule.id, f"{language}/{rule.id} falls back to the id"
+        assert "_" not in name, f"{language}/{rule.id} still reads like an identifier"
+        assert len(name) <= 40, f"{language}/{rule.id} is too long for a caption: {name!r}"
+
+
+def test_the_score_breakdown_names_its_rules(language="de"):
+    """The deduction list is built before a language is chosen, so it
+    carries pairs and is named at render time. If that wiring breaks it
+    fails loudly here rather than showing snake_case to a reader."""
+    rendered = t(
+        "detail_structure_deductions",
+        language,
+        deductions=(("docx_table_content", 25), ("pdf_textless_image", 10)),
+    )
+
+    assert "docx_table_content" not in rendered
+    assert "Inhalt in einer Tabelle (-25)" in rendered
+    assert "(-10)" in rendered

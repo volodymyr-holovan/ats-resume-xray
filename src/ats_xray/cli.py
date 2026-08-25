@@ -11,10 +11,12 @@ from .i18n import (
     DEFAULT_LANGUAGE,
     UI_LANGUAGES,
     rule_description,
+    rule_name,
     rule_detail,
     rule_fixes,
     sources_path,
     t,
+    tn,
 )
 from .pipeline import extract_text
 from .score import score_resume
@@ -115,7 +117,13 @@ def main() -> None:
 def _format_score(breakdown, language: str = DEFAULT_LANGUAGE) -> str:
     lines = [f"{breakdown.total}/100 - {t(breakdown.rating_key, language)}"]
     if breakdown.cap_key:
-        lines.append(f"  {t(breakdown.cap_key, language, **breakdown.cap_params)}")
+        capped = tn(
+            breakdown.cap_key,
+            breakdown.cap_params.get("count", 1),
+            language,
+            **breakdown.cap_params,
+        )
+        lines.append(f"  {capped}")
     lines.append("")
     for component in breakdown.components:
         weight = (
@@ -215,7 +223,7 @@ def _format_finding(finding, language: str) -> str:
     it. The web UI folds the last two behind an expander because it can; a
     terminal has no fold, so it prints the lot."""
     lines = [
-        f"[{t('severity_' + finding.severity, language)}] {finding.rule.id}",
+        f"[{t('severity_' + finding.severity, language)}] {rule_name(finding.rule.id, language)}",
         f"  {rule_description(finding.rule.id, language, finding.rule.description)}",
     ]
 

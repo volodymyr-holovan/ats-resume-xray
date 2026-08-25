@@ -27,8 +27,11 @@
    ========================================================================== */
 
 :root {
-  /* A four-step spacing scale. Everything is a multiple of 4px, which is
-     what stops a layout from looking hand-placed. */
+  /* A four-step spacing scale. Layout distances are multiples of 4px,
+     which is what stops a layout from looking hand-placed. Distances that
+     belong to the type rather than the grid -- the padding inside a chip,
+     an optical nudge under a cap height -- are set in rem where they are
+     used, because they have to move when the text size does. */
   --axr-space-1: 0.25rem;
   --axr-space-2: 0.5rem;
   --axr-space-3: 1rem;
@@ -46,34 +49,51 @@
   --axr-medium: #d97706;
   --axr-low: #2563eb;
 
-  /* The same three as *text*, which is a different problem. #dc2626 on a
-     near-black ground is about 3.5:1 -- under the 4.5:1 small text needs --
-     so the labels lighten in dark mode while the swatches do not. */
-  --axr-high-text: #dc2626;
-  --axr-medium-text: #b45309;
-  --axr-low-text: #2563eb;
+  /* The same three as *text*, which is a different problem: #dc2626 is
+     about 3.5:1 on a near-black ground, under the 4.5:1 small text needs.
+     Mixed against currentColor rather than swapped in a media query,
+     because the media query follows the operating system and Streamlit has
+     its own theme toggle -- a reader on a light OS who switched the app to
+     dark got the light palette. 70% keeps the hue unmistakable; the rest
+     pulls it toward whichever foreground is actually in force. */
+  --axr-high-text: color-mix(in srgb, #dc2626 70%, currentColor);
+  --axr-medium-text: color-mix(in srgb, #d97706 70%, currentColor);
+  --axr-low-text: color-mix(in srgb, #2563eb 70%, currentColor);
 
   /* Derived from the text colour rather than fixed, so a hairline can never
      end up light-on-light or, as it did here first, near-white on near-black. */
   --axr-rule: color-mix(in srgb, currentColor 14%, transparent);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --axr-high-text: #f87171;
-    --axr-medium-text: #fbbf24;
-    --axr-low-text: #60a5fa;
-  }
-}
-
 /* --------------------------------------------------------------------------
    Page frame
    -------------------------------------------------------------------------- */
 
+/* The top padding is not decoration: Streamlit's own toolbar -- the ⋮ menu
+   that holds the theme switch, and Deploy when it is shown -- is a 60px
+   bar pinned across the top of the page, opaque and at z-index 999990.
+   Tightening this padding to 1.5rem pulled the masthead underneath it, and
+   the toolbar painted over the top 16px of the language button. It looked
+   like a clipped control and was in fact a control drawn behind a bar.
+
+   So: clear the toolbar first, then add the space the page actually wants.
+   --axr-header is the measured height of that bar. */
+:root {
+  --axr-header: 60px;
+}
+
 [data-testid="stMainBlockContainer"] {
   max-width: 1440px;
-  padding-top: var(--axr-space-4);
+  padding-top: calc(var(--axr-header) + var(--axr-space-3));
   padding-bottom: var(--axr-space-5);
+}
+
+/* Nothing in the toolbar band belongs to this app except the ⋮ menu, and a
+   solid bar the width of the page only advertises Streamlit. Transparent,
+   so the page reads as one surface -- the buttons inside it keep their own
+   backgrounds and stay legible. */
+[data-testid="stHeader"] {
+  background: transparent;
 }
 
 /* Streamlit spaces every block equally, which flattens the hierarchy: a
@@ -110,7 +130,7 @@
 }
 
 [data-testid="stMarkdownContainer"] .axr-tagline {
-  font-size: 0.9375rem;
+  font-size: 1rem;
   opacity: 0.7;
   margin: 0;
 }
@@ -121,20 +141,31 @@
 [data-testid="stMarkdownContainer"] .axr-jump {
   display: flex;
   gap: var(--axr-space-3);
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
   margin: var(--axr-space-2) 0 0;
   flex-wrap: wrap;
 }
 
 .axr-jump a {
   text-decoration: none;
-  opacity: 0.75;
-  border-bottom: 1px solid transparent;
-  padding-bottom: 1px;
+  border-bottom: 1px solid color-mix(in srgb, currentColor 45%, transparent);
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
 }
 
-.axr-jump a:hover {
-  opacity: 1;
+/* A zone that has not been rendered yet. Same size and place as the link
+   it will become, so the row does not reflow when a file is loaded. */
+.axr-jump-pending {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  opacity: 0.55;
+  cursor: default;
+}
+
+.axr-jump a:hover,
+.axr-jump a:focus-visible {
   border-bottom-color: currentColor;
 }
 
@@ -164,7 +195,7 @@
   font-variant-numeric: tabular-nums;
   font-size: 0.8125rem;
   font-weight: 700;
-  opacity: 0.45;
+  opacity: 0.7;
   min-width: 1.5rem;
 }
 
@@ -176,7 +207,7 @@
 }
 
 [data-testid="stMarkdownContainer"] .axr-zone-note {
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
   opacity: 0.65;
   margin: 0 0 var(--axr-space-3) 2.25rem;
   max-width: var(--axr-measure);
@@ -200,10 +231,43 @@
 .axr-finding-low { border-left-color: var(--axr-low); }
 
 .axr-severity {
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
+}
+
+/* Column headings are not badges. Uppercasing a whole sentence -- and
+   "Не знайдено у вашому резюме" is a sentence -- makes it slower to read,
+   not more prominent; weight and colour do that job without shouting. */
+[data-testid="stMarkdownContainer"] .axr-column-heading {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  margin: 0 0 var(--axr-space-2);
+}
+
+.axr-count {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  margin-left: 0.25rem;
+}
+
+/* A partial is a gap the reader can act on, listed with the other gaps.
+   The tag is what stops it reading as a plain miss. */
+.axr-partly {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  /* Text and ground are the same hue, so the wash lifts the ground toward
+     the text and eats the contrast between them: 70% on a 14% tint
+     measured 4.49 on light, under the 4.5 small text needs. Less amber in
+     the text and less in the wash, measured against the composited chip
+     rather than against the page. */
+  color: color-mix(in srgb, #d97706 60%, currentColor);
+  background: color-mix(in srgb, #d97706 10%, transparent);
+  border-radius: 0.25rem;
+  padding: 0.125rem 0.375rem;
+  margin-left: 0.375rem;
+  white-space: nowrap;
 }
 
 .axr-severity-high { color: var(--axr-high-text); }
@@ -223,7 +287,7 @@
   display: flex;
   gap: var(--axr-space-3);
   flex-wrap: wrap;
-  font-size: 0.8125rem;
+  font-size: 0.9375rem;
   opacity: 0.85;
   margin-bottom: var(--axr-space-2);
 }
@@ -256,6 +320,15 @@
   align-items: center;
 }
 
+/* Streamlit's own focus ring is a 50%-alpha tint of the accent: 2.78:1
+   on the dark page and 1.54:1 on the light one, where 2.4.11 asks for 3.
+   Drawing it in the text colour makes it the same ring on both. */
+:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+  box-shadow: none !important;
+}
+
 /* The language menu is a top-level control and gets a top-level target. */
 [data-testid="stPopoverButton"] {
   min-height: 44px;
@@ -265,18 +338,28 @@
    editable keyword list exists for -- correcting what the parser guessed --
    and at that size a thumb cannot hit it. The chip grows to a comfortable
    height and the cross gets a real hit area inside it. */
-[data-testid="stMultiSelectTagsContainer"] span[data-baseweb="tag"],
-[data-testid="stMultiSelectTagsContainer"] > span {
-  min-height: 32px;
+[data-testid="stMultiSelectTagsContainer"] span[data-tag] {
+  min-height: 44px;
 }
 
 [data-testid="stMultiSelectTagsContainer"] button[aria-label^="Remove"] {
-  min-width: 24px;
-  min-height: 24px;
-  padding: 6px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 10px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+}
+
+/* The language menu is a radio, and a radio's target is the label, not the
+   dot. Without this the reader is aiming at a 16px circle stacked 22px from
+   the next one. Keyed off the widget rather than its container: the popover
+   body is portalled to the end of <body>, so the container's class is not
+   an ancestor of anything inside it. */
+.st-key-language [data-testid="stRadioOption"] {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
 }
 
 /* --------------------------------------------------------------------------
@@ -301,6 +384,21 @@
     flex: 1 1 100% !important;
     min-width: 100% !important;
   }
+
+  /* Side by side, the fixed heights are what hold the comparison together:
+     three columns that all start at the same place and end at the same
+     place. Stacked, they hold nothing together and become three scrollers
+     inside a scrolling page, each one catching a thumb on its way down. The
+     page pane is the same story. Stacked, they can be as long as they are.
+
+     Streamlit sets the height through a generated class rather than an
+     inline style, so a compound selector wins it without !important. */
+  [class*="st-key-axr-split"] [data-testid="stLayoutWrapper"],
+  [class*="st-key-axr-split"] [data-testid="stLayoutWrapper"] > [data-testid="stVerticalBlock"] {
+    height: auto;
+    max-height: none;
+    overflow: visible;
+  }
 }
 
 @media (max-width: 640px) {
@@ -316,4 +414,28 @@
   [data-testid="stMarkdownContainer"] .axr-zone-note {
     margin-left: 0;
   }
+}
+
+/* --------------------------------------------------------------------------
+   Small text
+   --------------------------------------------------------------------------
+   Streamlit sets captions at 14px. They carry the explanation under every
+   requirement and every score component -- most of the reading on a results
+   screen -- so they come up to 15px, the floor for body copy someone is
+   expected to actually read. */
+
+[data-testid="stCaptionContainer"],
+[data-testid="stCaptionContainer"] p {
+  font-size: 0.9375rem;
+}
+
+/* The language menu sits in a narrow masthead column. Without room to
+   breathe the 44px button was being clipped by the row above it. */
+.st-key-axr-language {
+  padding: var(--axr-space-1) 0;
+}
+
+.st-key-axr-language [data-testid="stPopoverButton"] {
+  min-height: 44px;
+  white-space: nowrap;
 }

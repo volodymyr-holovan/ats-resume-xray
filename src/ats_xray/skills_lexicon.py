@@ -37,7 +37,27 @@ def _build(row: tuple[str, ...]) -> Skill:
 SKILLS: tuple[Skill, ...] = tuple(_build(row) for row in ALL_SKILLS)
 SKILLS_BY_ID: dict[str, Skill] = {skill.id: skill for skill in SKILLS}
 
-AMBIGUOUS_ALIASES = frozenset({"go", "r", "c", "ad", "ai", "ki", "qa", "hr", "au", "hu", "bar", "din", "iso", "sap fi", "sap co"})
+AMBIGUOUS_ALIASES = frozenset({
+    "go", "r", "c", "ad", "ai", "ki", "qa", "hr", "au", "hu", "bar", "din", "iso",
+    "sap fi", "sap co",
+    # Units and ordinary words that a curated list is supposed to keep out
+    # and did not. Every one below was reported from a real sentence:
+    "ml",       # "Infusionen bis 500 ml" -- Machine Learning, in five languages
+    "safe",     # "safe handling of chemicals" -- Scrum
+    "daily",    # "daily cleaning of offices" -- Scrum
+    "solid",    # "solid experience with..." -- Design Patterns
+    "rest",     # "keep the rest of the workroom tidy" -- REST
+    "teams",    # "Führung von Teams" -- Microsoft 365
+    "chef",     # "Chef de rang" -- Puppet
+    "san",      # "Calle San Juan 14" -- TrueNAS
+    "basel",    # "4051 Basel" -- Risikomanagement
+    "maya",     # a given name on line 1 -- 3D-Modellierung
+    "mag",      # "wer Kinder mag", and the Austrian Mag. title -- Schweißen
+    "fonds",    # "Ansetzen von Fonds und Saucen" -- Anlageberatung
+    "depot",    # a bus depot -- Anlageberatung
+    "satz",     # "ein Satz Werkzeuge", "Steuersatz" -- Grafikdesign
+    "optik",    # German for appearance -- Physik
+})
 """Spellings that are never treated as a skill mention even though they are
 the real name of one.
 
@@ -46,6 +66,11 @@ a place rather than the craft: each is an ordinary word somewhere, and a
 requirements list that gained a programming language from a launch date
 would be wrong in a way the reader cannot easily spot. Every skill here
 stays reachable through a longer, unambiguous alias.
+
+The test for this list is the corpus, not the dictionary. "Angular" is an
+ordinary English adjective and belongs here by that measure -- but nobody
+writes about angular momentum on a CV, and half the front-end adverts in
+Germany ask for the framework by that exact word. It stays.
 """
 
 ALIAS_TO_ID: dict[str, str] = {}
@@ -109,23 +134,59 @@ def find_skills_and_covered(text: str) -> tuple[list[str], set[str]]:
     return found, covered
 
 
+MIN_INFLECTED_ALIAS = 8
+"""Shortest alias allowed to match an inflected form of itself.
+
+The general shared-stem comparison in :mod:`normalize` is right for ordinary
+German words and disastrous here. It turned "mongoose" into MongoDB,
+"excels" into Excel, "swiftly" into Swift, "reacts" into React and "sparks"
+into Spark -- every one of those observed, and the first of them reported
+from a blank character sheet that scored well as a CV.
+
+Technology names do not inflect, so they need no tolerance at all. Only the
+long descriptive aliases do: "Reinigungsmittel" really does appear as
+"Reinigungsmitteln". At eight characters a coincidence stops being
+plausible."""
+
+INFLECTIONAL_ENDINGS = frozenset({"e", "en", "er", "es", "em", "n", "s", "ns", "nen"})
+"""German case and plural endings. Requiring the difference to be one of
+these is what separates an inflected form from a different word that merely
+starts the same way: "Datenbanken" is "Datenbank" declined, "Datenbankdesign"
+is not."""
+
+
+def _is_inflection(alias: str, word: str) -> bool:
+    """Whether ``word`` is ``alias`` with a case or plural ending added.
+
+    One direction only. Allowing the word to be the *shorter* of the two --
+    stripping an ending off the alias rather than adding one to it -- let
+    "Schleife" (a ribbon) reach CNC through "schleifen", "Toleranz" (an
+    attitude) reach Messtechnik through "toleranzen", "Workshop" reach
+    Change Management, "transform" reach Deep Learning and "embedding"
+    reach RAG. Every legitimate case adds: "Reinigungsmitteln" is
+    "reinigungsmittel" declined, never the reverse.
+    """
+    if alias == word:
+        return True
+    if len(alias) < MIN_INFLECTED_ALIAS or not word.startswith(alias):
+        return False
+    return word[len(alias) :] in INFLECTIONAL_ENDINGS
+
+
 def _lookup(window: list[str]) -> str | None:
     """Resolve one window of folded words to a skill id.
 
-    Tries the exact spelling first, because that is both the common case and
-    the safe one. Only single words fall back to inflection-tolerant
-    comparison: allowing it on every phrase would make long aliases match
-    far too loosely.
+    Exact spelling first: that is both the common case and the safe one.
+    Only single words fall back to inflection, and only long ones -- see
+    :data:`MIN_INFLECTED_ALIAS` for what happens without that floor.
     """
-    from .normalize import same_word
-
     phrase = " ".join(window)
     exact = ALIAS_TO_ID.get(phrase)
     if exact is not None:
         return exact
-    if len(window) != 1:
+    if len(window) != 1 or len(phrase) < MIN_INFLECTED_ALIAS:
         return None
     for alias, skill_id in _SINGLE_WORD_ALIASES.items():
-        if same_word(alias, phrase):
+        if _is_inflection(alias, phrase):
             return skill_id
     return None

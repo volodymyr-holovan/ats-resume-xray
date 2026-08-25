@@ -183,7 +183,9 @@ def _evaluate_fields(aware_fields: dict, naive_fields: dict, trigger: Trigger) -
         if aware_field["found"] and not naive_fields["sections"][section]["found"]
     ]
     if at_risk:
-        listed = ", ".join(f'"{section}"' for section in at_risk)
+        # Joined but not quoted: i18n translates each name on the way to the
+        # screen, and it can only recognise a bare token.
+        listed = ", ".join(at_risk)
         trigger(
             "section_missing_under_naive_parsing",
             "evidence_sections_lost_one" if len(at_risk) == 1 else "evidence_sections_lost_many",

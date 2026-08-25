@@ -17,13 +17,13 @@ August 2026 und auf Englisch belassen: die Artikel selbst sind englisch.
 
 ## ats-fonts
 
-Nicht standardisierte oder nicht eingebettete Schriften riskieren, falsch gelesen, ersetzt oder ganz verworfen zu werden — mit verstümmeltem oder fehlendem Text als Folge.
+Nicht standardisierte oder nicht eingebettete Schriften können falsch gelesen, ersetzt oder ganz verworfen werden — mit verstümmeltem oder fehlendem Text als Folge.
 
 - [How ATS Handles Fonts: Complete Guide to Resume Formatting](https://hireflow.net/blog/how-ats-handles-fonts)
 
 ## ats-headers-footers
 
-Inhalte in Kopf- oder Fußzeilen werden von ATS-Parsern häufig vollständig übersprungen, weil sie als "Seitenbeiwerk" außerhalb des Dokumentkörpers gelten.
+Inhalte in Kopf- oder Fußzeilen werden von ATS-Parsern häufig vollständig übersprungen, weil sie als "Seitenbeiwerk" außerhalb des Textkörpers gelten.
 
 - [How ATS Reads Headers and Footers: Complete Guide to Resume Parsing](https://hireflow.net/blog/how-ats-reads-headers-and-footers)
 
@@ -48,4 +48,4 @@ Als Bild exportierte Lebensläufe (häufig bei Design-Tool-Vorlagen wie Canva) b
 
 ## practical-necessity
 
-Keine externe Quelle: Ein Lebenslauf, auf dem eine recruitende Person keine Kontaktdaten findet, ist unerreichbar — unabhängig davon, was ein Parser korrekt extrahiert hat. Diese Regel besteht aus praktischen, nicht aus Forschungsgründen.
+Keine externe Quelle: Wer keine Kontaktdaten in den Lebenslauf schreibt, ist für Personalverantwortliche nicht erreichbar — unabhängig davon, was ein Parser korrekt extrahiert hat. Diese Regel besteht aus praktischen, nicht aus Forschungsgründen.

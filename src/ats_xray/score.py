@@ -82,7 +82,19 @@ class ScoreBreakdown:
 
 
 def score_resume(aware_fields: dict, naive_fields: dict, findings: list[Finding]) -> ScoreBreakdown:
-    """Compute the parse readiness score and the components behind it."""
+    """Compute the parse readiness score and the components behind it.
+
+    Every document gets a number. There was briefly a gate here that
+    returned zero and "not a CV" for anything without dated employment
+    history, and it was wrong twice over: it answered a question nobody
+    asked the tool, and it answered it badly -- a real CV in an unusual
+    shape got zero and no readability report at all, which is precisely
+    the reader who most needs one.
+
+    A document that is not a CV still gets an honest parse-readiness
+    score, because that is all this measures. What it must never do is
+    invent content that is not there; that belongs to the lexicon, not
+    here."""
     components = [
         _contact_component(naive_fields),
         _sections_component(aware_fields, naive_fields),
@@ -102,9 +114,10 @@ def score_resume(aware_fields: dict, naive_fields: dict, findings: list[Finding]
             total=cap,
             components=components,
             uncapped_total=uncapped,
-            # Separate keys rather than an English plural rule: languages
-            # here pluralise differently and some need three forms.
-            cap_key="cap_reason_one" if high_count == 1 else "cap_reason_many",
+            # A stem, not a finished key: how many forms the sentence needs
+            # depends on the reader's language, which the score does not know.
+            # ``i18n.tn`` picks between them at render time.
+            cap_key="cap_reason",
             cap_params={"cap": cap, "count": high_count, "uncapped": uncapped},
         )
 
@@ -162,7 +175,9 @@ def _structure_component(findings: list[Finding]) -> Component:
     structural = [f for f in findings if f.rule.id not in _FIELD_RULES]
     penalty = sum(SEVERITY_PENALTY[f.severity] for f in structural)
 
-    deductions = ", ".join(f"{f.rule.id} (-{SEVERITY_PENALTY[f.severity]})" for f in structural)
+    # Pairs, not a sentence: which rules cost what is data until a language
+    # is chosen, and this runs before one is. i18n names them at render.
+    deductions = tuple((f.rule.id, SEVERITY_PENALTY[f.severity]) for f in structural)
 
     return Component(
         name_key="component_structure",

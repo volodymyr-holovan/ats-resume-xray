@@ -86,3 +86,54 @@ def test_label_for_falls_back_to_the_id_for_unknown_skills():
 
 def test_every_registered_skill_has_a_category():
     assert all(SKILLS_BY_ID[skill.id].category for skill in SKILLS)
+
+
+ORDINARY_WORDS = [
+    ("mongoose", "mongodb"),
+    ("mongols", "mongodb"),
+    ("excels", "excel"),
+    ("excelled", "excel"),
+    ("swiftly", "swift"),
+    ("scalar", "scala"),
+    ("batches", "batch"),
+    ("fluttering", "flutter"),
+    ("reacts", "react"),
+    ("reacted", "react"),
+    ("sparks", "spark"),
+    ("sparked", "spark"),
+]
+
+
+@pytest.mark.parametrize(("word", "was_matched_as"), ORDINARY_WORDS)
+def test_an_ordinary_word_is_not_a_technology(word, was_matched_as):
+    """Every one of these was observed matching a product name through the
+    shared-stem comparison, which is right for German nouns and disastrous
+    for names that do not inflect. "MongoDB" was reported from a blank
+    character sheet this way."""
+    assert find_skills(word) == [], f"{word} still reads as {was_matched_as}"
+
+
+GERMAN_INFLECTIONS = [
+    ("Reinigungsmitteln", "reinigungsmittel"),
+    ("Pflegedokumentationen", "pflegedoku"),
+    ("Reinigungsmaschinen", "reinigungsmaschinen"),
+    ("Netzwerken", "networking"),
+]
+
+
+@pytest.mark.parametrize(("word", "skill_id"), GERMAN_INFLECTIONS)
+def test_a_declined_german_noun_still_matches(word, skill_id):
+    """The tolerance that had to survive: German adverts decline their
+    nouns, and a dative plural is the same requirement."""
+    assert skill_id in find_skills(word)
+
+
+TECHNOLOGIES = [
+    "MongoDB", "Excel", "Swift", "Scala", "React", "Apache Spark", "Flutter",
+    "Docker", "Kubernetes", "Microsoft SQL Server", "Node.js", "C#", "PostgreSQL",
+]
+
+
+@pytest.mark.parametrize("name", TECHNOLOGIES)
+def test_the_real_name_still_matches(name):
+    assert find_skills(name), f"{name} no longer recognised"

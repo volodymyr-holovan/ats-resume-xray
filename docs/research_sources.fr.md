@@ -48,4 +48,4 @@ Les CV exportés en image (courant avec les modèles d'outils de design comme Ca
 
 ## practical-necessity
 
-Pas une citation externe : un CV sur lequel un recruteur ne trouve pas de coordonnées est injoignable, quoi qu'un analyseur ait extrait correctement par ailleurs. Cette règle existe pour des raisons pratiques, non de recherche.
+Pas une citation externe : qui ne met pas ses coordonnées sur son CV reste injoignable pour un recruteur, quoi qu'un analyseur ait extrait correctement par ailleurs. Cette règle existe pour des raisons pratiques, non de recherche.

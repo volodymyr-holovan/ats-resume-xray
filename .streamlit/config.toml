@@ -1,6 +1,14 @@
 [browser]
 gatherUsageStats = false
 
+[runner]
+# Streamlit renders any bare top-level expression, and a docstring under a
+# module constant is a bare top-level expression. Two of them were printing
+# above the masthead -- "Tall enough for a whole A4 page..." -- which is a
+# strange way to lose documentation. Nothing in app.py relies on magic;
+# every widget is an explicit st.* call.
+magicEnabled = false
+
 [server]
 # 50 MB matches pipeline.MAX_FILE_SIZE_BYTES. No legitimate resume needs
 # more; this rejects oversized uploads at the server layer before they
@@ -32,7 +40,12 @@ baseFontSize = 16
 baseRadius = "8px"
 buttonRadius = "8px"
 showWidgetBorder = true
-linkUnderline = false
+# A link inside a sentence is 2.35:1 against the text around it on light
+# and 1.62:1 on dark, so with the underline off, colour is the only thing
+# marking it -- which fails 1.4.1 and is invisible to a reader who cannot
+# separate those two hues. The zone nav draws its own underline and is a
+# standalone row rather than links inside prose; this is for the rest.
+linkUnderline = true
 headingFontSizes = ["1.75rem", "1.375rem", "1.125rem", "1rem", "0.9375rem", "0.9375rem"]
 headingFontWeights = [700, 600, 600, 600, 600, 600]
 metricValueFontSize = "2.25rem"

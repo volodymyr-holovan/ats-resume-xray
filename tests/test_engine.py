@@ -124,7 +124,11 @@ def test_evaluate_section_missing_under_naive_parsing_triggers():
     findings = evaluate("pdf", EMPTY_PDF_STRUCTURE, aware, naive)
 
     match = next(f for f in findings if f.rule.id == "section_missing_under_naive_parsing")
-    assert "experience" in match.evidence
+    # The parameter carries the bare token; the rendered sentence carries
+    # the reader's word for it. Asserting on both is what keeps i18n from
+    # quoting or decorating the value on its way through.
+    assert match.evidence_params["sections"] == "experience"
+    assert "Experience" in match.evidence
 
 
 def test_evaluate_section_missing_does_not_trigger_when_truly_absent_from_resume():
