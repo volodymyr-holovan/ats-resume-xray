@@ -57,16 +57,35 @@ def find_docx_table_texts(docx_path: str) -> list[str]:
     rendered page means searching for the content itself.
     """
     document = docx.Document(docx_path)
-    texts = []
+    texts: list[str] = []
     seen = set()
     for table in document.tables:
-        for row in table.rows:
-            for cell in row.cells:
-                text = cell.text.strip()
-                # Merged cells repeat across the row span they cover.
-                if text and text not in seen:
-                    seen.add(text)
-                    texts.append(text)
+        _collect_cells(table, texts, seen)
+    return texts
+
+
+def _collect_cells(table, texts: list[str], seen: set) -> None:
+    """Every cell of a table and of any table nested inside it.
+
+    ``document.tables`` lists only the top-level ones, and a cell holding a
+    nested table reports empty text, so a CV laid out as a grid inside a
+    grid used to look like a document with no table content at all --
+    which is the one shape most likely to break a parser.
+    """
+    for row in table.rows:
+        for cell in row.cells:
+            # A merged cell is reported once per grid column it covers, so
+            # it has to be recognised by its element rather than by its
+            # text: two separate cells may legitimately hold the same
+            # words, and de-duplicating on the text dropped the second one.
+            if cell._tc in seen:
+                continue
+            seen.add(cell._tc)
+            text = cell.text.strip()
+            if text:
+                texts.append(text)
+            for nested in cell.tables:
+                _collect_cells(nested, texts, seen)
     return texts
 
 
