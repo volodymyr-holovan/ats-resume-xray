@@ -1085,6 +1085,15 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "nl": "Elke bevinding, wat die met je bestand doet en de stappen die het oplossen.",
         "fr": "Chaque constat, son effet sur votre fichier et les étapes qui le corrigent.",
     },
+    "jump_nav_label": {
+        "en": "Zones",
+        "de": "Bereiche",
+        "uk": "Розділи",
+        "ru": "Разделы",
+        "es": "Secciones",
+        "nl": "Zones",
+        "fr": "Sections",
+    },
     "jump_document": {
         "en": "Document",
         "de": "Dokument",

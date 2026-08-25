@@ -123,13 +123,25 @@ def _masthead(lang: str) -> None:
         _pick_language()
 
 
-def _jump_links(lang: str) -> None:
+def _jump_links(lang: str, loaded: bool) -> None:
+    """The zone nav, with the zones that do not exist yet marked as such.
+
+    Two of the three anchors are only rendered once a file is loaded, so on
+    the page every first-time visitor sees, two of three links did nothing
+    at all. Dropping them would make the row change width under the
+    reader; drawing them as plain text says they are waiting on something.
+    """
+    zones = [("zone-document", "jump_document", loaded),
+             ("zone-match", "jump_match", True),
+             ("zone-fixes", "jump_fixes", loaded)]
+    items = "".join(
+        f'<a href="#{anchor}">{t(key, lang)}</a>' if live
+        else f'<span class="axr-jump-pending">{t(key, lang)}</span>'
+        for anchor, key, live in zones
+    )
     st.markdown(
-        '<nav class="axr-jump">'
-        f'<a href="#zone-document">{t("jump_document", lang)}</a>'
-        f'<a href="#zone-match">{t("jump_match", lang)}</a>'
-        f'<a href="#zone-fixes">{t("jump_fixes", lang)}</a>'
-        "</nav>",
+        f'<nav class="axr-jump" aria-label="{html.escape(t("jump_nav_label", lang))}">'
+        f"{items}</nav>",
         unsafe_allow_html=True,
     )
 
@@ -166,7 +178,12 @@ def _upload_zone(lang: str):
     # triggers; without it, switching language silently discards the file.
     with st.container(key="axr-upload"):
         return st.file_uploader(
-            t("upload_label", lang), type=["pdf", "docx"], key="resume", label_visibility="collapsed"
+            # Streamlit's dropzone chrome ("Browse files", "50MB per file")
+            # is baked into its frontend with no API to translate it. This
+            # label is the one string that is ours, so it is shown rather
+            # than collapsed: a translated instruction above the box demotes
+            # the English underneath it to secondary noise.
+            t("upload_label", lang), type=["pdf", "docx"], key="resume"
         )
 
 
@@ -421,7 +438,7 @@ def _render_match_report(report, lang: str) -> None:
     if report.at_risk:
         st.warning(f"**{t('match_at_risk_heading', lang)}** ({len(report.at_risk)})")
         st.caption(t("match_at_risk_caption", lang))
-        st.markdown(", ".join(o.requirement.label for o in report.at_risk))
+        st.markdown(", ".join(html.escape(o.requirement.label) for o in report.at_risk))
 
 
 def _match_zone(analysis, lang: str) -> None:
@@ -522,7 +539,7 @@ st.markdown(f"<style>{_stylesheet()}</style>", unsafe_allow_html=True)
 # known after it has run; everything below the masthead uses that value.
 _masthead(st.session_state.get("language", DEFAULT_LANGUAGE))
 language = st.session_state.get("language", DEFAULT_LANGUAGE)
-_jump_links(language)
+_jump_links(language, st.session_state.get("resume") is not None)
 _show_update_notice(language)
 
 uploaded_file = _upload_zone(language)
