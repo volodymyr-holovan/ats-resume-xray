@@ -377,17 +377,99 @@ _OPEN_ENDED = (
     "heute", "present", "aktuell", "today", "now", "jetzt", "laufend", "ongoing",
     "current", "actualidad", "heden", "нині", "настоящее время",
 )
-_MONTH_YEAR = r"(\d{1,2})[./](\d{4})"
-_YEAR_ONLY = r"(\d{4})"
-_RANGE_SEPARATOR = r"\s*(?:-|–|—|bis|to|until|hasta|tot|до)\s*"
+MONTH_NAMES: dict[str, int] = {}
+"""Every spelling of a month this reads, folded, mapped to its number.
+
+Built rather than typed out: seven languages times twelve months times the
+abbreviations people actually write is five hundred entries, and a list
+that long maintained by hand is a list with a typo in it.
+
+This exists because CVs write dates in words. "March 2019 - August 2022" is
+the ordinary English form and "März 2019" the ordinary German one, and
+neither was read at all: the tool saw a CV with fourteen years of history
+and reported nothing, which then fed a wrong answer to an advert asking for
+five years of experience."""
+
+_MONTHS_BY_LANGUAGE = {
+    "en": ("january february march april may june july august september october november december"),
+    "de": ("januar februar märz april mai juni juli august september oktober november dezember"),
+    "uk": ("січня лютого березня квітня травня червня липня серпня вересня жовтня листопада грудня"),
+    "ru": ("января февраля марта апреля мая июня июля августа сентября октября ноября декабря"),
+    "es": ("enero febrero marzo abril mayo junio julio agosto septiembre octubre noviembre diciembre"),
+    "nl": ("januari februari maart april mei juni juli augustus september oktober november december"),
+    "fr": ("janvier février mars avril mai juin juillet août septembre octobre novembre décembre"),
+}
+
+# Nominative Ukrainian and Russian too: a CV heading writes "Січень", a
+# sentence writes "січня", and both appear beside a year.
+_MONTHS_EXTRA = {
+    "uk": ("січень лютий березень квітень травень червень липень серпень вересень жовтень листопад грудень"),
+    "ru": ("январь февраль март апрель май июнь июль август сентябрь октябрь ноябрь декабрь"),
+}
+
+_MIN_ABBREVIATION = 3
+
+_MONTH_SPELLINGS: set[str] = set()
+"""The spellings as written, which is what the regex has to look for.
+
+Keys go in folded and the alternation goes in raw, because fold() maps ä to
+ae and drops the circumflex: an alternation built from folded names never
+matches "Marz" written "Marz" with an umlaut, and the reader silently fell
+back to reading the year alone -- turning "Maerz 2019 bis August 2022" into
+January 2019 to August 2022 and inventing two months of experience."""
+
+
+def _register_month(name: str, number: int) -> None:
+    """Record one spelling, plus the abbreviations people write for it."""
+    for spelling in _abbreviations(name):
+        folded = fold(spelling)
+        if not folded:
+            continue
+        MONTH_NAMES.setdefault(folded, number)
+        _MONTH_SPELLINGS.add(spelling)
+
+
+def _abbreviations(name: str) -> tuple[str, ...]:
+    # "Sept", "Okt", "Jan" -- a trailing dot is handled by the pattern.
+    if len(name) <= _MIN_ABBREVIATION:
+        return (name,)
+    if len(name) == 4:
+        return (name, name[:_MIN_ABBREVIATION])
+    return (name, name[:4], name[:_MIN_ABBREVIATION])
+
+
+for _names in (*_MONTHS_BY_LANGUAGE.values(), *_MONTHS_EXTRA.values()):
+    for _index, _name in enumerate(_names.split(), start=1):
+        _register_month(_name, _index)
+
+# Longest first, so "januar" is not eaten by "jan" leaving a stray "uar".
+_MONTH_ALTERNATION = "|".join(
+    re.escape(name) for name in sorted(_MONTH_SPELLINGS, key=len, reverse=True)
+)
+
+
+def _date_pattern(tag: str) -> str:
+    """One date, in any form this reads, with uniquely named groups.
+
+    A regex may not repeat a group name, and a range needs the same shape
+    twice, so the caller passes a tag that keeps the two halves apart.
+    """
+    return (
+        rf"(?:(?P<{tag}_mnum>\d{{1,2}})[./](?P<{tag}_myear>\d{{4}})"
+        rf"|(?P<{tag}_mname>{_MONTH_ALTERNATION})\.?\s+(?P<{tag}_nyear>\d{{4}})"
+        rf"|(?P<{tag}_year>\d{{4}}))"
+    )
+
+
+_RANGE_SEPARATOR = r"\s*(?:-|–|—|bis|to|until|hasta|tot|до|au|à)\s*"
 
 _DATE_RANGE = re.compile(
-    rf"(?:{_MONTH_YEAR}|{_YEAR_ONLY}){_RANGE_SEPARATOR}"
-    rf"(?:{_MONTH_YEAR}|{_YEAR_ONLY}|({'|'.join(_OPEN_ENDED)}))",
+    rf"{_date_pattern('start')}{_RANGE_SEPARATOR}"
+    rf"(?:{_date_pattern('end')}|(?P<open_ended>{'|'.join(_OPEN_ENDED)}))",
     re.IGNORECASE,
 )
 _SINCE = re.compile(
-    rf"(?:seit|since|desde|sinds|depuis|з|с)\s+(?:{_MONTH_YEAR}|{_YEAR_ONLY})", re.IGNORECASE
+    rf"(?:seit|since|desde|sinds|depuis|з|с)\s+{_date_pattern('start')}", re.IGNORECASE
 )
 
 MIN_PLAUSIBLE_YEAR = 1960
@@ -405,25 +487,35 @@ def find_experience_months(text: str, today: date | None = None) -> int:
     spans: list[tuple[int, int]] = []
 
     for match in _DATE_RANGE.finditer(text):
-        # Groups: 1-2 start month/year, 3 start year-only,
-        #         4-5 end month/year, 6 end year-only, 7 open-ended word.
-        start = _to_month_index(match.group(1), match.group(2), match.group(3))
+        start = _month_index(match, "start")
         if start is None:
             continue
-        if match.group(7):
+        if match.group("open_ended"):
             end = today.year * 12 + today.month
         else:
-            end = _to_month_index(match.group(4), match.group(5), match.group(6), end_of_year=True)
+            end = _month_index(match, "end", end_of_year=True)
         if end is None or end < start:
             continue
         spans.append((start, end))
 
     for match in _SINCE.finditer(text):
-        start = _to_month_index(match.group(1), match.group(2), match.group(3))
+        start = _month_index(match, "start")
         if start is not None:
             spans.append((start, today.year * 12 + today.month))
 
     return _merged_length(spans)
+
+
+def _month_index(match: re.Match, tag: str, end_of_year: bool = False) -> int | None:
+    """Turn one half of a matched range into a month number since year zero."""
+    name = match.group(f"{tag}_mname")
+    if name:
+        return _to_month_index(
+            MONTH_NAMES.get(fold(name)), match.group(f"{tag}_nyear"), None, end_of_year
+        )
+    return _to_month_index(
+        match.group(f"{tag}_mnum"), match.group(f"{tag}_myear"), match.group(f"{tag}_year"), end_of_year
+    )
 
 
 def _to_month_index(month, year, year_only, end_of_year: bool = False) -> int | None:
