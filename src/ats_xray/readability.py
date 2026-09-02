@@ -13,6 +13,7 @@ unreachable either way.
 import re
 
 from .contact import find_email, find_phone
+from .credentials import range_end
 from .sections import find_section_headers
 
 # --------------------------------------------------------------------------
@@ -92,16 +93,36 @@ def find_unrecognised_headings(text: str) -> list[str]:
         stripped = line.strip()
         if not _is_heading_shaped(stripped):
             continue
-        # White space above and content below. This is what separates a
-        # heading from the name at the top of the page and from a job title
-        # sitting in the middle of an entry -- the two things a looser test
-        # reported, which would have been a worse finding than none.
-        if index == 0 or lines[index - 1].strip():
-            continue
         if not any(lines[after].strip() for after in range(index + 1, min(index + 3, len(lines)))):
             continue
-        headings.append(stripped)
+        if _stands_alone(lines, index) or _introduces_an_entry(lines, index):
+            headings.append(stripped)
     return headings if len(headings) >= MIN_HEADINGS else []
+
+
+def _stands_alone(lines: list[str], index: int) -> bool:
+    """White space above it, which is how a heading announces itself.
+
+    True for a DOCX and for plain text, and false for most PDFs: pdfplumber
+    returns the lines it finds and not the space between them, so this
+    signal was silently absent from the majority format.
+    """
+    return index > 0 and not lines[index - 1].strip()
+
+
+def _introduces_an_entry(lines: list[str], index: int) -> bool:
+    """The next line opens a dated entry, so this one labelled a section.
+
+    The signal that survives a PDF. It costs a guard: the line under a name
+    is often a job title, and a job title above a date looks exactly like
+    this -- so the first two lines are excluded, and MIN_HEADINGS does the
+    rest of the work, since a CV rarely has two stray job titles and always
+    has at least two sections.
+    """
+    if index < 2:
+        return False
+    following = next((line for line in lines[index + 1 :] if line.strip()), "")
+    return range_end(following) is not None
 
 
 def _is_heading_shaped(line: str) -> bool:

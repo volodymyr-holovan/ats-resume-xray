@@ -161,3 +161,33 @@ def test_ordinary_text_is_left_alone(text):
     """Including a Cyrillic-only line and an em dash, neither of which is a
     mixed word."""
     assert find_broken_characters(text) == []
+
+
+PDF_SHAPED = """Maria Weber
+Pflegefachkraft
+LinkedIn: linkedin.com/in/mariaweber
+Mein Weg
+Marz 2019 - heute Seniorenheim Nordlicht
+Grundpflege und Behandlungspflege
+Was ich gelernt habe
+September 2008 - August 2011 Pflegeschule Bremen"""
+
+
+def test_headings_are_found_without_blank_lines():
+    """The shape a PDF actually arrives in. pdfplumber returns the lines it
+    finds and not the space between them, so the blank-line signal this
+    rule was first written around is absent from the majority format --
+    which meant the rule fired on DOCX files and quietly never on PDFs.
+
+    A heading whose next line opens a dated entry is the signal that
+    survives."""
+    assert find_unrecognised_headings(PDF_SHAPED) == ["Mein Weg", "Was ich gelernt habe"]
+
+
+def test_a_job_title_above_a_date_is_not_a_heading():
+    """The cost of that second signal: a job title sitting under the name
+    and above a date looks exactly like a section label. The first two
+    lines are excluded, and needing two headings does the rest."""
+    text = "Anna Muster\nanna@example.com\nSenior Designer\n03/2019 - heute Studio Nord\nGestaltung"
+
+    assert find_unrecognised_headings(text) == []
