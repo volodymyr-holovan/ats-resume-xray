@@ -21,6 +21,7 @@ from datetime import date
 from .credentials import CEFR_RANK, EDUCATION_RANK, find_education, find_experience_months, find_languages, find_licence
 from .langid import detect_language
 from .normalize import contains_phrase, fold, tokens
+from .recency import find_dated_entries, is_stale, last_used, years_since
 from .sections import split_into_sections
 from .skills_lexicon import SKILLS_BY_ID, find_skills, label_for
 from .vacancy import Requirement
@@ -46,6 +47,13 @@ mismatch, and adverts routinely ask for more than the job needs."""
 
 MAX_EXTRAS = 12
 
+MAX_GAINS = 3
+"""How many improvements to name.
+
+A list of everything missing is the gaps column, which is already on
+screen. This answers a different question -- what should I do first --
+and an answer with ten items in it is not an answer."""
+
 
 @dataclass(frozen=True)
 class Outcome:
@@ -53,6 +61,7 @@ class Outcome:
     status: str
     evidence: str = ""
     at_risk: bool = False
+    stale: bool = False
     note_key: str | None = None
     note_params: dict = field(default_factory=dict)
 
@@ -73,6 +82,9 @@ class MatchReport:
     extras: tuple[str, ...]
     missing_must: tuple[Outcome, ...]
     at_risk: tuple[Outcome, ...]
+    stale: tuple[Outcome, ...] = ()
+    gains: tuple[tuple[Outcome, int], ...] = ()
+    """What each unmet requirement would add to the score, best first."""
 
     def of_status(self, status: str) -> list[Outcome]:
         return [o for o in self.outcomes if o.status == status]
@@ -90,9 +102,14 @@ def evaluate_match(
     sections = split_into_sections(aware_text)
     cv_skills = set(find_skills(aware_text))
     naive_skills = set(find_skills(naive_text)) if naive_text else cv_skills
+    # The dated blocks of the CV, so a matched skill can be told apart into
+    # one the candidate still uses and one they last touched a decade ago.
+    entries = find_dated_entries(aware_text, today)
 
     outcomes = [
-        _evaluate(requirement, aware_text, sections, cv_skills, naive_skills, today, language)
+        _evaluate(
+            requirement, aware_text, sections, cv_skills, naive_skills, today, language, entries
+        )
         for requirement in requirements
     ]
 
@@ -110,12 +127,40 @@ def evaluate_match(
         extras=extras,
         missing_must=tuple(o for o in outcomes if o.status == "missing" and o.requirement.must),
         at_risk=tuple(o for o in outcomes if o.at_risk),
+        stale=tuple(o for o in outcomes if o.stale),
+        gains=_gains(outcomes, total_weight),
     )
 
 
-def _evaluate(requirement, aware_text, sections, cv_skills, naive_skills, today, language):
+def _gains(outcomes: list[Outcome], total_weight: int) -> tuple[tuple[Outcome, int], ...]:
+    """The unmet requirements ranked by what each would add to the score.
+
+    The gaps column says what is missing. This says which of them to do
+    first, which is not the same list: a required item nobody would guess
+    matters three times what an optional one does, and two items with the
+    same label can be worth very different numbers.
+
+    Computed rather than estimated -- the score is a weighted average, so
+    the gain from meeting one requirement is exactly its remaining share.
+    """
+    if not total_weight:
+        return ()
+    ranked = sorted(
+        (
+            (outcome, round((1 - outcome.credit) * outcome.weight / total_weight * 100))
+            for outcome in outcomes
+            if outcome.credit < 1
+        ),
+        key=lambda pair: (-pair[1], pair[0].requirement.label),
+    )
+    return tuple(pair for pair in ranked if pair[1] > 0)[:MAX_GAINS]
+
+
+def _evaluate(
+    requirement, aware_text, sections, cv_skills, naive_skills, today, language, entries
+):
     if requirement.kind == "skill":
-        return _evaluate_skill(requirement, aware_text, cv_skills, naive_skills)
+        return _evaluate_skill(requirement, aware_text, cv_skills, naive_skills, entries, today)
     if requirement.kind == "experience":
         return _evaluate_experience(requirement, sections, aware_text, today)
     if requirement.kind == "education":
@@ -127,20 +172,39 @@ def _evaluate(requirement, aware_text, sections, cv_skills, naive_skills, today,
     return Outcome(requirement, "missing")
 
 
-def _evaluate_skill(requirement, aware_text, cv_skills, naive_skills) -> Outcome:
+def _evaluate_skill(requirement, aware_text, cv_skills, naive_skills, entries, today) -> Outcome:
     if requirement.key not in SKILLS_BY_ID:
         return _evaluate_custom_keyword(requirement, aware_text)
 
     if requirement.key not in cv_skills:
         return Outcome(requirement, "missing")
+
     at_risk = requirement.key not in naive_skills
+    stale = is_stale(requirement.key, aware_text, entries, today)
+
+    # A skill the parser cannot see outranks one the employer might ask
+    # about: the first loses the match outright, the second only invites a
+    # question. Both are true; only one fits on the line.
+    if at_risk:
+        note_key = "match_note_skill_at_risk"
+        note_params = {"skill": label_for(requirement.key)}
+    elif stale:
+        note_key = "match_note_skill_stale"
+        note_params = {
+            "skill": label_for(requirement.key),
+            "years": years_since(last_used(requirement.key, entries), today),
+        }
+    else:
+        note_key, note_params = None, {}
+
     return Outcome(
         requirement,
         "met",
         evidence=_line_with_skill(aware_text, requirement.key),
         at_risk=at_risk,
-        note_key="match_note_skill_at_risk" if at_risk else None,
-        note_params={"skill": label_for(requirement.key)} if at_risk else {},
+        stale=stale,
+        note_key=note_key,
+        note_params=note_params,
     )
 
 

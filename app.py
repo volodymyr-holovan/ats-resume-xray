@@ -474,10 +474,36 @@ def _render_match_report(report, lang: str) -> None:
             _outcome_pane("match_extras_heading", "medium", [], lang, extras=report.extras)
             st.caption(t("match_extras_caption", lang))
 
+    if report.gains:
+        _gains_pane(report, lang)
+
     if report.at_risk:
         st.warning(f"**{t('match_at_risk_heading', lang)}** ({len(report.at_risk)})")
         st.caption(t("match_at_risk_caption", lang))
         st.markdown(", ".join(html.escape(o.requirement.label) for o in report.at_risk))
+
+    if report.stale:
+        st.info(f"**{t('match_stale_heading', lang)}** ({len(report.stale)})")
+        st.caption(t("match_stale_caption", lang))
+        st.markdown(", ".join(html.escape(o.requirement.label) for o in report.stale))
+
+
+def _gains_pane(report, lang: str) -> None:
+    """What to do first, which is not the top of the gaps list.
+
+    The gaps column is sorted by nothing in particular and treats a
+    blocking requirement and a nice-to-have alike. This says what each one
+    is worth, so effort goes where it moves the number.
+    """
+    st.markdown(f"**{t('match_gains_heading', lang)}**")
+    st.caption(t("match_gains_caption", lang))
+    for outcome, points in report.gains:
+        label = html.escape(outcome.requirement.label)
+        st.markdown(
+            f'<p class="axr-gain"><span class="axr-gain-points">'
+            f'{t("match_gain_points", lang, points=points)}</span> {label}</p>',
+            unsafe_allow_html=True,
+        )
 
 
 def _match_zone(analysis, lang: str) -> None:

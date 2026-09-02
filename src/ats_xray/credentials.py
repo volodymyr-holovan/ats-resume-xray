@@ -506,6 +506,22 @@ def find_experience_months(text: str, today: date | None = None) -> int:
     return _merged_length(spans)
 
 
+def range_end(text: str, today: date | None = None) -> int | None:
+    """When the first date range in ``text`` ends, as a month index.
+
+    ``0`` for a range with no end -- "seit 2019", "2019 - present" -- and
+    ``None`` when the text carries no range at all. Public because reading
+    a CV entry by entry needs the same date grammar this module already
+    knows, and copying the patterns into a second module is how two
+    readers of the same CV start disagreeing.
+    """
+    today = today or date.today()
+    match = _DATE_RANGE.search(text)
+    if match:
+        return 0 if match.group("open_ended") else _month_index(match, "end", end_of_year=True)
+    return 0 if _SINCE.search(text) else None
+
+
 def _month_index(match: re.Match, tag: str, end_of_year: bool = False) -> int | None:
     """Turn one half of a matched range into a month number since year zero."""
     name = match.group(f"{tag}_mname")
