@@ -964,6 +964,60 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "nl": "Upload hierboven een cv om het met deze vacature te vergelijken.",
         "fr": "Téléversez un CV ci-dessus pour le comparer à cette offre.",
     },
+    "match_note_skill_stale": {
+        "en": "Found, but the most recent dated entry using it ended {years} years ago.",
+        "de": "Gefunden, aber der jüngste datierte Eintrag damit endete vor {years} Jahren.",
+        "uk": "Знайдено, але останній датований запис із цим завершився {years} р. тому.",
+        "ru": "Найдено, но последняя датированная запись с этим закончилась {years} л. назад.",
+        "es": "Encontrado, pero la entrada fechada más reciente que lo usa terminó hace {years} años.",
+        "nl": "Gevonden, maar de recentste gedateerde vermelding ervan eindigde {years} jaar geleden.",
+        "fr": "Trouvé, mais la dernière entrée datée qui l'utilise s'est terminée il y a {years} ans.",
+    },
+    "match_gains_heading": {
+        "en": "What would raise this most",
+        "de": "Was am meisten bringen würde",
+        "uk": "Що підніме результат найбільше",
+        "ru": "Что поднимет результат больше всего",
+        "es": "Qué subiría más esta puntuación",
+        "nl": "Wat dit het meest zou verhogen",
+        "fr": "Ce qui ferait le plus monter la note",
+    },
+    "match_gains_caption": {
+        "en": "Each line is what the score would gain if that one requirement were met. Required items are weighted three times preferred ones, so the order is not the order of the gaps list.",
+        "de": "Jede Zeile zeigt, was die Bewertung gewinnen würde, wenn genau diese Anforderung erfüllt wäre. Pflichtpunkte zählen dreifach gegenüber gewünschten, die Reihenfolge ist also nicht die der Lückenliste.",
+        "uk": "Кожен рядок — це те, що додасть оцінці виконання саме цієї вимоги. Обов'язкові пункти важать утричі більше за бажані, тож порядок тут не такий, як у списку прогалин.",
+        "ru": "Каждая строка — это то, что добавит оценке выполнение именно этого требования. Обязательные пункты весят втрое больше желательных, поэтому порядок здесь не такой, как в списке пробелов.",
+        "es": "Cada línea es lo que ganaría la puntuación si se cumpliera ese requisito. Los obligatorios pesan el triple que los preferentes, así que el orden no es el de la lista de carencias.",
+        "nl": "Elke regel is wat de score erbij krijgt als juist die eis vervuld zou zijn. Vereiste punten wegen drie keer zo zwaar als gewenste, dus de volgorde is niet die van de lijst met hiaten.",
+        "fr": "Chaque ligne indique ce que la note gagnerait si cette exigence était remplie. Les critères obligatoires pèsent trois fois plus que les souhaités : l'ordre n'est donc pas celui de la liste des manques.",
+    },
+    "match_gain_points": {
+        "en": "+{points}",
+        "de": "+{points}",
+        "uk": "+{points}",
+        "ru": "+{points}",
+        "es": "+{points}",
+        "nl": "+{points}",
+        "fr": "+{points}",
+    },
+    "match_stale_heading": {
+        "en": "Matched, but not lately",
+        "de": "Getroffen, aber nicht mehr aktuell",
+        "uk": "Збіглося, але давно не використовувалось",
+        "ru": "Совпало, но давно не использовалось",
+        "es": "Coincide, pero no recientemente",
+        "nl": "Komt overeen, maar niet recent",
+        "fr": "Correspond, mais pas récemment",
+    },
+    "match_stale_caption": {
+        "en": "The advert asks for these and your CV has them — in an entry that ended years ago. That is a fair interview question, and a good line to refresh with something recent.",
+        "de": "Die Anzeige verlangt diese Punkte und Ihr Lebenslauf hat sie — in einem Eintrag, der vor Jahren endete. Das ist eine faire Frage im Gespräch und eine gute Zeile, die man mit etwas Aktuellem auffrischt.",
+        "uk": "Вакансія просить це, і у вашому резюме воно є — у записі, який завершився роками раніше. Це справедливе питання на співбесіді й хороший рядок, щоб освіжити чимось свіжішим.",
+        "ru": "Вакансия просит это, и в вашем резюме оно есть — в записи, которая закончилась годы назад. Это справедливый вопрос на собеседовании и хорошая строка, чтобы освежить чем-то недавним.",
+        "es": "La oferta pide esto y tu CV lo tiene, en una entrada que terminó hace años. Es una pregunta justa en una entrevista y una buena línea para refrescar con algo reciente.",
+        "nl": "De vacature vraagt hierom en je cv heeft het — in een vermelding die jaren geleden eindigde. Dat is een eerlijke vraag in een gesprek en een goede regel om met iets recents op te frissen.",
+        "fr": "L'offre demande cela et votre CV l'a — dans une entrée terminée il y a des années. C'est une question légitime en entretien, et une bonne ligne à rafraîchir avec quelque chose de récent.",
+    },
     "match_note_skill_at_risk": {
         "en": "{skill} was found only in the layout-aware read.",
         "de": "{skill} wurde nur beim layoutbewussten Lesen gefunden.",
@@ -1439,6 +1493,33 @@ def tn(stem: str, count: int, language: str, **kwargs) -> str:
 
 
 RULE_NAMES: dict[str, dict[str, str]] = {
+    "contact_only_as_link": {
+        "en": "Contact only behind a link",
+        "de": "Kontakt nur hinter einem Link",
+        "uk": "Контакт лише за посиланням",
+        "ru": "Контакт только за ссылкой",
+        "es": "Contacto solo tras un enlace",
+        "nl": "Contact alleen achter een link",
+        "fr": "Contact seulement dans un lien",
+    },
+    "unrecognised_section_headings": {
+        "en": "Headings a parser cannot place",
+        "de": "Unbekannte Abschnittstitel",
+        "uk": "Незнайомі заголовки розділів",
+        "ru": "Незнакомые заголовки разделов",
+        "es": "Títulos de sección no reconocidos",
+        "nl": "Onbekende sectiekoppen",
+        "fr": "Titres de section non reconnus",
+    },
+    "broken_characters": {
+        "en": "Characters that break a word",
+        "de": "Zeichen, die ein Wort zerbrechen",
+        "uk": "Символи, що ламають слово",
+        "ru": "Символы, ломающие слово",
+        "es": "Caracteres que rompen la palabra",
+        "nl": "Tekens die een woord breken",
+        "fr": "Caractères qui cassent un mot",
+    },
     "pdf_non_embedded_font": {
         "en": "Font not embedded",
         "de": "Schrift nicht eingebettet",
@@ -1538,6 +1619,33 @@ def rule_name(rule_id: str, language: str) -> str:
 
 
 RULE_DESCRIPTIONS: dict[str, dict[str, str]] = {
+    "contact_only_as_link": {
+        "en": "The only route to the candidate is a hyperlink — a LinkedIn or portfolio profile, or a mailto: — with no email address or phone number written out as text. The link text is what a parser reads; the address behind it lives in an annotation most extractors never open.",
+        "de": "Der einzige Weg zur Bewerberin oder zum Bewerber ist ein Hyperlink — ein LinkedIn- oder Portfolio-Profil oder ein mailto: — ohne ausgeschriebene E-Mail-Adresse oder Telefonnummer. Ein Parser liest den Linktext; die Adresse dahinter steht in einer Anmerkung, die die meisten Extraktoren nie öffnen.",
+        "uk": "Єдиний шлях до кандидата — гіперпосилання: профіль LinkedIn чи портфоліо або mailto: — без виписаної текстом адреси чи номера телефону. Парсер читає текст посилання; сама адреса лежить в анотації, яку більшість екстракторів ніколи не відкриває.",
+        "ru": "Единственный путь к кандидату — гиперссылка: профиль LinkedIn или портфолио либо mailto: — без выписанного текстом адреса или номера телефона. Парсер читает текст ссылки; сам адрес лежит в аннотации, которую большинство экстракторов никогда не открывает.",
+        "es": "La única vía hacia la persona candidata es un hipervínculo — un perfil de LinkedIn o de portafolio, o un mailto: — sin correo ni teléfono escritos como texto. Un analizador lee el texto del enlace; la dirección que hay detrás vive en una anotación que casi ningún extractor abre.",
+        "nl": "De enige weg naar de kandidaat is een hyperlink — een LinkedIn- of portfolioprofiel, of een mailto: — zonder uitgeschreven e-mailadres of telefoonnummer. Een parser leest de linktekst; het adres erachter staat in een annotatie die de meeste extractors nooit openen.",
+        "fr": "Le seul chemin vers la personne candidate est un lien — un profil LinkedIn ou de portfolio, ou un mailto: — sans adresse e-mail ni numéro écrits en toutes lettres. Un analyseur lit le texte du lien ; l'adresse derrière se trouve dans une annotation que presque aucun extracteur n'ouvre.",
+    },
+    "unrecognised_section_headings": {
+        "en": "The document is organised under headings, but none of them is a heading a parser recognises. Software finds Experience and Education by their names; under invented labels the content is read as one undifferentiated block, and no history can be mapped to a role or a date.",
+        "de": "Das Dokument ist in Abschnitte gegliedert, aber keine der Überschriften ist eine, die ein Parser kennt. Software findet Berufserfahrung und Ausbildung über ihre Namen; unter erfundenen Titeln wird der Inhalt als ein einziger Block gelesen, und kein Werdegang lässt sich einer Rolle oder einem Datum zuordnen.",
+        "uk": "Документ поділено на розділи, але жоден заголовок не є тим, який парсер упізнає. Програма знаходить досвід і освіту за їхніми назвами; під вигаданими підписами вміст читається як один суцільний блок, і жоден запис не прив'язати ні до посади, ні до дати.",
+        "ru": "Документ разделён на разделы, но ни один заголовок не из тех, что парсер узнаёт. Программа находит опыт и образование по их названиям; под придуманными подписями содержимое читается как один сплошной блок, и ни одну запись не привязать ни к должности, ни к дате.",
+        "es": "El documento está organizado en secciones, pero ninguno de sus títulos es uno que un analizador reconozca. El software encuentra Experiencia y Formación por su nombre; bajo etiquetas inventadas el contenido se lee como un solo bloque y ningún historial puede asociarse a un puesto o a una fecha.",
+        "nl": "Het document is ingedeeld met koppen, maar geen ervan is een kop die een parser herkent. Software vindt werkervaring en opleiding aan hun naam; onder verzonnen labels wordt de inhoud als één ongedeeld blok gelezen en is geen loopbaan aan een functie of datum te koppelen.",
+        "fr": "Le document est organisé en sections, mais aucun de ses titres n'est un titre qu'un analyseur reconnaît. Un logiciel repère l'expérience et la formation à leur nom ; sous des libellés inventés, le contenu est lu comme un seul bloc et aucun parcours ne peut être rattaché à un poste ou à une date.",
+    },
+    "broken_characters": {
+        "en": "A word contains characters that are not the letters they look like: a typographic ligature, an invisible soft hyphen or zero-width space, or a mix of Latin and Cyrillic. The word reads normally on screen and matches nothing a recruiter searches for.",
+        "de": "Ein Wort enthält Zeichen, die nicht die Buchstaben sind, nach denen sie aussehen: eine typografische Ligatur, ein unsichtbares weiches Trennzeichen oder ein Nullbreiten-Leerzeichen, oder eine Mischung aus Latein und Kyrillisch. Am Bildschirm liest sich das Wort normal und trifft doch keine Suche.",
+        "uk": "Слово містить символи, які не є тими літерами, на які схожі: типографська лігатура, невидимий м'який перенос чи пробіл нульової ширини, або суміш латиниці з кирилицею. На екрані слово читається нормально, а в пошуку не знаходиться.",
+        "ru": "Слово содержит символы, которые не являются теми буквами, на которые похожи: типографская лигатура, невидимый мягкий перенос или пробел нулевой ширины, либо смесь латиницы с кириллицей. На экране слово читается нормально, а в поиске не находится.",
+        "es": "Una palabra contiene caracteres que no son las letras que aparentan: una ligadura tipográfica, un guion suave o un espacio de ancho cero invisibles, o una mezcla de latino y cirílico. En pantalla la palabra se lee con normalidad y no aparece en ninguna búsqueda.",
+        "nl": "Een woord bevat tekens die niet de letters zijn waar ze op lijken: een typografische ligatuur, een onzichtbaar zacht afbreekteken of spatie zonder breedte, of een mengeling van Latijn en Cyrillisch. Op het scherm leest het woord normaal en toch vindt geen zoekopdracht het.",
+        "fr": "Un mot contient des caractères qui ne sont pas les lettres qu'ils semblent être : une ligature typographique, un trait d'union conditionnel ou une espace sans chasse invisibles, ou un mélange de latin et de cyrillique. À l'écran le mot se lit normalement et aucune recherche ne le trouve.",
+    },
     "pdf_non_embedded_font": {
         "en": (
             "A font used in the PDF is not embedded and is not one of the 14 standard PDF "
@@ -1844,6 +1952,33 @@ def rule_description(rule_id: str, language: str, fallback: str) -> str:
 
 
 RULE_DETAILS: dict[str, dict[str, str]] = {
+    "contact_only_as_link": {
+        "en": "A person reading your CV clicks the link and finds you. Software does not click. It reads the words on the page, and the words say \"LinkedIn\" — the address itself sits in a separate layer of the file that most extractors never look at. So the contact field comes back empty, and an empty contact field is the one gap nothing else on the page can make up for.",
+        "de": "Ein Mensch klickt den Link an und findet Sie. Software klickt nicht. Sie liest die Wörter auf der Seite, und dort steht \"LinkedIn\" — die Adresse selbst liegt in einer eigenen Ebene der Datei, die die meisten Extraktoren nie ansehen. Das Kontaktfeld bleibt also leer, und ein leeres Kontaktfeld ist die eine Lücke, die nichts anderes auf der Seite ausgleicht.",
+        "uk": "Людина клікає посилання і знаходить вас. Програма не клікає. Вона читає слова на сторінці, а там написано «LinkedIn» — сама ж адреса лежить в окремому шарі файлу, куди більшість екстракторів не заглядає. Тож поле контакту лишається порожнім, а порожнє поле контакту — саме та прогалина, якої ніщо інше на сторінці не компенсує.",
+        "ru": "Человек кликает ссылку и находит вас. Программа не кликает. Она читает слова на странице, а там написано «LinkedIn» — сам адрес лежит в отдельном слое файла, куда большинство экстракторов не заглядывает. Поле контакта остаётся пустым, а пустое поле контакта — та самая брешь, которую ничто другое на странице не восполняет.",
+        "es": "Una persona hace clic en el enlace y te encuentra. El software no hace clic. Lee las palabras de la página, y las palabras dicen «LinkedIn»: la dirección está en una capa aparte del archivo que casi ningún extractor mira. El campo de contacto queda vacío, y un campo de contacto vacío es la única carencia que nada más en la página compensa.",
+        "nl": "Een mens klikt op de link en vindt je. Software klikt niet. Die leest de woorden op de pagina, en daar staat \"LinkedIn\" — het adres zelf zit in een aparte laag van het bestand waar de meeste extractors nooit kijken. Het contactveld blijft dus leeg, en een leeg contactveld is het ene gat dat niets anders op de pagina goedmaakt.",
+        "fr": "Une personne clique sur le lien et vous trouve. Un logiciel ne clique pas. Il lit les mots de la page, et ces mots disent « LinkedIn » : l'adresse elle-même est dans une couche à part du fichier que presque aucun extracteur ne consulte. Le champ de contact reste donc vide, et un champ de contact vide est le seul manque que rien d'autre sur la page ne rattrape.",
+    },
+    "unrecognised_section_headings": {
+        "en": "Your file is laid out clearly and reads well. The problem is the labels. Software locates your history by looking for the word Experience, your qualifications by looking for Education — it has no other way in. \"My Journey\" is a better line than \"Experience\", and it is invisible: the entries underneath are read as loose text with nothing to say what they are. Keep your wording anywhere you like; put the plain word in the heading.",
+        "de": "Ihre Datei ist klar aufgebaut und liest sich gut. Das Problem sind die Titel. Software findet Ihren Werdegang, indem sie nach dem Wort Berufserfahrung sucht, Ihre Abschlüsse über das Wort Ausbildung — einen anderen Zugang hat sie nicht. \"Was ich mitbringe\" ist die schönere Zeile und bleibt unsichtbar: die Einträge darunter werden als loser Text gelesen, ohne dass etwas sagt, was sie sind. Formulieren Sie, wie Sie mögen; in die Überschrift gehört das schlichte Wort.",
+        "uk": "Ваш файл побудовано зрозуміло й читається добре. Проблема в підписах. Програма знаходить ваш шлях, шукаючи слово «Досвід», а кваліфікації — за словом «Освіта»; іншого входу в неї немає. «Мій шлях» — гарніший рядок, і він невидимий: записи під ним читаються як розсипаний текст, і ніщо не каже, що це таке. Формулюйте як хочете; у заголовок має піти просте слово.",
+        "ru": "Ваш файл построен понятно и читается хорошо. Проблема в подписях. Программа находит ваш путь, ища слово «Опыт», а квалификации — по слову «Образование»; другого входа у неё нет. «Мой путь» — строка красивее, и она невидима: записи под ней читаются как рассыпанный текст, и ничто не говорит, что это такое. Формулируйте как хотите; в заголовок должно пойти простое слово.",
+        "es": "Tu archivo está bien organizado y se lee bien. El problema son las etiquetas. El software localiza tu trayectoria buscando la palabra Experiencia y tus títulos buscando Formación: no tiene otra entrada. «Mi camino» es mejor frase que «Experiencia», y es invisible: lo que va debajo se lee como texto suelto, sin nada que diga qué es. Escribe como quieras; en el título pon la palabra sencilla.",
+        "nl": "Je bestand is helder opgebouwd en leest prettig. Het probleem zijn de labels. Software vindt je loopbaan door te zoeken naar het woord Werkervaring en je diploma's via Opleiding — een andere ingang heeft die niet. \"Mijn pad\" is de mooiere regel en blijft onzichtbaar: wat eronder staat wordt als los tekst gelezen, zonder dat iets zegt wat het is. Formuleer zoals je wilt; in de kop hoort het gewone woord.",
+        "fr": "Votre fichier est clairement organisé et se lit bien. Le problème, ce sont les libellés. Un logiciel repère votre parcours en cherchant le mot Expérience et vos diplômes en cherchant Formation : il n'a pas d'autre entrée. « Mon parcours » est une plus belle ligne, et elle est invisible : ce qui suit est lu comme du texte en vrac, sans rien pour dire ce que c'est. Formulez comme vous voulez ; dans le titre, mettez le mot simple.",
+    },
+    "broken_characters": {
+        "en": "This is the fault that hides best, because the page looks perfect. A PDF exporter turns \"fi\" into the single character \"ﬁ\"; a justified paragraph leaves soft hyphens inside words; editing an old document with a second keyboard layout puts a Cyrillic о inside a Latin word. Every one of them reads correctly to you and matches nothing: a recruiter searching for the word will not find it, and neither will the filter that ranked the pile.",
+        "de": "Das ist der Fehler, der sich am besten versteckt, weil die Seite perfekt aussieht. Ein PDF-Export macht aus \"fi\" das eine Zeichen \"ﬁ\"; ein Blocksatz hinterlässt weiche Trennzeichen mitten in Wörtern; wer ein altes Dokument mit einer zweiten Tastaturbelegung überarbeitet, setzt ein kyrillisches о in ein lateinisches Wort. Für Sie liest sich jedes davon richtig und trifft doch nichts: Wer das Wort sucht, findet es nicht — weder der Mensch noch der Filter, der den Stapel sortiert hat.",
+        "uk": "Це вада, яка ховається найкраще, бо сторінка виглядає бездоганно. Експорт у PDF перетворює «fi» на один символ «ﬁ»; вирівнювання за шириною лишає м'які переноси всередині слів; правка старого документа з другою розкладкою ставить кириличну «о» в латинське слово. Кожне з них читається вам правильно і не збігається ні з чим: хто шукатиме це слово, не знайде його — ні людина, ні фільтр, що впорядкував стос.",
+        "ru": "Это изъян, который прячется лучше всего, потому что страница выглядит безупречно. Экспорт в PDF превращает «fi» в один символ «ﬁ»; выравнивание по ширине оставляет мягкие переносы внутри слов; правка старого документа со второй раскладкой ставит кириллическую «о» в латинское слово. Каждое из них читается вам правильно и не совпадает ни с чем: кто будет искать это слово, не найдёт его — ни человек, ни фильтр, упорядочивший стопку.",
+        "es": "Este es el fallo que mejor se esconde, porque la página se ve perfecta. Un exportador de PDF convierte «fi» en el carácter único «ﬁ»; un párrafo justificado deja guiones suaves dentro de las palabras; editar un documento antiguo con otra distribución de teclado mete una о cirílica en una palabra latina. Todos se leen bien para ti y no coinciden con nada: quien busque esa palabra no la encontrará, ni la persona ni el filtro que ordenó el montón.",
+        "nl": "Dit is de fout die zich het best verstopt, want de pagina ziet er perfect uit. Een PDF-export maakt van \"fi\" het ene teken \"ﬁ\"; uitgevulde tekst laat zachte afbreektekens midden in woorden achter; een oud document bewerken met een tweede toetsenbordindeling zet een Cyrillische о in een Latijns woord. Voor jou leest elk ervan goed en toch matcht het niets: wie het woord zoekt vindt het niet, de mens niet en het filter dat de stapel sorteerde evenmin.",
+        "fr": "C'est le défaut qui se cache le mieux, parce que la page a l'air parfaite. Un export PDF transforme « fi » en un seul caractère « ﬁ » ; un paragraphe justifié laisse des traits d'union conditionnels au milieu des mots ; retoucher un vieux document avec une deuxième disposition de clavier glisse un о cyrillique dans un mot latin. Chacun se lit correctement pour vous et ne correspond à rien : qui cherche ce mot ne le trouvera pas, ni la personne ni le filtre qui a trié la pile.",
+    },
     "pdf_non_embedded_font": {
         "en": 'The PDF names a font but does not carry it. Whatever opens the file substitutes something else, and the substitute may map characters differently — which is how text that looks fine on your screen arrives as gibberish, or does not arrive at all.',
         "de": 'Das PDF nennt eine Schrift, enthält sie aber nicht. Das öffnende Programm ersetzt sie, und der Ersatz kann Zeichen anders zuordnen — so kommt Text, der auf Ihrem Bildschirm gut aussieht, als Zeichensalat oder gar nicht an.',
@@ -1919,6 +2054,117 @@ RULE_DETAILS: dict[str, dict[str, str]] = {
 }
 
 RULE_FIXES: dict[str, dict[str, list[str]]] = {
+    "contact_only_as_link": {
+        "en": [
+            "Write the address out in full in the first three lines: name@example.com and +49 170 1234567, as ordinary text under your name.",
+            "Keep the profile link as well — it costs nothing and helps a human reader. It just cannot be the only route.",
+            "Check it: open the file, select all, paste into a plain text editor. If your email is not in what you pasted, no parser will find it either.",
+        ],
+        "de": [
+            "Schreiben Sie die Adresse in den ersten drei Zeilen aus: name@example.com und +49 170 1234567, als gewöhnlicher Text unter Ihrem Namen.",
+            "Behalten Sie den Profil-Link ruhig — er kostet nichts und hilft menschlichen Lesenden. Er darf nur nicht der einzige Weg sein.",
+            "Prüfen Sie es: Datei öffnen, alles markieren, in einen einfachen Texteditor einfügen. Steht Ihre E-Mail nicht darin, findet sie auch kein Parser.",
+        ],
+        "uk": [
+            "Випишіть адресу повністю в перших трьох рядках: name@example.com і +49 170 1234567, звичайним текстом під вашим іменем.",
+            "Посилання на профіль лишіть — воно нічого не коштує й допомагає людині. Просто воно не має бути єдиним шляхом.",
+            "Перевірте: відкрийте файл, виділіть усе, вставте у простий текстовий редактор. Якщо вашої пошти там немає, її не знайде й жоден парсер.",
+        ],
+        "ru": [
+            "Выпишите адрес полностью в первых трёх строках: name@example.com и +49 170 1234567, обычным текстом под вашим именем.",
+            "Ссылку на профиль оставьте — она ничего не стоит и помогает человеку. Просто она не должна быть единственным путём.",
+            "Проверьте: откройте файл, выделите всё, вставьте в простой текстовый редактор. Если вашей почты там нет, её не найдёт и никакой парсер.",
+        ],
+        "es": [
+            "Escribe la dirección completa en las tres primeras líneas: nombre@ejemplo.com y +34 600 123 456, como texto normal bajo tu nombre.",
+            "Deja también el enlace al perfil: no cuesta nada y ayuda a quien lee. Solo no puede ser la única vía.",
+            "Compruébalo: abre el archivo, selecciona todo y pégalo en un editor de texto plano. Si tu correo no está ahí, ningún analizador lo encontrará.",
+        ],
+        "nl": [
+            "Schrijf het adres voluit in de eerste drie regels: naam@voorbeeld.nl en +31 6 12345678, als gewone tekst onder je naam.",
+            "Laat de profiellink gerust staan — die kost niets en helpt een menselijke lezer. Alleen mag het niet de enige weg zijn.",
+            "Controleer het: open het bestand, selecteer alles, plak het in een kale teksteditor. Staat je e-mailadres er niet in, dan vindt geen parser het.",
+        ],
+        "fr": [
+            "Écrivez l'adresse en toutes lettres dans les trois premières lignes : nom@exemple.com et +33 6 12 34 56 78, en texte ordinaire sous votre nom.",
+            "Gardez aussi le lien vers le profil : il ne coûte rien et aide un lecteur humain. Il ne peut simplement pas être le seul chemin.",
+            "Vérifiez : ouvrez le fichier, tout sélectionner, coller dans un éditeur de texte brut. Si votre e-mail n'y est pas, aucun analyseur ne le trouvera.",
+        ],
+    },
+    "unrecognised_section_headings": {
+        "en": [
+            "Rename the headings to the plain words: Experience, Education, Skills. These are what software looks for, and a reader loses nothing by them.",
+            "Keep your own phrasing as a line underneath the heading if you like it — it reads to a person and costs the parser nothing.",
+            "Check it: search the file for the word Experience. If it is not there, no software reading it knows where your history begins.",
+        ],
+        "de": [
+            "Benennen Sie die Überschriften in die schlichten Wörter um: Berufserfahrung, Ausbildung, Kenntnisse. Danach sucht Software, und Lesende verlieren nichts.",
+            "Ihre eigene Formulierung können Sie als Zeile darunter behalten, wenn Sie daran hängen — Menschen lesen sie, den Parser kostet sie nichts.",
+            "Prüfen Sie es: Suchen Sie in der Datei nach dem Wort Berufserfahrung. Steht es nicht darin, weiß keine Software, wo Ihr Werdegang beginnt.",
+        ],
+        "uk": [
+            "Перейменуйте заголовки на прості слова: Досвід, Освіта, Навички. Саме їх шукає програма, а читач від цього нічого не втрачає.",
+            "Власне формулювання лишіть рядком нижче, якщо воно вам дороге — людина його прочитає, а парсерові воно нічого не коштує.",
+            "Перевірте: пошукайте у файлі слово «Досвід». Якщо його немає, жодна програма не знає, де починається ваш шлях.",
+        ],
+        "ru": [
+            "Переименуйте заголовки в простые слова: Опыт, Образование, Навыки. Именно их ищет программа, а читатель от этого ничего не теряет.",
+            "Собственную формулировку оставьте строкой ниже, если она вам дорога — человек её прочитает, а парсеру она ничего не стоит.",
+            "Проверьте: поищите в файле слово «Опыт». Если его нет, никакая программа не знает, где начинается ваш путь.",
+        ],
+        "es": [
+            "Renombra los títulos con las palabras sencillas: Experiencia, Formación, Competencias. Es lo que busca el software y quien lee no pierde nada.",
+            "Conserva tu propia frase como línea debajo del título si te gusta: una persona la lee y al analizador no le cuesta nada.",
+            "Compruébalo: busca la palabra Experiencia en el archivo. Si no está, ningún programa sabe dónde empieza tu trayectoria.",
+        ],
+        "nl": [
+            "Hernoem de koppen naar de gewone woorden: Werkervaring, Opleiding, Vaardigheden. Daar zoekt software op, en een lezer verliest er niets mee.",
+            "Houd je eigen formulering als regel eronder als je eraan hecht — een mens leest die, en de parser kost het niets.",
+            "Controleer het: zoek in het bestand naar het woord Werkervaring. Staat het er niet, dan weet geen software waar je loopbaan begint.",
+        ],
+        "fr": [
+            "Renommez les titres avec les mots simples : Expérience, Formation, Compétences. C'est ce que cherche un logiciel, et le lecteur n'y perd rien.",
+            "Gardez votre propre formulation en ligne sous le titre si vous y tenez : une personne la lira, et l'analyseur n'en souffre pas.",
+            "Vérifiez : cherchez le mot Expérience dans le fichier. S'il n'y est pas, aucun logiciel ne sait où commence votre parcours.",
+        ],
+    },
+    "broken_characters": {
+        "en": [
+            "Retype the affected words by hand rather than correcting them: a ligature or an invisible character survives most find-and-replace.",
+            "Turn off automatic ligatures before exporting. In Word: Font → Advanced → Ligatures → None. In InDesign, uncheck Ligatures on the character panel.",
+            "Check it: paste the file's text into a plain text editor and search for the word. If the search fails there, it will fail everywhere.",
+        ],
+        "de": [
+            "Tippen Sie die betroffenen Wörter neu, statt sie zu korrigieren: Eine Ligatur oder ein unsichtbares Zeichen übersteht die meisten Suchen-und-Ersetzen-Läufe.",
+            "Schalten Sie automatische Ligaturen vor dem Export ab. In Word: Schriftart → Erweitert → Ligaturen → Keine. In InDesign den Haken bei Ligaturen entfernen.",
+            "Prüfen Sie es: Text der Datei in einen einfachen Texteditor einfügen und nach dem Wort suchen. Scheitert die Suche dort, scheitert sie überall.",
+        ],
+        "uk": [
+            "Наберіть уражені слова наново, а не виправляйте: лігатура чи невидимий символ переживає більшість замін через «знайти й замінити».",
+            "Вимкніть автоматичні лігатури перед експортом. У Word: Шрифт → Додатково → Лігатури → Немає. В InDesign зніміть галочку «Лігатури».",
+            "Перевірте: вставте текст файлу у простий текстовий редактор і пошукайте слово. Якщо пошук не спрацює там, він не спрацює ніде.",
+        ],
+        "ru": [
+            "Наберите поражённые слова заново, а не исправляйте: лигатура или невидимый символ переживает большинство замен через «найти и заменить».",
+            "Отключите автоматические лигатуры перед экспортом. В Word: Шрифт → Дополнительно → Лигатуры → Нет. В InDesign снимите галочку «Лигатуры».",
+            "Проверьте: вставьте текст файла в простой текстовый редактор и поищите слово. Если поиск не сработает там, он не сработает нигде.",
+        ],
+        "es": [
+            "Vuelve a escribir a mano las palabras afectadas en lugar de corregirlas: una ligadura o un carácter invisible sobrevive a casi cualquier buscar y reemplazar.",
+            "Desactiva las ligaduras automáticas antes de exportar. En Word: Fuente → Avanzado → Ligaduras → Ninguna. En InDesign, desmarca Ligaduras.",
+            "Compruébalo: pega el texto del archivo en un editor de texto plano y busca la palabra. Si la búsqueda falla ahí, fallará en todas partes.",
+        ],
+        "nl": [
+            "Typ de betreffende woorden opnieuw in plaats van ze te corrigeren: een ligatuur of onzichtbaar teken overleeft de meeste zoek-en-vervangacties.",
+            "Zet automatische ligaturen uit voor je exporteert. In Word: Lettertype → Geavanceerd → Ligaturen → Geen. In InDesign vink je Ligaturen uit.",
+            "Controleer het: plak de tekst van het bestand in een kale teksteditor en zoek het woord. Lukt het zoeken daar niet, dan lukt het nergens.",
+        ],
+        "fr": [
+            "Retapez les mots concernés au lieu de les corriger : une ligature ou un caractère invisible survit à la plupart des rechercher-remplacer.",
+            "Désactivez les ligatures automatiques avant l'export. Dans Word : Police → Avancé → Ligatures → Aucune. Dans InDesign, décochez Ligatures.",
+            "Vérifiez : collez le texte du fichier dans un éditeur de texte brut et cherchez le mot. Si la recherche échoue là, elle échouera partout.",
+        ],
+    },
     "pdf_non_embedded_font": {
         "en": [
             'Re-export from Word with File → Save As → PDF, and under Options tick "PDF/A compliant" — that forces every font to be embedded.',

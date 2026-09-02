@@ -239,10 +239,23 @@ def parse_vacancy(text: str, language: str | None = None) -> VacancyProfile:
 
     def add(requirement: Requirement) -> None:
         existing = requirements.get(requirement.uid)
+        if existing is None:
+            requirements[requirement.uid] = requirement
+            return
         # A skill named in both the profile and the tasks block keeps the
         # harder reading: the advert asked for it twice.
-        if existing is None or (requirement.must and not existing.must):
+        if requirement.must and not existing.must:
             requirements[requirement.uid] = requirement
+            return
+        # Experience is a number rather than a yes/no, and an advert states
+        # it more than once: "mehrjaehrige Erfahrung mit Python" on one line
+        # and "mindestens 5 Jahre Berufserfahrung" on another. The vague
+        # phrase is worth three years by convention, so first-wins reported
+        # three for an advert that asked for five. The larger figure is the
+        # one the reader has to clear.
+        if requirement.kind == "experience":
+            if requirement.detail.get("years", 0) > existing.detail.get("years", 0):
+                requirements[requirement.uid] = requirement
 
     for name, body in scanned.items():
         default_must = BLOCK_DEFAULT_MUST.get(name, False)

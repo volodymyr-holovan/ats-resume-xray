@@ -57,6 +57,7 @@ AMBIGUOUS_ALIASES = frozenset({
     "depot",    # a bus depot -- Anlageberatung
     "satz",     # "ein Satz Werkzeuge", "Steuersatz" -- Grafikdesign
     "optik",    # German for appearance -- Physik
+    "container",  # "Be- und Entladen von Containern" -- Docker
 })
 """Spellings that are never treated as a skill mention even though they are
 the real name of one.
