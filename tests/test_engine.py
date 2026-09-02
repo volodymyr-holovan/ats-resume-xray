@@ -29,11 +29,24 @@ EMPTY_DOCX_STRUCTURE = {
 }
 
 
+PLAIN_TEXT = """Anna Muster
+anna@example.com
+040 1234567
+
+Experience
+Studio Nord"""
+"""A document with nothing wrong with its text.
+
+The structural tests are about fonts, tables and headers; passing them a
+clean extraction keeps the text-level rules quiet so each test still
+reports on the one thing it is about."""
+
+
 def test_evaluate_pdf_no_signals_triggers_nothing():
     aware = field_report(email=FOUND, phone=FOUND, experience=FOUND, education=FOUND, skills=FOUND)
     naive = field_report(email=FOUND, phone=FOUND, experience=FOUND, education=FOUND, skills=FOUND)
 
-    findings = evaluate("pdf", EMPTY_PDF_STRUCTURE, aware, naive)
+    findings = evaluate("pdf", EMPTY_PDF_STRUCTURE, aware, naive, PLAIN_TEXT)
 
     assert findings == []
 
@@ -42,7 +55,7 @@ def test_evaluate_pdf_non_embedded_font_triggers():
     structure = {**EMPTY_PDF_STRUCTURE, "non_embedded_fonts": ["Calibri"]}
     aware = naive = field_report(email=FOUND, phone=FOUND)
 
-    findings = evaluate("pdf", structure, aware, naive)
+    findings = evaluate("pdf", structure, aware, naive, PLAIN_TEXT)
 
     ids = {f.rule.id for f in findings}
     assert "pdf_non_embedded_font" in ids
@@ -57,7 +70,7 @@ def test_evaluate_pdf_repeated_header_footer_triggers():
     }
     aware = naive = field_report(email=FOUND, phone=FOUND)
 
-    findings = evaluate("pdf", structure, aware, naive)
+    findings = evaluate("pdf", structure, aware, naive, PLAIN_TEXT)
 
     assert any(f.rule.id == "pdf_repeated_header_footer_content" for f in findings)
 
@@ -69,7 +82,7 @@ def test_evaluate_pdf_textless_image_triggers():
     }
     aware = naive = field_report(email=FOUND, phone=FOUND)
 
-    findings = evaluate("pdf", structure, aware, naive)
+    findings = evaluate("pdf", structure, aware, naive, PLAIN_TEXT)
 
     assert any(f.rule.id == "pdf_textless_image" for f in findings)
 
@@ -78,7 +91,7 @@ def test_evaluate_docx_header_footer_content_triggers():
     structure = {**EMPTY_DOCX_STRUCTURE, "headers_footers": {"headers": ["Jane Doe"], "footers": []}}
     aware = naive = field_report(email=FOUND, phone=FOUND)
 
-    findings = evaluate("docx", structure, aware, naive)
+    findings = evaluate("docx", structure, aware, naive, PLAIN_TEXT)
 
     assert any(f.rule.id == "docx_header_footer_content" for f in findings)
 
@@ -87,7 +100,7 @@ def test_evaluate_docx_text_box_content_triggers():
     structure = {**EMPTY_DOCX_STRUCTURE, "text_box_content": ["Skills: Python"]}
     aware = naive = field_report(email=FOUND, phone=FOUND)
 
-    findings = evaluate("docx", structure, aware, naive)
+    findings = evaluate("docx", structure, aware, naive, PLAIN_TEXT)
 
     assert any(f.rule.id == "docx_text_box_content" for f in findings)
 
@@ -96,7 +109,7 @@ def test_evaluate_docx_table_content_triggers():
     structure = {**EMPTY_DOCX_STRUCTURE, "has_table_content": True}
     aware = naive = field_report(email=FOUND, phone=FOUND)
 
-    findings = evaluate("docx", structure, aware, naive)
+    findings = evaluate("docx", structure, aware, naive, PLAIN_TEXT)
 
     assert any(f.rule.id == "docx_table_content" for f in findings)
 
@@ -104,7 +117,7 @@ def test_evaluate_docx_table_content_triggers():
 def test_evaluate_missing_contact_field_triggers_when_both_absent():
     aware = naive = field_report(email=MISSING, phone=MISSING)
 
-    findings = evaluate("pdf", EMPTY_PDF_STRUCTURE, aware, naive)
+    findings = evaluate("pdf", EMPTY_PDF_STRUCTURE, aware, naive, PLAIN_TEXT)
 
     assert any(f.rule.id == "missing_contact_field" for f in findings)
 
@@ -112,7 +125,7 @@ def test_evaluate_missing_contact_field_triggers_when_both_absent():
 def test_evaluate_missing_contact_field_does_not_trigger_if_either_present():
     aware = naive = field_report(email=FOUND, phone=MISSING)
 
-    findings = evaluate("pdf", EMPTY_PDF_STRUCTURE, aware, naive)
+    findings = evaluate("pdf", EMPTY_PDF_STRUCTURE, aware, naive, PLAIN_TEXT)
 
     assert not any(f.rule.id == "missing_contact_field" for f in findings)
 
@@ -121,7 +134,7 @@ def test_evaluate_section_missing_under_naive_parsing_triggers():
     aware = field_report(email=FOUND, phone=FOUND, experience=FOUND)
     naive = field_report(email=FOUND, phone=FOUND, experience=MISSING)
 
-    findings = evaluate("pdf", EMPTY_PDF_STRUCTURE, aware, naive)
+    findings = evaluate("pdf", EMPTY_PDF_STRUCTURE, aware, naive, PLAIN_TEXT)
 
     match = next(f for f in findings if f.rule.id == "section_missing_under_naive_parsing")
     # The parameter carries the bare token; the rendered sentence carries
@@ -139,7 +152,7 @@ def test_evaluate_section_missing_does_not_trigger_when_truly_absent_from_resume
     aware = field_report(email=FOUND, phone=FOUND, education=MISSING)
     naive = field_report(email=FOUND, phone=FOUND, education=MISSING)
 
-    findings = evaluate("pdf", EMPTY_PDF_STRUCTURE, aware, naive)
+    findings = evaluate("pdf", EMPTY_PDF_STRUCTURE, aware, naive, PLAIN_TEXT)
 
     assert not any(f.rule.id == "section_missing_under_naive_parsing" for f in findings)
 
@@ -147,7 +160,7 @@ def test_evaluate_section_missing_does_not_trigger_when_truly_absent_from_resume
 def test_evaluate_unknown_file_type_raises():
     aware = naive = field_report(email=FOUND, phone=FOUND)
     with pytest.raises(ValueError):
-        evaluate("txt", {}, aware, naive)
+        evaluate("txt", {}, aware, naive, PLAIN_TEXT)
 
 
 def _banner(width=400.0, height=60.0):
@@ -178,8 +191,8 @@ def test_repeated_footer_holding_contact_details_is_high_but_a_page_number_is_lo
     }
     aware = naive = field_report(email=FOUND, phone=FOUND)
 
-    harmless = _only(evaluate("pdf", page_numbers, aware, naive), "pdf_repeated_header_footer_content")
-    costly = _only(evaluate("pdf", contact, aware, naive), "pdf_repeated_header_footer_content")
+    harmless = _only(evaluate("pdf", page_numbers, aware, naive, PLAIN_TEXT), "pdf_repeated_header_footer_content")
+    costly = _only(evaluate("pdf", contact, aware, naive, PLAIN_TEXT), "pdf_repeated_header_footer_content")
 
     assert harmless.severity == "low"
     assert costly.severity == "high"
@@ -203,8 +216,8 @@ def test_profile_photo_is_low_but_a_banner_is_high():
     }
     aware = naive = field_report(email=FOUND, phone=FOUND)
 
-    assert _only(evaluate("pdf", photo, aware, naive), "pdf_textless_image").severity == "low"
-    assert _only(evaluate("pdf", banner, aware, naive), "pdf_textless_image").severity == "high"
+    assert _only(evaluate("pdf", photo, aware, naive, PLAIN_TEXT), "pdf_textless_image").severity == "low"
+    assert _only(evaluate("pdf", banner, aware, naive, PLAIN_TEXT), "pdf_textless_image").severity == "high"
 
 
 def test_textless_image_without_geometry_assumes_the_worse_case():
@@ -216,7 +229,7 @@ def test_textless_image_without_geometry_assumes_the_worse_case():
     }
     aware = naive = field_report(email=FOUND, phone=FOUND)
 
-    assert _only(evaluate("pdf", structure, aware, naive), "pdf_textless_image").severity == "high"
+    assert _only(evaluate("pdf", structure, aware, naive, PLAIN_TEXT), "pdf_textless_image").severity == "high"
 
 
 def test_docx_header_is_high_with_contact_details_and_medium_without():
@@ -227,8 +240,8 @@ def test_docx_header_is_high_with_contact_details_and_medium_without():
     }
     aware = naive = field_report(email=FOUND, phone=FOUND)
 
-    assert _only(evaluate("docx", plain, aware, naive), "docx_header_footer_content").severity == "medium"
-    assert _only(evaluate("docx", contact, aware, naive), "docx_header_footer_content").severity == "high"
+    assert _only(evaluate("docx", plain, aware, naive, PLAIN_TEXT), "docx_header_footer_content").severity == "medium"
+    assert _only(evaluate("docx", contact, aware, naive, PLAIN_TEXT), "docx_header_footer_content").severity == "high"
 
 
 def test_all_three_severity_levels_are_reachable():
@@ -250,7 +263,7 @@ def test_all_three_severity_levels_are_reachable():
         ("docx", {**EMPTY_DOCX_STRUCTURE, "has_table_content": True}),
     ]
 
-    reached = {f.severity for kind, s in structures for f in evaluate(kind, s, aware, naive)}
+    reached = {f.severity for kind, s in structures for f in evaluate(kind, s, aware, naive, PLAIN_TEXT)}
 
     assert reached == {"high", "medium", "low"}
 

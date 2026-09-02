@@ -118,3 +118,48 @@ SECTION_MISSING_UNDER_NAIVE_PARSING = register(
         source="ats-tables-columns",
     )
 )
+
+CONTACT_ONLY_AS_LINK = register(
+    Rule(
+        id="contact_only_as_link",
+        description=(
+            "The only route to the candidate is a hyperlink — a LinkedIn or "
+            "portfolio profile, or a mailto: — with no email address or "
+            "phone number written out as text. The link text is what a "
+            "parser reads; the address behind it lives in an annotation "
+            "most extractors never open."
+        ),
+        severity="high",
+        source="practical-necessity",
+    )
+)
+
+UNRECOGNISED_SECTION_HEADINGS = register(
+    Rule(
+        id="unrecognised_section_headings",
+        description=(
+            "The document is organised under headings, but none of them is "
+            "a heading a parser recognises. Software finds Experience and "
+            "Education by their names; under invented labels the content is "
+            "read as one undifferentiated block, and no history can be "
+            "mapped to a role or a date."
+        ),
+        severity="high",
+        source="ats-tables-columns",
+    )
+)
+
+BROKEN_CHARACTERS = register(
+    Rule(
+        id="broken_characters",
+        description=(
+            "A word contains characters that are not the letters they look "
+            "like: a typographic ligature, an invisible soft hyphen or "
+            "zero-width space, or a mix of Latin and Cyrillic. The word "
+            "reads normally on screen and matches nothing a recruiter "
+            "searches for."
+        ),
+        severity="medium",
+        source="ats-fonts",
+    )
+)

@@ -14,6 +14,7 @@ from typing import Callable
 
 from . import rules as _rules  # noqa: F401  (import registers the rule set)
 from .field_report import build_field_report
+from .readability import analyze_readability
 from .i18n import DEFAULT_LANGUAGE, t
 from .regions import Region
 from .rule import Rule, get_rule
@@ -53,14 +54,24 @@ needing to know how findings are collected.
 """
 
 
-def evaluate(file_type: str, structure: dict, aware_fields: dict, naive_fields: dict) -> list[Finding]:
+def evaluate(
+    file_type: str,
+    structure: dict,
+    aware_fields: dict,
+    naive_fields: dict,
+    aware_text: str,
+) -> list[Finding]:
     """Evaluate every registered rule against pre-computed signals.
 
     ``file_type`` is ``"pdf"`` or ``"docx"``. ``structure`` is the dict
     shape returned by ``analyze_structure()`` for that file type.
     ``aware_fields``/``naive_fields`` are ``build_field_report()`` results
     for the layout-aware and naive extractions respectively.
-    """
+
+    ``aware_text`` is the layout-aware extraction itself, which the
+    text-level rules read. Required rather than defaulted: a caller who
+    forgot it would lose three rules and see a clean report, which is
+    the one failure mode this tool must not have."""
     findings: list[Finding] = []
 
     def trigger(
@@ -88,6 +99,7 @@ def evaluate(file_type: str, structure: dict, aware_fields: dict, naive_fields: 
         raise ValueError(f"Unknown file_type: {file_type!r}, expected 'pdf' or 'docx'")
 
     _evaluate_fields(aware_fields, naive_fields, trigger)
+    _evaluate_text(aware_text, trigger)
 
     return findings
 
@@ -173,6 +185,31 @@ def _holds_contact_details(text: str) -> bool:
     return bool(find_email(text) or find_phone(text))
 
 
+def _evaluate_text(aware_text: str, trigger: Trigger) -> None:
+    """Faults in the recovered text itself, whatever file it came from."""
+    findings = analyze_readability(aware_text)
+
+    links = findings["link_only_contact"]
+    if links:
+        trigger("contact_only_as_link", "evidence_verbatim", {"text": ", ".join(links)})
+
+    headings = findings["unrecognised_headings"]
+    if headings:
+        trigger(
+            "unrecognised_section_headings",
+            "evidence_verbatim",
+            {"text": ", ".join(headings[:MAX_LISTED_HEADINGS])},
+        )
+
+    broken = findings["broken_characters"]
+    if broken:
+        trigger("broken_characters", "evidence_verbatim", {"text": "; ".join(broken)})
+
+
+MAX_LISTED_HEADINGS = 6
+"""Enough to show the pattern without printing the whole contents page."""
+
+
 def _evaluate_fields(aware_fields: dict, naive_fields: dict, trigger: Trigger) -> None:
     if not aware_fields["email"]["found"] and not aware_fields["phone"]["found"]:
         trigger("missing_contact_field", "evidence_no_contact")
@@ -210,7 +247,7 @@ def run_rules(file_path: str, naive_text: str, aware_text: str) -> list[Finding]
     aware_fields = build_field_report(aware_text)
     naive_fields = build_field_report(naive_text)
 
-    findings = evaluate(file_type, structure, aware_fields, naive_fields)
+    findings = evaluate(file_type, structure, aware_fields, naive_fields, aware_text)
 
     if file_type == "pdf":
         findings = _attach_pdf_regions(file_path, findings, structure, aware_fields, naive_fields)
