@@ -1,0 +1,27 @@
+Senior Software Engineer Python (m/w/d)
+
+Wir entwickeln eine Plattform für Kontaktdatensynchronisation und suchen
+Verstärkung für unser Backend-Team. Die Stelle ist vollständig remote.
+
+Ihre Aufgaben:
+- Entwicklung und Betrieb unserer Python-Services
+- Weiterentwicklung der REST-APIs
+- Betrieb der Anwendung auf Kubernetes
+- Code Reviews und technische Konzeption im Team
+- Verantwortung für Releases
+
+Ihr Profil:
+- Zwingend erforderlich sind mehrjährige Erfahrung mit Python und Django
+- Mindestens 5 Jahre Berufserfahrung in der Softwareentwicklung
+- Sicherer Umgang mit PostgreSQL, Docker und Linux
+- Erfahrung mit Kubernetes und CI/CD
+- Abgeschlossenes Studium der Informatik oder eine vergleichbare
+  Qualifikation
+- Kenntnisse in Vue.js oder React sind von Vorteil
+- Erfahrung mit Terraform ist wünschenswert
+- Deutsch B2 und Englisch C1
+
+Wir bieten:
+- Vollständig remote, mit zwei Teamtreffen im Jahr
+- Hardware nach Wahl
+- Ein Weiterbildungsbudget und Konferenzbesuche
