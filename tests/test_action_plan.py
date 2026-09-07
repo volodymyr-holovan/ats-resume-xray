@@ -4,8 +4,9 @@ The report says what is wrong three times over — a finding names the fault,
 its fix list gives the steps, the match columns say what the advert wanted
 — and none of those is a plan. What is asserted here is the merge: that
 everything worth doing appears once, in the order it costs most to leave
-undone, and that the sentences come from the same place as the findings so
-the two cannot drift apart.
+undone, and that each line says what the document should end up looking
+like rather than which menu to open, because the block is copied off the
+page and read somewhere the menu does not exist.
 """
 
 from datetime import date
@@ -15,7 +16,7 @@ import pytest
 import ats_xray.rules  # noqa: F401  (registers the rule set)
 from ats_xray.action_plan import build_plan
 from ats_xray.engine import Finding
-from ats_xray.i18n import UI_LANGUAGES, rule_fixes, t
+from ats_xray.i18n import UI_LANGUAGES, rule_fixes, rule_plan, t
 from ats_xray.match import evaluate_match
 from ats_xray.rule import get_rule
 from ats_xray.vacancy import Requirement
@@ -124,7 +125,7 @@ def test_every_step_renders_a_real_sentence(language):
 
     for step in steps:
         if step.kind == "fix":
-            sentence = rule_fixes(step.rule_id, language)[0]
+            sentence = rule_plan(step.rule_id, language)
         else:
             sentence = t(step.key, language, **step.params)
 
@@ -133,14 +134,19 @@ def test_every_step_renders_a_real_sentence(language):
         assert not sentence.startswith("[")
 
 
-def test_a_fix_step_reuses_the_wording_the_finding_already_has():
-    """One source for one instruction. A second wording for the same advice
-    is a second thing to keep translated, and a second thing to disagree
-    with the first."""
+def test_a_fix_step_says_the_outcome_rather_than_the_route_to_it():
+    """The block is copied off the page, so it has to survive the trip.
+
+    The fix list under the finding walks one application: click here, then
+    this submenu, then that checkbox. That is the right answer for someone
+    sitting in that application and useless to a reader in another editor
+    -- or to a model handed the CV and this list, which can act on what the
+    document should look like and cannot click anything."""
     steps = build_plan([finding("docx_table_content")], None)
 
-    assert rule_fixes("docx_table_content", "de")[0].startswith("Wandeln Sie")
     assert steps[0].rule_id == "docx_table_content"
+    assert "Tabellenlayout" in rule_fixes("docx_table_content", "de")[0]
+    assert "Tabellenlayout" not in rule_plan("docx_table_content", "de")
 
 
 def test_a_skill_that_is_both_invisible_and_old_still_reports_its_age():
