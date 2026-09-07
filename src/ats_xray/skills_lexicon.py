@@ -156,22 +156,30 @@ starts the same way: "Datenbanken" is "Datenbank" declined, "Datenbankdesign"
 is not."""
 
 
-def _is_inflection(alias: str, word: str) -> bool:
-    """Whether ``word`` is ``alias`` with a case or plural ending added.
+_INFLECTED_ALIASES: dict[str, str] = {}
+for _alias, _id in _SINGLE_WORD_ALIASES.items():
+    if len(_alias) < MIN_INFLECTED_ALIAS:
+        continue
+    for _ending in INFLECTIONAL_ENDINGS:
+        # Same first-writer-wins order as the scan it replaces: the aliases
+        # are walked in the order they were declared, so a form two aliases
+        # could both produce belongs to the one that was written first.
+        _INFLECTED_ALIASES.setdefault(_alias + _ending, _id)
+"""Every alias that may inflect, with its endings already written out.
 
-    One direction only. Allowing the word to be the *shorter* of the two --
-    stripping an ending off the alias rather than adding one to it -- let
-    "Schleife" (a ribbon) reach CNC through "schleifen", "Toleranz" (an
-    attitude) reach Messtechnik through "toleranzen", "Workshop" reach
-    Change Management, "transform" reach Deep Learning and "embedding"
-    reach RAG. Every legitimate case adds: "Reinigungsmitteln" is
-    "reinigungsmittel" declined, never the reverse.
-    """
-    if alias == word:
-        return True
-    if len(alias) < MIN_INFLECTED_ALIAS or not word.startswith(alias):
-        return False
-    return word[len(alias) :] in INFLECTIONAL_ENDINGS
+This was a rule applied by walking all the aliases for every unmatched word
+in the text: a few hundred string comparisons per word, and half the cost of
+reading an advert. The set of forms the rule can accept is small, finite and
+known at import -- an alias plus one of nine endings -- so it is built once
+here and looked up.
+
+The rule runs one direction only, which the construction preserves: endings
+are added to an alias, never stripped off a word. Allowing the word to be
+the shorter of the two let "Schleife" (a ribbon) reach CNC through
+"schleifen", "Toleranz" (an attitude) reach Messtechnik through
+"toleranzen", "Workshop" reach Change Management, "transform" reach Deep
+Learning and "embedding" reach RAG. Every legitimate case adds:
+"Reinigungsmitteln" is "reinigungsmittel" declined, never the reverse."""
 
 
 def _lookup(window: list[str]) -> str | None:
@@ -181,13 +189,10 @@ def _lookup(window: list[str]) -> str | None:
     Only single words fall back to inflection, and only long ones -- see
     :data:`MIN_INFLECTED_ALIAS` for what happens without that floor.
     """
-    phrase = " ".join(window)
+    phrase = window[0] if len(window) == 1 else " ".join(window)
     exact = ALIAS_TO_ID.get(phrase)
     if exact is not None:
         return exact
-    if len(window) != 1 or len(phrase) < MIN_INFLECTED_ALIAS:
+    if len(window) != 1 or len(phrase) <= MIN_INFLECTED_ALIAS:
         return None
-    for alias, skill_id in _SINGLE_WORD_ALIASES.items():
-        if _is_inflection(alias, phrase):
-            return skill_id
-    return None
+    return _INFLECTED_ALIASES.get(phrase)
