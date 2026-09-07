@@ -46,8 +46,13 @@ def test_no_emotion_class_is_targeted():
 
 
 # Built as `stBaseButton-${kind}` in the frontend, so the whole string
-# never appears in the bundle even though the attribute does.
-TEMPLATED_TESTIDS = {"stBaseButton-primary", "stBaseButton-secondary"}
+# never appears in the bundle even though the attribute does. Each one here
+# was confirmed in the live DOM before being allowed through.
+TEMPLATED_TESTIDS = {
+    "stBaseButton-primary",
+    "stBaseButton-secondary",
+    "stBaseButton-elementToolbar",
+}
 
 
 @pytest.fixture(scope="module")
@@ -277,3 +282,29 @@ def test_no_severity_tone_is_declared_without_a_user():
     orphans = sorted(declared - used)
 
     assert not orphans, f"severity tones nothing uses: {orphans}"
+
+
+def test_the_plan_copy_button_is_a_real_target():
+    """The action plan exists to be copied, so its copy button is the one
+    control in that zone. Streamlit draws it at 22px."""
+    selector = '[data-testid="stCode"] [data-testid="stBaseButton-elementToolbar"]'
+    block = CSS.split(selector, 1)
+
+    assert len(block) == 2, "no rule for the code copy button"
+    assert "44px" in block[1][:200]
+
+
+def test_the_plan_copy_button_does_not_need_a_hover():
+    """Streamlit hides the code toolbar until the pointer is over the
+    block. On a touch screen there is no pointer, and a visibility:hidden
+    element cannot take keyboard focus -- so the reader could see the plan
+    and have no way to copy it, which is the entire feature.
+
+    The selector matters: written against stElementToolbar, which is not
+    the element Streamlit emits, the rule changed nothing and the button
+    stayed hidden."""
+    selector = '[data-testid="stCode"] [data-testid="stElementToolbarButton"]'
+    block = CSS.split(selector, 1)
+
+    assert len(block) == 2, "no rule making the code toolbar visible"
+    assert "visibility: visible" in block[1][:220]

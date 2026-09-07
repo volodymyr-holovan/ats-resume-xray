@@ -62,6 +62,15 @@ class Outcome:
     evidence: str = ""
     at_risk: bool = False
     stale: bool = False
+    stale_years: int = 0
+    """How long ago the newest dated use ended, when ``stale``.
+
+    Carried on the outcome rather than only inside note_params, because
+    which note wins is a presentation decision: a skill that is both
+    invisible to the parser and years old shows the at-risk sentence, whose
+    parameters have no years in them. The action plan read the years from
+    there and told the reader a skill last used six years ago had ended
+    "0 years ago"."""
     note_key: str | None = None
     note_params: dict = field(default_factory=dict)
 
@@ -181,6 +190,7 @@ def _evaluate_skill(requirement, aware_text, cv_skills, naive_skills, entries, t
 
     at_risk = requirement.key not in naive_skills
     stale = is_stale(requirement.key, aware_text, entries, today)
+    stale_years = years_since(last_used(requirement.key, entries), today) if stale else 0
 
     # A skill the parser cannot see outranks one the employer might ask
     # about: the first loses the match outright, the second only invites a
@@ -190,10 +200,7 @@ def _evaluate_skill(requirement, aware_text, cv_skills, naive_skills, entries, t
         note_params = {"skill": label_for(requirement.key)}
     elif stale:
         note_key = "match_note_skill_stale"
-        note_params = {
-            "skill": label_for(requirement.key),
-            "years": years_since(last_used(requirement.key, entries), today),
-        }
+        note_params = {"skill": label_for(requirement.key), "years": stale_years}
     else:
         note_key, note_params = None, {}
 
@@ -203,6 +210,7 @@ def _evaluate_skill(requirement, aware_text, cv_skills, naive_skills, entries, t
         evidence=_line_with_skill(aware_text, requirement.key),
         at_risk=at_risk,
         stale=stale,
+        stale_years=stale_years,
         note_key=note_key,
         note_params=note_params,
     )

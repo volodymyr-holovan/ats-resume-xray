@@ -369,6 +369,30 @@
   justify-content: center;
 }
 
+/* The copy button on the action plan. Streamlit hides the code toolbar
+   until the pointer is over the block, which is right for a code sample
+   somebody might copy and wrong for the one control a zone exists for: on
+   a touch screen there is no hover, and a visibility:hidden element cannot
+   take keyboard focus at all. So the reader could see the plan and have no
+   way to copy it -- which is the whole feature.
+
+   Only stCode is affected, and the plan is the only st.code on the page. */
+[data-testid="stCode"] [data-testid="stElementToolbarButton"],
+[data-testid="stCode"] [data-testid="stElementToolbarButton"] * {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* Streamlit draws the button itself at 22px. Same 44px as every other
+   target a thumb has to find. */
+[data-testid="stCode"] [data-testid="stBaseButton-elementToolbar"] {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* The language menu is a radio, and a radio's target is the label, not the
    dot. Without this the reader is aiming at a 16px circle stacked 22px from
    the next one. Keyed off the widget rather than its container: the popover
