@@ -34,6 +34,7 @@ from ats_xray.i18n import (
     rule_name,
     rule_detail,
     rule_fixes,
+    rule_plan,
     sources_path,
     t,
     tn,
@@ -605,17 +606,17 @@ def _fixes_zone(findings, lang: str) -> None:
 def _plan_lines(steps, lang: str) -> list[str]:
     """Each step as one numbered instruction in the reader's language.
 
-    A "fix" step borrows the first entry of that rule's fix list rather
-    than inventing a second wording for the same advice: those lists are
-    already written as instructions, already translated, and already the
-    thing the reader would follow. Keeping one source means the plan and
-    the finding can never come to disagree.
+    A "fix" step takes the rule's plan sentence, not the first entry of its
+    fix list. The two say the same thing at different distances: the fix
+    list names a menu in one application, which is what somebody sitting in
+    that application wants, while this block gets copied out of the page
+    and read somewhere else entirely -- another editor, or a model asked to
+    rewrite the CV. What travels is the end state.
     """
     lines = []
     for number, step in enumerate(steps, start=1):
         if step.kind == "fix":
-            fixes = rule_fixes(step.rule_id, lang)
-            sentence = fixes[0] if fixes else rule_name(step.rule_id, lang)
+            sentence = rule_plan(step.rule_id, lang) or rule_name(step.rule_id, lang)
         else:
             sentence = t(step.key, lang, **step.params)
         lines.append(f"{number}. {sentence}")

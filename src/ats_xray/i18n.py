@@ -2545,6 +2545,123 @@ RULE_FIXES: dict[str, dict[str, list[str]]] = {
 }
 
 
+RULE_PLAN: dict[str, dict[str, str]] = {
+    "pdf_non_embedded_font": {
+        "en": "Embed every font the CV uses in the file itself, or rebuild the file in a common font.",
+        "de": "Betten Sie jede im Lebenslauf verwendete Schrift in die Datei ein oder erzeugen Sie die Datei mit einer gängigen Schrift neu.",
+        "uk": "Вбудуйте у файл кожен шрифт, який використовує резюме, або перезберіть файл звичайним шрифтом.",
+        "ru": "Встройте в файл каждый шрифт, который использует резюме, или пересоберите файл обычным шрифтом.",
+        "es": "Incrusta en el archivo todas las fuentes que usa el CV, o vuelve a generarlo con una fuente corriente.",
+        "nl": "Sluit elk lettertype dat het cv gebruikt in het bestand zelf in, of maak het bestand opnieuw met een gangbaar lettertype.",
+        "fr": "Intégrez dans le fichier chaque police utilisée par le CV, ou refaites le fichier avec une police courante.",
+    },
+    "pdf_repeated_header_footer_content": {
+        "en": "Move the contact details out of the page header and footer into the body text, in the first lines under your name.",
+        "de": "Verschieben Sie die Kontaktdaten aus Kopf- und Fußzeile in den Fließtext, in die ersten Zeilen unter Ihrem Namen.",
+        "uk": "Перенесіть контактні дані з колонтитулів в основний текст, у перші рядки під вашим іменем.",
+        "ru": "Перенесите контактные данные из колонтитулов в основной текст, в первые строки под вашим именем.",
+        "es": "Saca los datos de contacto del encabezado y el pie de página y ponlos en el texto, en las primeras líneas bajo tu nombre.",
+        "nl": "Haal de contactgegevens uit de kop- en voettekst en zet ze in de lopende tekst, in de eerste regels onder je naam.",
+        "fr": "Sortez les coordonnées de l'en-tête et du pied de page et placez-les dans le texte, dans les premières lignes sous votre nom.",
+    },
+    "pdf_textless_image": {
+        "en": "Replace the image with real text: type out what it shows as ordinary paragraphs.",
+        "de": "Ersetzen Sie das Bild durch echten Text: Schreiben Sie seinen Inhalt als gewöhnliche Absätze aus.",
+        "uk": "Замініть зображення справжнім текстом: наберіть те, що на ньому, звичайними абзацами.",
+        "ru": "Замените изображение настоящим текстом: наберите то, что на нём, обычными абзацами.",
+        "es": "Sustituye la imagen por texto real: escribe lo que muestra como párrafos normales.",
+        "nl": "Vervang de afbeelding door echte tekst: typ uit wat erop staat als gewone alinea's.",
+        "fr": "Remplacez l'image par du vrai texte : écrivez ce qu'elle montre en paragraphes ordinaires.",
+    },
+    "docx_table_content": {
+        "en": "Take the content out of the table and write it as ordinary paragraphs, one entry per line.",
+        "de": "Nehmen Sie den Inhalt aus der Tabelle heraus und schreiben Sie ihn als gewöhnliche Absätze, einen Eintrag pro Zeile.",
+        "uk": "Винесіть вміст із таблиці й запишіть його звичайними абзацами, по одному запису в рядку.",
+        "ru": "Вынесите содержимое из таблицы и запишите его обычными абзацами, по одной записи в строке.",
+        "es": "Saca el contenido de la tabla y escríbelo como párrafos normales, una entrada por línea.",
+        "nl": "Haal de inhoud uit de tabel en schrijf die als gewone alinea's, één vermelding per regel.",
+        "fr": "Sortez le contenu du tableau et écrivez-le en paragraphes ordinaires, une entrée par ligne.",
+    },
+    "docx_header_footer_content": {
+        "en": "Move everything that has to be read out of the page header and footer into the body of the document.",
+        "de": "Verschieben Sie alles, was gelesen werden muss, aus Kopf- und Fußzeile in den Haupttext des Dokuments.",
+        "uk": "Перенесіть усе, що має бути прочитане, з колонтитулів у тіло документа.",
+        "ru": "Перенесите всё, что должно быть прочитано, из колонтитулов в тело документа.",
+        "es": "Lleva al cuerpo del documento todo lo que deba leerse desde el encabezado y el pie de página.",
+        "nl": "Verplaats alles wat gelezen moet worden uit de kop- en voettekst naar de hoofdtekst van het document.",
+        "fr": "Déplacez dans le corps du document tout ce qui doit être lu depuis l'en-tête et le pied de page.",
+    },
+    "docx_text_box_content": {
+        "en": "Take the text out of the text box and put it into the body of the document as ordinary paragraphs.",
+        "de": "Nehmen Sie den Text aus dem Textfeld heraus und setzen Sie ihn als gewöhnliche Absätze in den Haupttext.",
+        "uk": "Винесіть текст із текстового поля й розмістіть його в тілі документа звичайними абзацами.",
+        "ru": "Вынесите текст из текстового поля и разместите его в теле документа обычными абзацами.",
+        "es": "Saca el texto del cuadro de texto y ponlo en el cuerpo del documento como párrafos normales.",
+        "nl": "Haal de tekst uit het tekstvak en zet die als gewone alinea's in de hoofdtekst van het document.",
+        "fr": "Sortez le texte de la zone de texte et placez-le dans le corps du document en paragraphes ordinaires.",
+    },
+    "missing_contact_field": {
+        "en": "Write your email address and phone number in the first three lines under your name, in their ordinary form: name@example.com and +49 151 2345678.",
+        "de": "Schreiben Sie E-Mail-Adresse und Telefonnummer in die ersten drei Zeilen unter Ihrem Namen, in ihrer gewöhnlichen Form: name@example.com und +49 151 2345678.",
+        "uk": "Напишіть адресу пошти й номер телефону в перших трьох рядках під вашим іменем, у звичайному вигляді: name@example.com і +380 67 1234567.",
+        "ru": "Напишите адрес почты и номер телефона в первых трёх строках под вашим именем, в обычном виде: name@example.com и +7 900 1234567.",
+        "es": "Escribe tu correo y tu teléfono en las tres primeras líneas bajo tu nombre, en su forma corriente: nombre@ejemplo.com y +34 600 123 456.",
+        "nl": "Zet je e-mailadres en telefoonnummer in de eerste drie regels onder je naam, in hun gewone vorm: naam@voorbeeld.nl en +31 6 12345678.",
+        "fr": "Écrivez votre adresse e-mail et votre numéro de téléphone dans les trois premières lignes sous votre nom, sous leur forme ordinaire : nom@exemple.com et +33 6 12 34 56 78.",
+    },
+    "section_missing_under_naive_parsing": {
+        "en": "Lay the CV out in a single column, read top to bottom, with no side panel.",
+        "de": "Legen Sie den Lebenslauf einspaltig an, von oben nach unten zu lesen, ohne Seitenspalte.",
+        "uk": "Зробіть резюме одноколонковим, щоб воно читалося згори вниз, без бічної панелі.",
+        "ru": "Сделайте резюме одноколоночным, чтобы оно читалось сверху вниз, без боковой панели.",
+        "es": "Maqueta el CV a una sola columna, que se lea de arriba abajo, sin panel lateral.",
+        "nl": "Zet het cv in één kolom, van boven naar beneden te lezen, zonder zijbalk.",
+        "fr": "Mettez le CV sur une seule colonne, qui se lit de haut en bas, sans panneau latéral.",
+    },
+    "contact_only_as_link": {
+        "en": "Write your email address and phone number out as text under your name, not only inside a link.",
+        "de": "Schreiben Sie E-Mail-Adresse und Telefonnummer als Text unter Ihrem Namen aus, nicht nur innerhalb eines Links.",
+        "uk": "Випишіть адресу пошти й номер телефону текстом під вашим іменем, а не лише всередині посилання.",
+        "ru": "Выпишите адрес почты и номер телефона текстом под вашим именем, а не только внутри ссылки.",
+        "es": "Escribe tu correo y tu teléfono como texto bajo tu nombre, no solo dentro de un enlace.",
+        "nl": "Schrijf je e-mailadres en telefoonnummer als tekst onder je naam, niet alleen binnen een link.",
+        "fr": "Écrivez votre adresse e-mail et votre numéro de téléphone en toutes lettres sous votre nom, pas seulement dans un lien.",
+    },
+    "unrecognised_section_headings": {
+        "en": "Rename the section headings to the plain words: Experience, Education, Skills.",
+        "de": "Benennen Sie die Abschnittsüberschriften in die schlichten Wörter um: Berufserfahrung, Ausbildung, Kenntnisse.",
+        "uk": "Перейменуйте заголовки розділів на прості слова: Досвід, Освіта, Навички.",
+        "ru": "Переименуйте заголовки разделов в простые слова: Опыт, Образование, Навыки.",
+        "es": "Cambia los títulos de las secciones por las palabras corrientes: Experiencia, Formación, Competencias.",
+        "nl": "Hernoem de kopjes naar de gewone woorden: Werkervaring, Opleiding, Vaardigheden.",
+        "fr": "Renommez les titres de sections avec les mots simples : Expérience, Formation, Compétences.",
+    },
+    "broken_characters": {
+        "en": "Retype the flagged word from scratch so no ligature, soft hyphen or letter from another alphabet is left inside it.",
+        "de": "Tippen Sie das gemeldete Wort neu, sodass keine Ligatur, kein bedingter Trennstrich und kein Buchstabe aus einem anderen Alphabet darin bleibt.",
+        "uk": "Наберіть позначене слово наново, щоб у ньому не лишилося ні лігатури, ні мʼякого переносу, ні літери з іншої абетки.",
+        "ru": "Наберите отмеченное слово заново, чтобы в нём не осталось ни лигатуры, ни мягкого переноса, ни буквы из другого алфавита.",
+        "es": "Vuelve a escribir desde cero la palabra señalada para que no quede en ella ninguna ligadura, guion opcional ni letra de otro alfabeto.",
+        "nl": "Typ het gemarkeerde woord helemaal opnieuw, zodat er geen ligatuur, zacht afbreekstreepje of letter uit een ander alfabet in blijft staan.",
+        "fr": "Retapez entièrement le mot signalé pour qu'il ne reste ni ligature, ni trait d'union conditionnel, ni lettre d'un autre alphabet.",
+    },
+}
+"""What to do about a rule, said without naming any program.
+
+The fix list under a finding walks the reader through one application:
+which menu, which submenu, which checkbox. That is the right answer to
+"how do I do this in Word", and the wrong thing to put in the plan, which
+is copied out of the page and taken somewhere else -- to a different
+editor, to a colleague, or into a model asked to rewrite the CV. A menu
+path means nothing to any of them.
+
+So each rule says here what the document should end up looking like, and
+leaves the route there to whoever is holding the file. Both readers get
+something they can act on: a person knows where the command lives in their
+own editor, and a model editing the text can act on the end state
+directly."""
+
+
 def rule_detail(rule_id: str, language: str) -> str:
     """The longer explanation shown when a finding is expanded, or "" when
     a rule has none yet -- the caller simply shows nothing extra."""
@@ -2562,6 +2679,18 @@ def rule_fixes(rule_id: str, language: str) -> list[str]:
     if entry is None:
         return []
     return entry.get(language) or entry.get(DEFAULT_LANGUAGE) or []
+
+
+def rule_plan(rule_id: str, language: str) -> str:
+    """The plan's one-line instruction for a rule, or "" when it has none.
+
+    Falls back to nothing rather than to the fix list: a caller that
+    silently borrowed a menu path would put back exactly what this table
+    exists to keep out of the copied block."""
+    entry = RULE_PLAN.get(rule_id)
+    if entry is None:
+        return ""
+    return entry.get(language) or entry.get(DEFAULT_LANGUAGE) or ""
 
 
 SOURCES_FILENAME = "research_sources.md"

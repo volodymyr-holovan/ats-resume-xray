@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 
 import pytest
@@ -12,6 +13,7 @@ from ats_xray.i18n import (
     rule_description,
     rule_detail,
     rule_fixes,
+    rule_plan,
     sources_path,
     t,
     tn,
@@ -139,6 +141,51 @@ def test_fixes_are_actual_steps_not_one_liners(language):
 
 
 @pytest.mark.parametrize("language", list(UI_LANGUAGES))
+def test_every_rule_has_a_plan_line_in_every_language(language):
+    """The plan renders one line per finding and falls back to the rule's
+    name if there is none, which is a label rather than an instruction. A
+    rule added without its plan line would quietly leave a step in the
+    copied list that says what is wrong and not what to do."""
+    missing = sorted(rule.id for rule in all_rules() if not rule_plan(rule.id, language))
+
+    assert not missing, f"{language} rules with no plan line: {missing}"
+
+
+@pytest.mark.parametrize("language", list(UI_LANGUAGES))
+def test_a_plan_line_names_no_application_and_no_menu_path(language):
+    """The plan is written to leave the page.
+
+    A reader copies it into another editor, sends it on, or hands it to a
+    model to apply. "Table Layout, then Convert to Text" is the right
+    answer inside one application and noise everywhere else -- and to
+    anything working on the text rather than on a menu, it is not an
+    instruction at all. The fix list under a finding keeps those routes;
+    this block says what the document should end up looking like."""
+    applications = re.compile(
+        r"\b(Word|InDesign|Acrobat|LibreOffice|OpenOffice|Pages|Canva|Photoshop"
+        r"|Illustrator|Google Docs|Writer)\b"
+    )
+    for rule in all_rules():
+        line = rule_plan(rule.id, language)
+
+        named = applications.search(line)
+        assert not named, f"{rule.id} ({language}) names {named.group()}"
+        assert "→" not in line, f"{rule.id} ({language}) walks a menu path"
+        assert "->" not in line, f"{rule.id} ({language}) walks a menu path"
+
+
+@pytest.mark.parametrize("language", list(UI_LANGUAGES))
+def test_a_plan_line_is_one_instruction(language):
+    """It is read as item three of eleven, so it has room for a sentence
+    and not for a paragraph. The fix list is where the reasoning goes."""
+    for rule in all_rules():
+        line = rule_plan(rule.id, language)
+
+        assert len(line) > 30, f"{rule.id} ({language}) is a stub"
+        assert len(line) < 220, f"{rule.id} ({language}) is a paragraph"
+
+
+@pytest.mark.parametrize("language", list(UI_LANGUAGES))
 def test_sources_file_exists_for_every_language(language):
     """The findings link straight into this file, so a language whose
     translation was never written would send readers to a 404."""
@@ -236,12 +283,17 @@ def test_no_internal_token_survives_into_a_rendered_sentence(language):
             continue
         rendered = t("detail_contact_one", language, found=token, missing=token)
 
-        # Whole words only: "phone" lives inside "telefoonnummer" and
-        # "telephone" without either being a leak.
-        assert not re.search(rf"{re.escape(token)}", rendered), (
+        assert translated in rendered
+
+        # What must not reach the reader is the bare token, and a term can
+        # legitimately contain it: "email" renders as "email address" in
+        # English and sits inside "telefoonnummer" in Dutch. So the search
+        # runs on what is left once every rendering of the term is taken
+        # out, and only on whole words.
+        residue = rendered.replace(translated, "")
+        assert not re.search(rf"\b{re.escape(token)}\b", residue), (
             f"{language}: {token} reached the reader untranslated"
         )
-        assert translated in rendered
 
 
 @pytest.mark.parametrize("language", list(UI_LANGUAGES))

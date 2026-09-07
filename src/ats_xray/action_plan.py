@@ -27,11 +27,11 @@ from dataclasses import dataclass, field
 SEVERITY_ORDER = {"high": 0, "medium": 1, "low": 2}
 
 REDUNDANT_WITH = {"contact_only_as_link": "missing_contact_field"}
-"""Rules whose first fix step is the same instruction as another's.
+"""Rules whose plan line is the same instruction as another's.
 
 Two findings can be separate diagnoses and one remedy. A CV reachable only
 through a LinkedIn link has no email in its text either, so both rules fire
-and both open with "write your address out in the first three lines" -- true
+and both say "write your address out in the first three lines" -- true
 twice, and in a numbered list it reads as two jobs rather than one.
 
 Only the plan collapses them. In the findings zone both stay, because there
@@ -45,8 +45,10 @@ class Step:
 
     ``kind`` says where the sentence comes from:
 
-    * ``"fix"`` -- take the first step of this rule's fix list, which is
-      already written as an instruction in seven languages.
+    * ``"fix"`` -- take this rule's plan line, which states the outcome
+      without naming an application. The fix list under the finding is the
+      other half of the same advice and stays there: it walks a menu, which
+      helps someone sitting in that one editor and nobody else.
     * ``"add"`` / ``"refresh"`` -- a sentence of its own, with parameters.
     """
 
