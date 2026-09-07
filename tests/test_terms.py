@@ -63,15 +63,20 @@ def test_language_names_never_come_back_as_keywords():
 @pytest.mark.parametrize(
     ("line", "language", "expected"),
     [
-        ("- Conocimientos de contabilidad analitica", "es", "contabilidad"),
-        ("- Kennis van boekhouding", "nl", "boekhouding"),
-        ("- Connaissance de la comptabilite", "fr", "comptabilite"),
-        ("- Знання бухгалтерського обліку", "uk", "бухгалтерського"),
-        ("- Знание бухгалтерского учета", "ru", "бухгалтерского"),
+        ("- Conocimientos de vitivinicultura ecologica", "es", "vitivinicultura"),
+        ("- Kennis van scheepsbetimmering", "nl", "scheepsbetimmering"),
+        ("- Connaissance de la vinification biologique", "fr", "vinification"),
+        ("- Знання бджільництва", "uk", "бджільництва"),
+        ("- Знание пчеловодства", "ru", "пчеловодства"),
         ("- Experience with underwater welding", "en", "underwater"),
     ],
 )
 def test_every_language_announces_requirements_the_same_way(line, language, expected):
+    """The trade in each line is one the gazetteer does not know, which is
+    the only way to see the introducer working. Accountancy used to stand
+    here and stopped testing anything the day the gazetteer learned to say
+    it in five more languages: the phrase still matched, the word was
+    already explained, and the extractor correctly returned nothing."""
     found = " ".join(extract_terms(line, language)).lower()
 
     assert expected in found

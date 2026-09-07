@@ -449,7 +449,7 @@ def extract_candidates(
     scanning every line against the gazetteer twice.
     """
     if covered is None:
-        covered = find_skills_and_covered(line)[1]
+        covered = find_skills_and_covered(line, language)[1]
     sources = BLOCK_SOURCES.get(block, ("introduced",))
     found: list[Candidate] = []
 

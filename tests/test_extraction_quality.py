@@ -63,23 +63,23 @@ CASES = [
     ),
     (
         ADVERTS / "es_camarero.txt",
-        ("cocteleria", "manipulador de alimentos"),
+        ("barista", "haccp", "service", "kassiertaetigkeit"),
         ("apoyo", "atencion", "montaje", "toma", "al menos 2", "menos"),
     ),
     (
         ADVERTS / "fr_comptable.txt",
-        ("excel", "comptabilite", "fiscalite des pme"),
+        ("excel", "buchhaltung", "fiscalite des pme"),
         ("etablissement", "preparation", "relation", "saisie", "3 ans minimum",
          "d'excel", "d excel"),
     ),
     (
         ADVERTS / "nl_monteur.txt",
-        ("hydrauliek", "elektrotechniek", "lassen"),
+        ("hydraulik", "elektroinstallation", "schweissen", "wartung"),
         ("onderhoud", "rapporteren", "storingen", "vervangen", "lassen is een"),
     ),
     (
         ADVERTS / "ru_povar.txt",
-        ("пароконвектоматом", "санитарных норм"),
+        ("kueche", "haccp", "санитарных норм"),
         ("контроль", "поддержание", "приготовление", "приём", "прием",
          "медицинская", "санитарных норм и"),
     ),

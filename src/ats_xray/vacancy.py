@@ -295,7 +295,7 @@ def parse_vacancy(text: str, language: str | None = None) -> VacancyProfile:
             # One pass of the gazetteer per line, not two: the term
             # extractor needs the words a skill match used up, and computing
             # them here rather than again inside it halved the parse.
-            skill_ids, covered = find_skills_and_covered(line)
+            skill_ids, covered = find_skills_and_covered(line, language)
             for skill_id in skill_ids:
                 add(
                     Requirement(

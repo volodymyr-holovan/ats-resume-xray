@@ -16,7 +16,7 @@ umlaut-insensitive because :func:`normalize.fold` runs over both sides.
 from dataclasses import dataclass
 
 from .normalize import fold
-from .skills_data import ALL_SKILLS
+from .skills_data import ALL_SKILLS, LOCALISED_ALIASES
 
 
 @dataclass(frozen=True)
@@ -85,7 +85,80 @@ for _skill in SKILLS:
         # very hard to notice later.
         ALIAS_TO_ID.setdefault(_folded, _skill.id)
 
-MAX_ALIAS_WORDS = max(len(alias.split()) for alias in ALIAS_TO_ID)
+LOCALISED_ALIAS_TO_ID: dict[str, dict[str, str]] = {}
+for _language, _rows in LOCALISED_ALIASES.items():
+    _table: dict[str, str] = {}
+    for _skill_id, *_names in _rows:
+        for _name in _names:
+            _folded = fold(_name)
+            if not _folded or _folded in AMBIGUOUS_ALIASES or _folded in ALIAS_TO_ID:
+                continue
+            _table.setdefault(_folded, _skill_id)
+    LOCALISED_ALIAS_TO_ID[_language] = _table
+"""What each skill is called in the other five languages, kept per language.
+
+One flat table was fine while it held German and English. It stopped being
+fine the moment the other five went in: French "production" met an English
+sentence about four years of Linux "in production" and reported the
+manufacturing skill, and "service", "animation", "formation" and
+"administration" are all waiting to do the same. So a document is read
+against its own language and the base table, never against all seven --
+which is the rule ``langid`` already applies to every other vocabulary
+here.
+
+A name the base table already claims is dropped rather than allowed to
+shadow it: the German and English spellings are the ones the labels and the
+tests are written in."""
+
+SLAVIC_LANGUAGES = frozenset({"uk", "ru"})
+SLAVIC_CASE_ENDINGS = (
+    "", "а", "и", "і", "у", "е", "о", "я", "ю", "ы", "ой", "ей", "ом", "ем",
+    "ою", "ев", "ов", "ів", "ам", "ям", "ах", "ях", "ами", "ями", "ії", "ия",
+)
+MIN_SLAVIC_STEM = 5
+_SLAVIC_FINAL_VOWELS = "аеиійоуыьэюя"
+"""Ukrainian and Russian decline the noun rather than adding to it.
+
+The German rule -- alias plus one of nine endings -- does not reach a single
+Slavic form: "каса" becomes "касі", "склад" becomes "складі", "прибирання"
+becomes "прибиранням". The ending replaces the last vowel instead of
+following it, so the stem has to be cut back one character before the
+endings go on.
+
+The five-character floor on the stem is what keeps this from turning into a
+prefix match. It is the same reasoning as :data:`MIN_INFLECTED_ALIAS`, and
+it matters more here because there are more endings to collide through."""
+
+
+def _slavic_forms(alias: str) -> tuple[str, ...]:
+    """Every case form of a single-word Slavic alias, or nothing.
+
+    Multi-word aliases are left alone: declining each word independently
+    produces phrases nobody writes, and the phrase itself is usually the
+    fixed expression an advert uses.
+    """
+    if " " in alias:
+        return ()
+    stem = alias[:-1] if alias[-1:] in _SLAVIC_FINAL_VOWELS else alias
+    if len(stem) < MIN_SLAVIC_STEM:
+        return ()
+    return tuple(stem + ending for ending in SLAVIC_CASE_ENDINGS)
+
+
+for _language in SLAVIC_LANGUAGES & set(LOCALISED_ALIAS_TO_ID):
+    _table = LOCALISED_ALIAS_TO_ID[_language]
+    # Second pass on purpose: every spelling somebody actually wrote is
+    # already in the table, so a generated form can never displace one.
+    for _alias, _skill_id in list(_table.items()):
+        for _form in _slavic_forms(_alias):
+            if _form not in ALIAS_TO_ID:
+                _table.setdefault(_form, _skill_id)
+
+MAX_ALIAS_WORDS = max(
+    len(alias.split())
+    for table in (ALIAS_TO_ID, *LOCALISED_ALIAS_TO_ID.values())
+    for alias in table
+)
 
 _SINGLE_WORD_ALIASES: dict[str, str] = {
     alias: skill_id for alias, skill_id in ALIAS_TO_ID.items() if " " not in alias
@@ -102,28 +175,35 @@ def category_for(skill_id: str) -> str:
     return skill.category if skill else "other"
 
 
-def find_skills(text: str) -> list[str]:
+def find_skills(text: str, language: str | None = None) -> list[str]:
     """Skill ids mentioned in ``text``, in order of first appearance."""
-    return find_skills_and_covered(text)[0]
+    return find_skills_and_covered(text, language)[0]
 
 
-def find_skills_and_covered(text: str) -> tuple[list[str], set[str]]:
+def find_skills_and_covered(
+    text: str, language: str | None = None
+) -> tuple[list[str], set[str]]:
     """Skill ids plus the folded words those matches used up.
 
     The second half exists for the generic term extractor: a word already
     explained by a lexicon hit must not come back as a separate keyword, or
     "Microsoft SQL Server" would be reported once as a skill and three more
     times as loose nouns.
+
+    ``language`` opens that language's names in addition to the base table.
+    Left out, only the base table is read, which is the right default for a
+    caller that does not know what it is holding.
     """
     words = fold(text).split() if text else []
     consumed = [False] * len(words)
     found: list[str] = []
+    localised = LOCALISED_ALIAS_TO_ID.get(language or "", _NO_ALIASES)
 
     for size in range(min(MAX_ALIAS_WORDS, len(words)), 0, -1):
         for start in range(len(words) - size + 1):
             if any(consumed[start : start + size]):
                 continue
-            skill_id = _lookup(words[start : start + size])
+            skill_id = _lookup(words[start : start + size], localised)
             if skill_id is None:
                 continue
             for index in range(start, start + size):
@@ -133,6 +213,9 @@ def find_skills_and_covered(text: str) -> tuple[list[str], set[str]]:
 
     covered = {word for word, used in zip(words, consumed) if used}
     return found, covered
+
+
+_NO_ALIASES: dict[str, str] = {}
 
 
 MIN_INFLECTED_ALIAS = 8
@@ -182,15 +265,17 @@ Learning and "embedding" reach RAG. Every legitimate case adds:
 "Reinigungsmitteln" is "reinigungsmittel" declined, never the reverse."""
 
 
-def _lookup(window: list[str]) -> str | None:
+def _lookup(window: list[str], localised: dict[str, str]) -> str | None:
     """Resolve one window of folded words to a skill id.
 
-    Exact spelling first: that is both the common case and the safe one.
-    Only single words fall back to inflection, and only long ones -- see
+    Exact spelling first: that is both the common case and the safe one. The
+    base table is asked before the document's own language, so a name that
+    exists in both is read as the one the labels are written in. Only single
+    words fall back to inflection, and only long ones -- see
     :data:`MIN_INFLECTED_ALIAS` for what happens without that floor.
     """
     phrase = window[0] if len(window) == 1 else " ".join(window)
-    exact = ALIAS_TO_ID.get(phrase)
+    exact = ALIAS_TO_ID.get(phrase) or localised.get(phrase)
     if exact is not None:
         return exact
     if len(window) != 1 or len(phrase) <= MIN_INFLECTED_ALIAS:
