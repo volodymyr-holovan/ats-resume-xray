@@ -109,8 +109,10 @@ def evaluate_match(
     # CV is sometimes measured against an English posting.
     language = detect_language(aware_text)
     sections = split_into_sections(aware_text)
-    cv_skills = set(find_skills(aware_text))
-    naive_skills = set(find_skills(naive_text)) if naive_text else cv_skills
+    cv_skills = set(find_skills(aware_text, language))
+    naive_skills = (
+        set(find_skills(naive_text, language)) if naive_text else cv_skills
+    )
     # The dated blocks of the CV, so a matched skill can be told apart into
     # one the candidate still uses and one they last touched a decade ago.
     entries = find_dated_entries(aware_text, today)
@@ -169,7 +171,9 @@ def _evaluate(
     requirement, aware_text, sections, cv_skills, naive_skills, today, language, entries
 ):
     if requirement.kind == "skill":
-        return _evaluate_skill(requirement, aware_text, cv_skills, naive_skills, entries, today)
+        return _evaluate_skill(
+            requirement, aware_text, cv_skills, naive_skills, entries, today, language
+        )
     if requirement.kind == "experience":
         return _evaluate_experience(requirement, sections, aware_text, today)
     if requirement.kind == "education":
@@ -181,7 +185,9 @@ def _evaluate(
     return Outcome(requirement, "missing")
 
 
-def _evaluate_skill(requirement, aware_text, cv_skills, naive_skills, entries, today) -> Outcome:
+def _evaluate_skill(
+    requirement, aware_text, cv_skills, naive_skills, entries, today, language
+) -> Outcome:
     if requirement.key not in SKILLS_BY_ID:
         return _evaluate_custom_keyword(requirement, aware_text)
 
@@ -189,8 +195,12 @@ def _evaluate_skill(requirement, aware_text, cv_skills, naive_skills, entries, t
         return Outcome(requirement, "missing")
 
     at_risk = requirement.key not in naive_skills
-    stale = is_stale(requirement.key, aware_text, entries, today)
-    stale_years = years_since(last_used(requirement.key, entries), today) if stale else 0
+    stale = is_stale(requirement.key, aware_text, entries, today, language)
+    stale_years = (
+        years_since(last_used(requirement.key, entries, language), today)
+        if stale
+        else 0
+    )
 
     # A skill the parser cannot see outranks one the employer might ask
     # about: the first loses the match outright, the second only invites a
@@ -207,7 +217,7 @@ def _evaluate_skill(requirement, aware_text, cv_skills, naive_skills, entries, t
     return Outcome(
         requirement,
         "met",
-        evidence=_line_with_skill(aware_text, requirement.key),
+        evidence=_line_with_skill(aware_text, requirement.key, language),
         at_risk=at_risk,
         stale=stale,
         stale_years=stale_years,
@@ -228,9 +238,9 @@ def _evaluate_custom_keyword(requirement, aware_text) -> Outcome:
     return Outcome(requirement, "met", evidence=_line_with_phrase(aware_text, phrase))
 
 
-def _line_with_skill(text: str, skill_id: str) -> str:
+def _line_with_skill(text: str, skill_id: str, language: str | None = None) -> str:
     for line in text.splitlines():
-        if line.strip() and skill_id in find_skills(line):
+        if line.strip() and skill_id in find_skills(line, language):
             return line.strip()[:160]
     return ""
 

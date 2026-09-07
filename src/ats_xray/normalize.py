@@ -49,20 +49,34 @@ _NON_WORD = re.compile(r"[^\w+#.]+|_+", re.UNICODE)
 _MULTI_SPACE = re.compile(r"\s+")
 
 
+_UMLAUT_TABLE = str.maketrans(UMLAUT_EXPANSIONS)
+"""The same expansions as a translation table: one pass over the string
+instead of seven, and it is the single hottest function in the project."""
+
+
 def fold(text: str) -> str:
     """Lower-case, expand umlauts, drop remaining diacritics.
 
     Punctuation is kept where it carries meaning in a technology name --
     ``+`` for C++, ``#`` for C#, ``.`` for .NET and Node.js -- and turned
     into a space everywhere else.
+
+    The two early exits are worth the lines they cost. Decomposing a string
+    and walking it character by character asking whether each is a combining
+    mark is most of the work here, and it cannot change an ASCII string --
+    which, after the umlauts are spelled out, is what most German text has
+    become. The same reasoning applies to the trailing-dot pass at the end.
     """
-    for umlaut, expansion in UMLAUT_EXPANSIONS.items():
-        text = text.replace(umlaut, expansion)
-    text = unicodedata.normalize("NFKD", text)
-    text = "".join(ch for ch in text if not unicodedata.combining(ch))
+    if not text.isascii():
+        text = text.translate(_UMLAUT_TABLE)
+        if not text.isascii():
+            text = unicodedata.normalize("NFKD", text)
+            text = "".join(ch for ch in text if not unicodedata.combining(ch))
     text = text.lower()
     text = _NON_WORD.sub(" ", text)
     text = _MULTI_SPACE.sub(" ", text).strip()
+    if "." not in text:
+        return text
     # A sentence-ending dot would otherwise fuse into the word before it and
     # stop "Docker." from matching "Docker". Dots inside a word are left
     # alone, because that is where they carry meaning: node.js, asp.net.

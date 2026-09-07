@@ -1,0 +1,22 @@
+DevOps Engineer (m/f/d) - Hamburg, hybrid
+
+We run the payment platform for a mid-sized insurance group and are looking
+for someone to take over the delivery pipeline.
+
+Your responsibilities:
+- Operate and extend our Kubernetes clusters on AWS
+- Automate deployments with Terraform and Ansible
+- Take part in the on-call rotation, roughly one week in six
+- Work with the development teams on release planning
+
+Your profile:
+- At least 4 years of experience with Linux in production
+- Solid knowledge of Docker and container orchestration
+- Experience with Prometheus and Grafana is a plus
+- English C1, German is nice to have
+- A degree in computer science or comparable practical experience
+
+What we offer:
+- 30 days of holiday and a public transport subsidy
+- A budget for conferences and certifications
+- Flexible hours and two office days per week

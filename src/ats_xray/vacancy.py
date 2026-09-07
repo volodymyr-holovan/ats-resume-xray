@@ -25,8 +25,8 @@ from .credentials import (
 )
 from .langid import detect_language, merge_for
 from .normalize import fold
-from .skills_lexicon import find_skills, label_for
-from .terms import MAX_TERMS_PER_AD, extract_terms
+from .skills_lexicon import find_skills_and_covered, label_for
+from .terms import MAX_TERMS_PER_AD, extract_candidates
 
 BLOCK_HEADINGS_BY_LANGUAGE: dict[str, dict[str, tuple[str, ...]]] = {
     "de": {
@@ -81,11 +81,40 @@ more specific one."""
 
 
 def _headings_for(language: str) -> dict[str, tuple[str, ...]]:
-    merged: dict[str, list[str]] = {block: [] for block in BLOCK_ORDER}
-    for code in (language, "en"):
-        for block, headings in BLOCK_HEADINGS_BY_LANGUAGE.get(code, {}).items():
-            merged[block].extend(headings)
-    return {block: tuple(headings) for block, headings in merged.items()}
+    """The heading aliases for a language, already folded, built once.
+
+    This is read once per line of the advert while looking for the block
+    boundaries, and it used to rebuild the merged dictionary and fold every
+    alias again each time -- around a hundred and forty folds per line, none
+    of which could have come out differently.
+    """
+    cached = _HEADING_CACHE.get(language)
+    if cached is None:
+        merged: dict[str, list[str]] = {block: [] for block in BLOCK_ORDER}
+        for code in (language, "en"):
+            for block, headings in BLOCK_HEADINGS_BY_LANGUAGE.get(code, {}).items():
+                merged[block].extend(headings)
+        cached = {
+            block: tuple(folded for folded in map(fold, headings) if folded)
+            for block, headings in merged.items()
+        }
+        _HEADING_CACHE[language] = cached
+    return cached
+
+
+_HEADING_CACHE: dict[str, dict[str, tuple[str, ...]]] = {}
+_CUE_CACHE: dict[tuple[str, str], tuple[str, ...]] = {}
+
+
+def _folded_cues(cues: dict[str, tuple[str, ...]], language: str, name: str) -> tuple[str, ...]:
+    """The must or nice phrases for a language, folded once rather than on
+    every line the advert has."""
+    key = (name, language)
+    cached = _CUE_CACHE.get(key)
+    if cached is None:
+        cached = tuple(folded for folded in map(fold, merge_for(cues, language)) if folded)
+        _CUE_CACHE[key] = cached
+    return cached
 
 
 MUST_CUES_BY_LANGUAGE: dict[str, tuple[str, ...]] = {
@@ -160,10 +189,10 @@ def split_blocks(text: str, language: str | None = None) -> dict[str, str]:
         if not stripped or len(stripped) > MAX_HEADING_LENGTH:
             continue
         folded = fold(stripped)
+        # The aliases arrive folded and non-empty: an empty one would match
+        # every line, so it is dropped when the table is built.
         for block, headings in _headings_for(language).items():
-            # An empty folded heading would match every line; guard rather
-            # than trust every alias to survive folding.
-            if any(h and h in folded for h in (fold(heading) for heading in headings)):
+            if any(heading in folded for heading in headings):
                 marks.append((index, block))
                 break
 
@@ -193,9 +222,9 @@ def line_is_must(line: str, default_must: bool, language: str = "en") -> bool:
     as a blocking gap.
     """
     folded = fold(line)
-    if any(fold(cue) in folded for cue in merge_for(NICE_CUES_BY_LANGUAGE, language)):
+    if any(cue in folded for cue in _folded_cues(NICE_CUES_BY_LANGUAGE, language, "nice")):
         return False
-    if any(fold(cue) in folded for cue in merge_for(MUST_CUES_BY_LANGUAGE, language)):
+    if any(cue in folded for cue in _folded_cues(MUST_CUES_BY_LANGUAGE, language, "must")):
         return True
     return default_must
 
@@ -263,7 +292,11 @@ def parse_vacancy(text: str, language: str | None = None) -> VacancyProfile:
             if not line.strip():
                 continue
             must = line_is_must(line, default_must, language)
-            for skill_id in find_skills(line):
+            # One pass of the gazetteer per line, not two: the term
+            # extractor needs the words a skill match used up, and computing
+            # them here rather than again inside it halved the parse.
+            skill_ids, covered = find_skills_and_covered(line, language)
+            for skill_id in skill_ids:
                 add(
                     Requirement(
                         kind="skill",
@@ -275,14 +308,15 @@ def parse_vacancy(text: str, language: str | None = None) -> VacancyProfile:
                 )
             # Anything the lexicon does not know still has to surface, or an
             # advert for a trade nobody added would produce an empty list.
-            for term in extract_terms(line, language):
+            for candidate in extract_candidates(line, language, name, covered):
                 add(
                     Requirement(
                         kind="skill",
-                        key=f"term:{fold(term)}",
-                        label=term,
+                        key=f"term:{fold(candidate.text)}",
+                        label=candidate.text,
                         must=must,
                         evidence=line.strip(),
+                        detail={"weight": candidate.weight},
                     )
                 )
             years = find_required_years(line, language)
@@ -326,13 +360,22 @@ def _cap_generic_terms(requirements: dict) -> None:
     """Keep the guessed keywords to a readable number.
 
     Lexicon hits are never dropped: those are known skills. Only the
-    generic guesses are trimmed, required ones first, because a list too
-    long to read is a list nobody will correct.
+    generic guesses are trimmed, and by how well they are evidenced rather
+    than by where they happened to sit in the advert. A keyword a
+    requirement phrase named outright outranks a noun that was merely
+    capitalised, which outranks one found inside the duties; a hard
+    requirement outranks a preference at the same evidence. Sorting on line
+    order, which is what a plain cap does, discarded the last block of the
+    advert whatever was in it.
     """
     generic = [r for r in requirements.values() if r.key.startswith("term:")]
     if len(generic) <= MAX_TERMS_PER_AD:
         return
-    keep = {r.uid for r in sorted(generic, key=lambda r: not r.must)[:MAX_TERMS_PER_AD]}
+    ranked = sorted(
+        generic,
+        key=lambda r: (not r.must, -r.detail.get("weight", 0), r.label.lower()),
+    )
+    keep = {r.uid for r in ranked[:MAX_TERMS_PER_AD]}
     for requirement in generic:
         if requirement.uid not in keep:
             del requirements[requirement.uid]

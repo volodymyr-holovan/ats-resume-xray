@@ -68,14 +68,20 @@ def find_dated_entries(text: str, today: date | None = None) -> list[Entry]:
     return entries
 
 
-def last_used(skill_id: str, entries: list[Entry]) -> int | None:
+def last_used(
+    skill_id: str, entries: list[Entry], language: str | None = None
+) -> int | None:
     """The month index when this skill was last in a dated entry.
 
     ``0`` means an entry that is still running. ``None`` means the skill
     appears in no dated entry at all -- which is the ordinary case for a
     Skills section and is not a finding.
     """
-    seen = [entry.ended for entry in entries if skill_id in find_skills(entry.text)]
+    seen = [
+        entry.ended
+        for entry in entries
+        if skill_id in find_skills(entry.text, language)
+    ]
     if not seen:
         return None
     if 0 in seen:
@@ -83,7 +89,13 @@ def last_used(skill_id: str, entries: list[Entry]) -> int | None:
     return max(seen)
 
 
-def is_stale(skill_id: str, text: str, entries: list[Entry], today: date | None = None) -> bool:
+def is_stale(
+    skill_id: str,
+    text: str,
+    entries: list[Entry],
+    today: date | None = None,
+    language: str | None = None,
+) -> bool:
     """Whether every dated mention of this skill is old enough to ask about.
 
     A skill named in the Skills section is never stale, whatever the dated
@@ -92,10 +104,10 @@ def is_stale(skill_id: str, text: str, entries: list[Entry], today: date | None 
     """
     sections = split_into_sections(text)
     listed = sections.get("skills")
-    if listed and skill_id in find_skills(listed):
+    if listed and skill_id in find_skills(listed, language):
         return False
 
-    ended = last_used(skill_id, entries)
+    ended = last_used(skill_id, entries, language)
     if ended is None or ended == 0:
         return False
 
