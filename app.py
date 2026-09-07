@@ -1,9 +1,10 @@
 """ATS Resume X-Ray — the web interface.
 
-The page is built as four zones in the order someone actually works through
-them: load the file, look at it, compare it against a job ad, then fix what
-came back. They are numbered on screen because a stack of equal-looking
-panels cannot say by itself that it is a sequence.
+The page is built as five zones in the order someone actually works through
+them: load the file, look at it, compare it against a job ad, read what came
+back, then take away one list of what to change. They are numbered on screen
+because a stack of equal-looking panels cannot say by itself that it is a
+sequence.
 
 Wide screens get a two-pane document review -- pages on the left, the
 readability verdict on the right -- because that is what the task is. You
@@ -25,6 +26,7 @@ from pathlib import Path
 import streamlit as st
 import streamlit.components.v1 as components
 
+from ats_xray.action_plan import build_plan
 from ats_xray.i18n import (
     DEFAULT_LANGUAGE,
     UI_LANGUAGES,
@@ -136,7 +138,8 @@ def _jump_links(lang: str, loaded: bool) -> None:
     """
     zones = [("zone-document", "jump_document", loaded),
              ("zone-match", "jump_match", True),
-             ("zone-fixes", "jump_fixes", loaded)]
+             ("zone-fixes", "jump_fixes", loaded),
+             ("zone-plan", "jump_plan", loaded)]
     items = "".join(
         f'<a href="#{anchor}">{t(key, lang)}</a>' if live
         else f'<span class="axr-jump-pending">{t(key, lang)}</span>'
@@ -595,6 +598,54 @@ def _fixes_zone(findings, lang: str) -> None:
 
 
 # --------------------------------------------------------------------------
+# Zone 5 — what to do about it
+# --------------------------------------------------------------------------
+
+
+def _plan_lines(steps, lang: str) -> list[str]:
+    """Each step as one numbered instruction in the reader's language.
+
+    A "fix" step borrows the first entry of that rule's fix list rather
+    than inventing a second wording for the same advice: those lists are
+    already written as instructions, already translated, and already the
+    thing the reader would follow. Keeping one source means the plan and
+    the finding can never come to disagree.
+    """
+    lines = []
+    for number, step in enumerate(steps, start=1):
+        if step.kind == "fix":
+            fixes = rule_fixes(step.rule_id, lang)
+            sentence = fixes[0] if fixes else rule_name(step.rule_id, lang)
+        else:
+            sentence = t(step.key, lang, **step.params)
+        lines.append(f"{number}. {sentence}")
+    return lines
+
+
+def _plan_zone(analysis, report, name: str, lang: str) -> None:
+    _zone("05", t("zone_plan_title", lang), t("zone_plan_note", lang), "zone-plan")
+
+    steps = build_plan(analysis.findings, report)
+    if not steps:
+        st.success(t("plan_nothing", lang))
+        return
+
+    body = "\n\n".join(_plan_lines(steps, lang))
+    # st.code carries Streamlit's own copy button, which is the whole point
+    # of putting a plan in a box rather than in prose: the reader wants it
+    # in a text editor beside the CV, not on screen. language=None keeps it
+    # plain -- syntax colouring on a numbered list of sentences reads as an
+    # error rather than as emphasis.
+    # Bound outside the f-string: nested quotes of the same kind are only
+    # legal from 3.12, and this runs on 3.10 too.
+    header = t("plan_header", lang, name=name)
+    st.code(f"{header}\n\n{body}", language=None)
+    st.caption(t("plan_copy_hint", lang))
+    if report is None:
+        st.caption(t("plan_no_advert", lang))
+
+
+# --------------------------------------------------------------------------
 # Page
 # --------------------------------------------------------------------------
 
@@ -644,6 +695,9 @@ _match_zone(analysis, language)
 
 if analysis is not None:
     _fixes_zone(analysis.findings, language)
+    _plan_zone(
+        analysis, st.session_state.get("match_report"), uploaded_file.name, language
+    )
 
 st.divider()
 st.caption(t("privacy", language))
