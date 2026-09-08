@@ -338,3 +338,33 @@ def test_the_keyword_list_is_not_capped_into_an_inner_scroller():
         r'div:has\(> \[data-testid="stMultiSelectTagsContainer"\]\)\s*\{[^}]*max-height:\s*none',
         CSS,
     ), "the tag area's height cap is not lifted"
+
+
+def test_the_page_language_is_declared_without_a_deprecated_call():
+    """`st.components.v1.html` carries a removal date that has already
+    passed, so the call could disappear with any Streamlit release. Its
+    replacement is `st.iframe`, which embeds an HTML string as srcdoc the
+    same way and keeps same-origin access to the parent -- which is the
+    whole mechanism, since setting `<html lang>` means reaching
+    `window.parent`. A data: URL would be an opaque origin and could not.
+    """
+    calls = re.findall(r"\bcomponents\.html\s*\(|\bst\.components\.v1\.html\s*\(", APP)
+
+    assert not calls, f"the deprecated components call is back: {calls}"
+    assert "st.iframe(" in APP, "nothing declares the page language any more"
+
+
+def test_the_declared_streamlit_floor_has_the_api_the_page_calls():
+    """`st.iframe` was added in 1.56; the floor said 1.30, which would have
+    installed cleanly and raised AttributeError on the first render. The
+    same shape of untruth as the python floor above."""
+    pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
+
+    floors = {
+        tuple(int(part) for part in match.split("."))
+        for match in re.findall(r'streamlit>=(\d+\.\d+)', pyproject)
+    }
+
+    assert floors, "pyproject declares no streamlit floor"
+    assert min(floors) >= (1, 56), f"st.iframe needs >=1.56, pyproject says {min(floors)}"
+    assert len(floors) == 1, f"the extras disagree about the floor: {sorted(floors)}"

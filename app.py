@@ -25,7 +25,6 @@ from dataclasses import replace
 from pathlib import Path
 
 import streamlit as st
-import streamlit.components.v1 as components
 
 from ats_xray.action_plan import build_plan
 from ats_xray.i18n import (
@@ -189,16 +188,23 @@ def _declare_page_language(lang: str) -> None:
     Russian string with English phonemes -- which is WCAG 3.1.1, and worse
     than it sounds: "Lebenslauf" read as English is not a word.
 
-    A components iframe is the only reach into the parent document that
-    Streamlit provides. Height zero and no content: it is a side effect,
-    not an element.
+    An iframe is the only reach into the parent document that Streamlit
+    provides, and only because an HTML string is embedded same-origin: a
+    data: URL would be an opaque origin and window.parent unreachable.
+
+    One pixel rather than none. This was st.components.v1.html, which is
+    deprecated and accepted a height of zero; st.iframe requires a positive
+    one. The element is hidden by the stylesheet instead, because it is a
+    side effect and not something to look at -- and hidden by height rather
+    than display, which would stop the script running at all.
     """
-    components.html(
-        "<script>"
-        f"window.parent.document.documentElement.lang = {json.dumps(lang)};"
-        "</script>",
-        height=0,
-    )
+    with st.container(key="axr-lang"):
+        st.iframe(
+            "<script>"
+            f"window.parent.document.documentElement.lang = {json.dumps(lang)};"
+            "</script>",
+            height=1,
+        )
 
 
 def _show_update_notice(lang: str) -> None:

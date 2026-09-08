@@ -501,6 +501,25 @@
   font-size: 0.9375rem;
 }
 
+/* The iframe that tells assistive technology which language the page is in.
+   It carries one line of script and nothing to look at, but st.iframe will
+   not accept the height of zero the deprecated components.html did, so it
+   arrives as a one-pixel row between the masthead and the zone nav.
+
+   Taken out of the flow rather than collapsed: it is a flex item, and a
+   height of zero on it is honoured as a rule and still measures one pixel.
+   Not display:none either -- that is a box the browser may decide never to
+   load, and the script inside is the whole point. Absolute and clipped
+   leaves it running and occupying nothing, which is the ordinary
+   visually-hidden pattern; the page measures to the pixel as it did before. */
+[data-testid="stVerticalBlock"].st-key-axr-lang {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
 /* The language menu sits in a narrow masthead column. Without room to
    breathe the 44px button was being clipped by the row above it. */
 .st-key-axr-language {
