@@ -64,11 +64,32 @@ st.set_page_config(
 )
 
 
-@st.cache_data(show_spinner=False)
 def _stylesheet() -> str:
-    """Read once rather than on every rerun. It is a few kilobytes, but a
-    rerun happens on every keystroke in the job-ad box."""
-    return STYLESHEET.read_text(encoding="utf-8") if STYLESHEET.exists() else ""
+    """The stylesheet, read once per version of the file.
+
+    Caching it matters: a rerun happens on every keystroke in the job-ad
+    box. Caching it on nothing was worse than not caching it at all. The
+    cached reader took no arguments, so its key never changed and the first
+    read of the process was served forever -- which meant a change to the
+    stylesheet could deploy, run, and have no effect, because the app was
+    still painting the CSS it had read before the update. That is exactly
+    what happened to the rule hiding the language shim: new Python, old
+    stylesheet, and nothing on screen to say so.
+
+    The file's size and modification time are the key now, so a new file is
+    a new entry. The stat call is a few microseconds against the rerun it
+    saves.
+    """
+    if not STYLESHEET.exists():
+        return ""
+    stat = STYLESHEET.stat()
+    return _read_stylesheet(stat.st_mtime_ns, stat.st_size)
+
+
+@st.cache_data(show_spinner=False)
+def _read_stylesheet(mtime_ns: int, size: int) -> str:
+    """Keyed by the caller on what makes the file a different file."""
+    return STYLESHEET.read_text(encoding="utf-8")
 
 
 @st.cache_data(ttl=3600, show_spinner=False)

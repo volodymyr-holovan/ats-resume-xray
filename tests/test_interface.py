@@ -368,3 +368,24 @@ def test_the_declared_streamlit_floor_has_the_api_the_page_calls():
     assert floors, "pyproject declares no streamlit floor"
     assert min(floors) >= (1, 56), f"st.iframe needs >=1.56, pyproject says {min(floors)}"
     assert len(floors) == 1, f"the extras disagree about the floor: {sorted(floors)}"
+
+
+def test_the_stylesheet_cache_is_keyed_on_the_file():
+    """A cached reader that takes no arguments has one key forever.
+
+    `_stylesheet` was cached that way, so the first read of a process was
+    served for the life of it: a change to app.css could be committed,
+    deployed and running while the page still painted the CSS read before
+    the update. It happened -- the rule hiding the language shim shipped
+    with the app.py change beside it and did nothing, and there was nothing
+    on screen to say why.
+    """
+    reader = re.search(
+        r"@st\.cache_data\([^)]*\)\s*\ndef _read_stylesheet\(([^)]*)\)", APP
+    )
+
+    assert reader, "no cached stylesheet reader"
+    assert reader.group(1).strip(), "the cached reader takes no arguments, so it has one key"
+    assert "st_mtime_ns" in APP and "st_size" in APP, (
+        "the cache key does not follow the file's identity"
+    )
