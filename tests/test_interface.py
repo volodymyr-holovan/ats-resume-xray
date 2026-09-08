@@ -308,3 +308,33 @@ def test_the_plan_copy_button_does_not_need_a_hover():
 
     assert len(block) == 2, "no rule making the code toolbar visible"
     assert "visibility: visible" in block[1][:220]
+
+
+def test_no_zone_carries_a_hand_written_number():
+    """The numbers count the zones the page has, not the zones it could have.
+
+    Three of the five only render once a file is loaded, so with fixed
+    numbers the first screen every visitor sees went "01 Your CV" and then
+    "03 Match against a job ad". The numbers are there to say these are
+    steps in an order, and a sequence with a hole in it reads as something
+    that failed to load rather than as something not reached yet.
+    """
+    hand_written = re.findall(r'_zone\(\s*["\']\d', APP)
+
+    assert not hand_written, f"zones numbered by hand: {hand_written}"
+
+
+def test_the_keyword_list_is_not_capped_into_an_inner_scroller():
+    """The control the whole zone exists for.
+
+    Streamlit's multiselect caps its tag area at about 155px, which is five
+    rows of the chip it ships and three of the 44px chip above. An advert
+    with a dozen keywords put two thirds of them behind a scrollbar inside
+    a scrolling page -- and on a phone, dragging the page with a thumb over
+    the list scrolled the list instead.
+    """
+    assert 'div:has(> [data-testid="stMultiSelectTagsContainer"])' in CSS
+    assert re.search(
+        r'div:has\(> \[data-testid="stMultiSelectTagsContainer"\]\)\s*\{[^}]*max-height:\s*none',
+        CSS,
+    ), "the tag area's height cap is not lifted"

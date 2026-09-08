@@ -170,11 +170,6 @@ def label_for(skill_id: str) -> str:
     return skill.label if skill else skill_id
 
 
-def category_for(skill_id: str) -> str:
-    skill = SKILLS_BY_ID.get(skill_id)
-    return skill.category if skill else "other"
-
-
 def find_skills(text: str, language: str | None = None) -> list[str]:
     """Skill ids mentioned in ``text``, in order of first appearance."""
     return find_skills_and_covered(text, language)[0]

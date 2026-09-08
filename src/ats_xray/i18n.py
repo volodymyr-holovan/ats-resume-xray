@@ -24,15 +24,6 @@ UI_LANGUAGES: dict[str, str] = {
 DEFAULT_LANGUAGE = "en"
 
 TRANSLATIONS: dict[str, dict[str, str]] = {
-    "language_label": {
-        "en": "Language",
-        "de": "Sprache",
-        "uk": "Мова",
-        "ru": "Язык",
-        "es": "Idioma",
-        "nl": "Taal",
-        "fr": "Langue",
-    },
     "intro": {
         "en": (
             "Upload a resume (PDF or DOCX) to see what a resume-parsing pipeline actually "
@@ -131,15 +122,6 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "es": "Analizando…",
         "nl": "Bezig met analyseren…",
         "fr": "Analyse en cours…",
-    },
-    "score_heading": {
-        "en": "Parse readiness",
-        "de": "Lesbarkeit für Parser",
-        "uk": "Придатність до розбору",
-        "ru": "Пригодность к разбору",
-        "es": "Legibilidad para el análisis",
-        "nl": "Leesbaarheid voor parsers",
-        "fr": "Lisibilité pour l'analyse",
     },
     "score_caption": {
         "en": (
@@ -283,15 +265,6 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "es": "Dónde están los problemas",
         "nl": "Waar de problemen zitten",
         "fr": "Où sont les problèmes",
-    },
-    "legend": {
-        "en": "Boxes mark the exact area each finding refers to.",
-        "de": "Die Rahmen markieren den genauen Bereich jedes Befunds.",
-        "uk": "Рамки позначають точну ділянку, якої стосується кожне зауваження.",
-        "ru": "Рамки отмечают точный участок, к которому относится каждое замечание.",
-        "es": "Los recuadros marcan el área exacta a la que se refiere cada hallazgo.",
-        "nl": "De kaders markeren precies het gebied waar elke bevinding op slaat.",
-        "fr": "Les cadres marquent la zone exacte visée par chaque constat.",
     },
     "docx_layout_note": {
         "en": (
@@ -796,15 +769,6 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "nl": "Mijn match beoordelen",
         "fr": "Évaluer ma correspondance",
     },
-    "match_score_heading": {
-        "en": "Match with this ad",
-        "de": "Übereinstimmung mit dieser Anzeige",
-        "uk": "Відповідність цій вакансії",
-        "ru": "Соответствие этой вакансии",
-        "es": "Encaje con esta oferta",
-        "nl": "Match met deze vacature",
-        "fr": "Correspondance avec cette offre",
-    },
     "match_score_caption": {
         "en": "Counts what appears in both texts. It cannot judge how well you did the work, only whether the ad's requirements are findable in your CV.",
         "de": "Zählt, was in beiden Texten vorkommt. Es beurteilt nicht, wie gut Sie gearbeitet haben, sondern nur, ob die Anforderungen der Anzeige in Ihrem Lebenslauf auffindbar sind.",
@@ -858,24 +822,6 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "es": "Cubierto",
         "nl": "Gedekt",
         "fr": "Couvert",
-    },
-    "match_partial_heading": {
-        "en": "Partly covered",
-        "de": "Teilweise abgedeckt",
-        "uk": "Закрито частково",
-        "ru": "Закрыто частично",
-        "es": "Cubierto en parte",
-        "nl": "Deels gedekt",
-        "fr": "Partiellement couvert",
-    },
-    "match_missing_heading": {
-        "en": "Not found in your CV",
-        "de": "Nicht in Ihrem Lebenslauf gefunden",
-        "uk": "Не знайдено у вашому резюме",
-        "ru": "Не найдено в вашем резюме",
-        "es": "No encontrado en tu CV",
-        "nl": "Niet gevonden in je cv",
-        "fr": "Introuvable dans votre CV",
     },
     "match_missing_must_warning_many": {
         "en": "{count} required items could not be found in your CV.",
@@ -1273,15 +1219,6 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "es": "{name} — {pages} página(s) leída(s)",
         "nl": "{name} — {pages} pagina('s) gelezen",
         "fr": "{name} — {pages} page(s) lue(s)",
-    },
-    "upload_another": {
-        "en": "Replace file",
-        "de": "Datei ersetzen",
-        "uk": "Замінити файл",
-        "ru": "Заменить файл",
-        "es": "Cambiar archivo",
-        "nl": "Bestand vervangen",
-        "fr": "Remplacer le fichier",
     },
     "issue_tally": {
         "en": "{high} serious · {medium} moderate · {low} minor",

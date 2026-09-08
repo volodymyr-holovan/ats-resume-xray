@@ -16,6 +16,13 @@ from .field_report import build_field_report
 from .score import ScoreBreakdown, score_resume
 
 SUPPORTED_SUFFIXES = (".pdf", ".docx")
+"""The formats this pipeline reads.
+
+The dispatch below still names them one at a time, because each branch
+calls a different extractor and a loop over the tuple would hide that.
+What this exists for is the callers: the uploader's accepted-types list
+and the message a rejected file gets, which each carried their own copy
+of the pair."""
 
 MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024
 """50 MB. Far above any real resume — it exists to bound worst-case
@@ -52,7 +59,8 @@ def extract_text(file_path: str) -> tuple[str, str]:
         return extract_naive(file_path), extract_layout_aware(file_path)
     if suffix == ".docx":
         return extract_docx_naive(file_path), extract_docx_full(file_path)
-    raise ValueError(f"Unsupported file type: {suffix or '(none)'}. Use .pdf or .docx.")
+    accepted = " or ".join(SUPPORTED_SUFFIXES)
+    raise ValueError(f"Unsupported file type: {suffix or '(none)'}. Use {accepted}.")
 
 
 def analyze_path(file_path: str, render: bool = False) -> AnalysisResult:

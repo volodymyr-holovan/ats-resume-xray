@@ -17,6 +17,7 @@ Run locally with: streamlit run app.py
 """
 
 import html
+import itertools
 import json
 from contextlib import nullcontext
 import logging
@@ -42,7 +43,7 @@ from ats_xray.i18n import (
 from ats_xray.match import evaluate_match
 from ats_xray.normalize import fold
 from ats_xray.overlay import SEVERITY_COLORS
-from ats_xray.pipeline import analyze_bytes
+from ats_xray.pipeline import SUPPORTED_SUFFIXES, analyze_bytes
 from ats_xray.skills_lexicon import label_for
 from ats_xray.updates import check_for_update
 from ats_xray.vacancy import Requirement, parse_vacancy
@@ -50,7 +51,7 @@ from ats_xray.vacancy import Requirement, parse_vacancy
 logger = logging.getLogger(__name__)
 
 SEVERITY_ORDER = {"high": 0, "medium": 1, "low": 2}
-STATUS_TONE = {"met": "green", "partial": "orange", "missing": "red"}
+_zone_numbers = itertools.count(1)
 JOB_AD_HEIGHT = 200
 REPO_URL = "https://github.com/volodymyr-holovan/ats-resume-xray"
 BLOB_URL = f"{REPO_URL}/blob/master"
@@ -155,10 +156,24 @@ def _jump_links(lang: str, loaded: bool) -> None:
     )
 
 
-def _zone(number: str, title: str, note: str, anchor: str) -> None:
+def _zone(title: str, note: str, anchor: str) -> None:
+    """One numbered zone heading, counting the zones this page actually has.
+
+    The numbers were fixed: upload was 01, the document review 02, the
+    advert 03. Three of the five only render once a file is loaded, so the
+    first screen every visitor sees went "01 Your CV" and then "03 Match
+    against a job ad" -- and a sequence with a hole in it reads as something
+    that failed to load rather than as something not reached yet. The
+    numbers exist to say these are steps in an order; counting the steps on
+    the page is the only way that stays true.
+
+    Streamlit re-executes this file top to bottom on every interaction, so
+    the counter starts again with it.
+    """
+    number = next(_zone_numbers)
     st.markdown(
         f'<div class="axr-zone" id="{anchor}">'
-        f'<span class="axr-zone-number">{number}</span>'
+        f'<span class="axr-zone-number">{number:02d}</span>'
         f'<h2 class="axr-zone-title">{title}</h2>'
         f"</div>"
         f'<p class="axr-zone-note">{note}</p>',
@@ -202,7 +217,7 @@ def _show_update_notice(lang: str) -> None:
 
 
 def _upload_zone(lang: str):
-    _zone("01", t("zone_upload_title", lang), t("zone_upload_note", lang), "zone-upload")
+    _zone(t("zone_upload_title", lang), t("zone_upload_note", lang), "zone-upload")
     # A stable key keeps the upload across the rerun a language change
     # triggers; without it, switching language silently discards the file.
     with st.container(key="axr-upload"):
@@ -212,7 +227,9 @@ def _upload_zone(lang: str):
             # label is the one string that is ours, so it is shown rather
             # than collapsed: a translated instruction above the box demotes
             # the English underneath it to secondary noise.
-            t("upload_label", lang), type=["pdf", "docx"], key="resume"
+            t("upload_label", lang),
+            type=[suffix.lstrip(".") for suffix in SUPPORTED_SUFFIXES],
+            key="resume",
         )
 
 
@@ -321,7 +338,7 @@ def _render_scorecard(breakdown, findings, lang: str) -> None:
 
 
 def _document_zone(result, is_pdf: bool, lang: str) -> None:
-    _zone("02", t("pages_heading", lang), t("zone_document_note", lang), "zone-document")
+    _zone(t("pages_heading", lang), t("zone_document_note", lang), "zone-document")
 
     with st.container(key="axr-split"):
         pages_col, score_col = st.columns([3, 2], gap="large")
@@ -511,7 +528,7 @@ def _gains_pane(report, lang: str) -> None:
 
 
 def _match_zone(analysis, lang: str) -> None:
-    _zone("03", t("match_heading", lang), t("match_intro", lang), "zone-match")
+    _zone(t("match_heading", lang), t("match_intro", lang), "zone-match")
 
     ad_text = st.text_area(
         t("match_paste_label", lang), key="job_ad", height=JOB_AD_HEIGHT,
@@ -583,7 +600,7 @@ def _render_finding(finding, lang: str) -> None:
 
 
 def _fixes_zone(findings, lang: str) -> None:
-    _zone("04", t("findings_heading", lang), t("zone_fixes_note", lang), "zone-fixes")
+    _zone(t("findings_heading", lang), t("zone_fixes_note", lang), "zone-fixes")
 
     if not findings:
         st.success(t("no_findings", lang))
@@ -624,7 +641,7 @@ def _plan_lines(steps, lang: str) -> list[str]:
 
 
 def _plan_zone(analysis, report, name: str, lang: str) -> None:
-    _zone("05", t("zone_plan_title", lang), t("zone_plan_note", lang), "zone-plan")
+    _zone(t("zone_plan_title", lang), t("zone_plan_note", lang), "zone-plan")
 
     steps = build_plan(analysis.findings, report)
     if not steps:
