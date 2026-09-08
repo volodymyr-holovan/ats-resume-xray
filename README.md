@@ -59,6 +59,17 @@ Available as a web app (`streamlit run app.py`) or a CLI (`atsxray`).
 
 7. **Matches your CV against a job ad** — see below.
 
+8. **Ends with one list of what to change.** The findings, their fix steps and
+   the unmet requirements are three lists that do not know about each other,
+   and none of them is a plan. They are merged into a single numbered
+   sequence, ordered by what it costs to leave undone: anything that risks
+   the file being read wrongly first, then what the advert asked for and did
+   not find, largest score gain first, then skills that matched only inside
+   an entry that ended years ago. It sits in a box with a copy button,
+   because it is meant to leave the page — into another editor, or into a
+   model asked to apply it — so each line says what the document should end
+   up looking like rather than which menu to open.
+
 ## Matching a CV against a job ad
 
 Paste a job advert and the requirements are read out of it, then compared
@@ -78,25 +89,51 @@ cue the softer reading wins, because overstating a blocking gap is the more
 alarming error.
 
 **Every profession, not just IT.** The gazetteer in
-[`src/ats_xray/skills_data.py`](src/ats_xray/skills_data.py) holds around 400
-skills across roughly fifty categories: care and medicine, the building
-trades, logistics and driving, hospitality, cleaning and facilities, retail
-and sales, finance and banking, law, consulting, design and media, teaching,
-religious work, agriculture, textiles, security, production and office work,
-alongside the software stack. Adding a trade means adding a line to that file
-and nothing else.
+[`src/ats_xray/skills_data.py`](src/ats_xray/skills_data.py) holds around 500
+skills across some fifty-odd categories: care and medicine, therapy, the
+building trades, logistics and driving, hospitality, cleaning and facilities,
+retail and sales, finance and banking, law, consulting, design and media,
+teaching, religious work, agriculture, textiles, security, emergency
+services, energy, production and office work, alongside the software stack.
+Adding a trade means adding a line to that file and nothing else.
+
+It also carries the names those skills go by in Ukrainian, Russian, Spanish,
+French and Dutch — a Spanish advert for a waiter and a Dutch one for a
+service engineer previously produced no known skills at all. Those names are
+read only for a document detected as that language: French "production" is
+an ordinary English word, and one flat table reported factory experience
+from an advert asking for four years of Linux in production. Ukrainian and
+Russian decline their nouns rather than suffixing them, so their names are
+also indexed in the cases an advert actually writes them in — "склад"
+appears as "складі" and never as itself.
 
 **What the gazetteer does not know is guessed at.** A curated list is
 accurate and finite; an advert for a job nobody thought to add would
 otherwise come back empty, which is worse than a rough list because the
-reader has nothing to correct. Two cheap signals fill the gap: German
-capitalises its nouns, which is a better part-of-speech tagger than anything
-that would fit in this project's dependencies, and every language announces
-requirements with the same few phrases ("Kenntnisse in", "experience with",
-"conocimiento de", "досвід роботи з"). The hard part is rejection, not
-detection: a German bullet starts with a capital letter whatever word is
-there, so "Abgeschlossene", "Gute" and "Mindestens" all look like nouns until
-a stoplist says otherwise.
+reader has nothing to correct. The hard part is rejection rather than
+detection, and most of it is structural.
+
+*Where the line sits decides what may be harvested.* An advert names its
+blocks and they mean different things: the profile block says what the
+candidate must bring, the tasks block describes the work and names the things
+the work is done to. Mining nouns out of the tasks block is where the noise
+came from — "Buchung von Warenbewegungen" and "Zusammenarbeit mit
+Angehörigen" are duties, not anything a person can claim — so that block is
+read through requirement phrases only.
+
+*Only German capitalises its common nouns*, which there is a better
+part-of-speech tagger than anything that would fit in this project's
+dependencies. Applied to the other six it harvested the first word of every
+bullet, which is a verb: "Take part in the on-call rotation" gave "Take".
+
+*Every language announces requirements with the same few phrases* —
+"Kenntnisse in", "experience with", "conocimiento de", "досвід роботи з" —
+and those carry the whole load in the six languages with no capitalisation
+signal. They are deliberately generous, and what they over-capture is
+trimmed per language rather than refused: function words and numbers off
+both ends, a leading infinitive in Ukrainian and Russian, a French elision,
+a lone Slavic adjective, a German word that is lowercase and therefore not a
+noun.
 
 **The language is detected once, then only that language is read.** A CV and
 the advert measured against it are written in one language, with English
@@ -132,6 +169,20 @@ the built-in lexicon gets.
 which parts of a CV survive a layout-blind read, a requirement met only in the
 layout-aware text is reported as *at risk*: a human reader would find it, the
 software filtering the pile might not.
+
+**A match can also be out of date.** A keyword search treats "Photoshop,
+2011–2013" and "Photoshop, still doing it" as the same fact; an employer does
+not. The dates are on the CV, attached to the job rather than to the skill,
+so the CV is split into its dated entries and a skill whose most recent one
+closed over six years ago comes back as *matched, but not lately*. A skill
+listed in the Skills section is never called stale — listing it is a claim
+about the present — and a CV with no dates produces no staleness at all.
+
+**What to fix first is arithmetic, not an opinion.** Each unmet requirement
+shows what meeting it would add to the score. The score is a weighted
+average, so that number can be checked by editing the CV and running it
+again. Three at a time: an answer to "what first" with twenty items in it is
+not an answer.
 
 The lexicon deliberately leaves out names that collide with ordinary words.
 "Go" and "R" are real languages, but an ad saying "go live" should not acquire

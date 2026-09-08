@@ -109,8 +109,6 @@ SECTION_ALIASES_BY_LANGUAGE: dict[str, dict[str, list[str]]] = {
     },
 }
 
-SUPPORTED_RESUME_LANGUAGES = tuple(SECTION_ALIASES_BY_LANGUAGE)
-
 
 def _flatten() -> dict[str, list[str]]:
     """Collapse the per-language tables into section -> every alias.

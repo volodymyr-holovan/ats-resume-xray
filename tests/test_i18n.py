@@ -333,3 +333,44 @@ def test_the_score_breakdown_names_its_rules(language="de"):
     assert "docx_table_content" not in rendered
     assert "Inhalt in einer Tabelle (-25)" in rendered
     assert "(-10)" in rendered
+
+
+def test_no_translation_key_is_written_and_never_rendered():
+    """Seven keys had outlived the layout that showed them.
+
+    A separate score heading, a legend heading, a "match score" title over a
+    column that now carries its own, an "upload another" button the file
+    uploader replaced: forty-nine strings across the seven languages,
+    translated and maintained and shown to nobody. Nothing catches that on
+    its own -- every other test here asks whether a key is complete, not
+    whether anything asks for it.
+
+    Two ways a key can be reached without its name appearing anywhere:
+    ``tn`` appends a plural suffix to a stem, and a handful of keys are
+    built by interpolation from a value (``severity_high``, ``must_high``).
+    Both are resolved by the stem, so a key is unused only when neither its
+    own name nor any stem of it occurs.
+    """
+    sources = [
+        path
+        for path in [*(REPO_ROOT / "src" / "ats_xray").glob("*.py"),
+                     REPO_ROOT / "app.py",
+                     *(REPO_ROOT / "tests").rglob("*.py")]
+        if path.name != "i18n.py"
+    ]
+    corpus = "\n".join(path.read_text(encoding="utf-8") for path in sources)
+    interpolated = set(re.findall(r"""f["'](\w+?)_\{""", corpus))
+    plural_suffixes = ("_one", "_few", "_many")
+
+    def reachable(key: str) -> bool:
+        if f'"{key}"' in corpus or f"'{key}'" in corpus:
+            return True
+        for suffix in plural_suffixes:
+            stem = key[: -len(suffix)] if key.endswith(suffix) else None
+            if stem and (f'"{stem}"' in corpus or f"'{stem}'" in corpus):
+                return True
+        return any(key.startswith(f"{prefix}_") for prefix in interpolated)
+
+    unused = sorted(key for key in TRANSLATIONS if not reachable(key))
+
+    assert not unused, f"translated and never shown: {unused}"

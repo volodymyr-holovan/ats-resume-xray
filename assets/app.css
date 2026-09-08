@@ -369,6 +369,22 @@
   justify-content: center;
 }
 
+/* ...and then the taller chips did not fit. The control that holds them
+   carries a 155px max-height, which is about five rows of the 28px chip
+   Streamlit ships and three rows of ours: an advert with twelve keywords
+   put two thirds of them behind an inner scrollbar, on the one control the
+   zone exists for. On a phone it was worse than hidden -- scrolling the
+   page with a thumb over the list scrolled the list instead, which is the
+   same trap the outcome columns are unstacked to avoid.
+
+   Selected as the parent of the tags container: the wrapper's own class is
+   a generated one, and :has() is how a testid reaches it. The list grows
+   with its content now; it is capped at twenty guesses plus the lexicon
+   hits, so it cannot run away. */
+[data-testid="stMultiSelect"] div:has(> [data-testid="stMultiSelectTagsContainer"]) {
+  max-height: none;
+}
+
 /* The copy button on the action plan. Streamlit hides the code toolbar
    until the pointer is over the block, which is right for a code sample
    somebody might copy and wrong for the one control a zone exists for: on
@@ -440,6 +456,20 @@
     height: auto;
     max-height: none;
     overflow: visible;
+  }
+}
+
+/* Streamlit stacks the masthead's two columns somewhere below 768px -- the
+   exact width is its own and has moved between releases, so the rule covers
+   the whole band rather than naming it. Stacked, the language column is the
+   full width of the page, and `use_container_width` stretches a menu that
+   says "English" across all of it: on a phone the biggest button on the
+   screen was the one changing the interface language, above the one the
+   page exists for. Above 768px the button still fills its column, where its
+   right edge lines up with the right edge of the content. */
+@media (max-width: 767px) {
+  .st-key-axr-language [data-testid="stPopoverButton"] {
+    width: fit-content;
   }
 }
 
