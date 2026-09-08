@@ -2,7 +2,7 @@
 
 [![Tests](https://github.com/volodymyr-holovan/ats-resume-xray/actions/workflows/tests.yml/badge.svg)](https://github.com/volodymyr-holovan/ats-resume-xray/actions/workflows/tests.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue)
+![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)
 
 **See your resume the way a parser sees it — not a fake "ATS score", an actual diff.**
 
@@ -121,7 +121,7 @@ came from — "Buchung von Warenbewegungen" and "Zusammenarbeit mit
 Angehörigen" are duties, not anything a person can claim — so that block is
 read through requirement phrases only.
 
-*Only German capitalises its common nouns*, which there is a better
+*Only German capitalises its common nouns*, which is a better
 part-of-speech tagger than anything that would fit in this project's
 dependencies. Applied to the other six it harvested the first word of every
 bullet, which is a verb: "Take part in the on-call rotation" gave "Take".
@@ -259,11 +259,16 @@ Two things to expect:
   certificate. Build it yourself with `python build_exe.py` if you would
   rather not trust a download.
 - **DOCX page previews need LibreOffice** installed separately; everything
-  else works offline.
+  else works offline. The hosted demo currently has no LibreOffice and falls
+  back to the text-only view for DOCX -- Streamlit Community Cloud installs
+  system packages with `apt-get`, and its base image still carries a Debian
+  bullseye source whose signing metadata expired for good when that release
+  went end-of-life, which fails every deploy that asks for one. PDFs are
+  unaffected, and so is the Windows build.
 
 ## Install from source
 
-You need [Python 3.9 or newer](https://www.python.org/downloads/). Then run
+You need [Python 3.10 or newer](https://www.python.org/downloads/). Then run
 these three commands:
 
 ```bash
