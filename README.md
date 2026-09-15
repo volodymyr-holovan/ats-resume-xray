@@ -57,14 +57,18 @@ Available as a web app (`streamlit run app.py`) or a CLI (`atsxray`).
 
 6. **Scores parse readiness** — see below.
 
-7. **Matches your CV against a job ad** — see below.
+7. **Checks the CV against the conventions of where it is going** — see
+   below. The file can parse perfectly and still say something a recruiter
+   in that country does not expect.
 
-8. **Ends with one list of what to change.** The findings, their fix steps and
+8. **Matches your CV against a job ad** — see below.
+
+9. **Ends with one list of what to change.** The findings, their fix steps and
    the unmet requirements are three lists that do not know about each other,
    and none of them is a plan. They are merged into a single numbered
    sequence, ordered by what it costs to leave undone: anything that risks
-   the file being read wrongly first, then what the advert asked for and did
-   not find, largest score gain first, then skills that matched only inside
+   the file being read wrongly first, then the conventions it breaks, then
+   what the advert asked for and did not find, largest score gain first, then skills that matched only inside
    an entry that ended years ago. It sits in a box with a copy button,
    because it is meant to leave the page — into another editor, or into a
    model asked to apply it — so each line says what the document should end
@@ -194,6 +198,35 @@ once invented a degree that the advert never asked for.
 This is keyword and rule matching, not a judgement of your work. It reports
 whether the ad's requirements are findable in your CV, and it says so on the
 page.
+
+## Conventions of the country a CV is going to
+
+Everything above asks whether software can read the file. These checks ask
+what a parser never will: having read it, does the CV say what a recruiter
+in that country expects? A German recruiter who finds volunteering under
+Berufserfahrung reads it as a job, because that heading means paid
+employment, and then finds out it was not one.
+
+They are reported with the other findings, at low or medium, and they never
+count towards the parse-readiness score — a CV that breaks a German custom
+and parses perfectly scores like one that parses perfectly.
+
+| Check | Severity | Applies to | Why |
+|---|---|---|---|
+| Volunteering listed under work experience | medium, low for a career starter | German, Ukrainian | An Ehrenamt does not replace Berufserfahrung and goes in its own section. An FSJ or Bundesfreiwilligendienst is a paid placement and is not reported. |
+| Gap in the dates | low from 4 months, medium from 7 | German | The *lückenloser Lebenslauf*: a gap is fine, silence is not. Six months of job searching after education is allowed for. |
+| A range that ends before it starts, or a date years ahead | medium | every language | An applicant tracking system discards the range, and the experience it proves disappears from every filter. |
+| Sentences about "I" outside the profile | low | German, English | Entries are fragments; a short first-person profile at the top is the one exception, and is not checked. |
+| Religion, marital status, children, parents | low | German | Religion is protected under the AGG; the rest are simply no longer expected. Relevant for a church employer. |
+| Oldest job first | low | German, English | Reverse chronological order is the standard, so the first thing read is what the candidate does now. |
+
+A convention is national, and a CV carries its language rather than its
+destination, so each check applies only where career guidance in that
+language describes a rule rather than a preference. Dutch, Spanish, French,
+UK and Russian guidance all accept volunteering under experience when it is
+relevant, so a CV in those languages is left alone. The sources are in the
+language of the country each convention belongs to, in
+[`research_sources.md`](research_sources.md).
 
 ## The parse readiness score
 

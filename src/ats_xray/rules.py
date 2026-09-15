@@ -1,5 +1,6 @@
 """The registered rules: documented resume-parsing risks that the detectors
-in ``structure.py`` and ``field_report.py`` can find evidence for. See
+in ``structure.py`` and ``field_report.py`` can find evidence for, and the
+national CV conventions that ``conventions.py`` checks. See
 ``research_sources.md`` for the citation behind each ``source`` key.
 
 Evaluating these rules against an actual file is a separate concern, handled
