@@ -43,6 +43,7 @@ from ats_xray.match import evaluate_match
 from ats_xray.normalize import fold
 from ats_xray.overlay import SEVERITY_COLORS
 from ats_xray.pipeline import SUPPORTED_SUFFIXES, analyze_bytes
+from ats_xray.rule import CONVENTION
 from ats_xray.skills_lexicon import label_for
 from ats_xray.updates import check_for_update
 from ats_xray.vacancy import Requirement, parse_vacancy
@@ -599,9 +600,17 @@ def _sources_url(rule, lang: str) -> str:
 def _render_finding(finding, lang: str) -> None:
     description = rule_description(finding.rule.id, lang, finding.rule.description)
     severity = finding.severity
+    # A convention finding sits in the same list as the parsing ones and
+    # carries the same severity scale, so without a label a reader has no way
+    # to tell "the software will lose this" from "a German recruiter will
+    # frown at this" -- and no way to see why one moved the score and the
+    # other did not.
+    convention = finding.rule.category == CONVENTION
+    kind = f'<span class="axr-kind">{t("finding_kind_convention", lang)}</span>' if convention else ""
     st.markdown(
         f'<div class="axr-finding axr-finding-{severity}">'
         f'<span class="axr-severity axr-severity-{severity}">{t(f"severity_{severity}", lang)}</span>'
+        f"{kind}"
         f'<p class="axr-finding-text">{description}</p>'
         f"</div>",
         unsafe_allow_html=True,
@@ -621,6 +630,8 @@ def _render_finding(finding, lang: str) -> None:
 
         evidence = t(finding.evidence_key, lang, **finding.evidence_params)
         st.caption(f"{t('evidence', lang)}: {evidence}")
+        if convention:
+            st.caption(t("convention_not_scored", lang))
         st.caption(
             f"{t('source', lang)}: [{t('read_more', lang)}]({_sources_url(finding.rule, lang)})"
         )

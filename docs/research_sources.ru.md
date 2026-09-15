@@ -49,3 +49,61 @@ ATS и публикуют результаты — а не из документ
 ## practical-necessity
 
 Не внешний источник: тот, кто не указал контактов в резюме, остаётся недоступным для рекрутера независимо от того, что парсер извлёк правильно. Это правило существует из практических, а не исследовательских соображений.
+
+---
+
+Записи ниже — правила другого рода. Они не о том, что может прочитать программа, а о том, чего рекрутеры в определённой стране ждут от резюме, и никогда не влияют на оценку из 100. Их источники — национальные карьерные советы, приведённые на языке страны, к которой относится конвенция. Дата обращения — сентябрь 2026 года.
+
+## cv-volunteering
+
+Немецкие советы единодушны: волонтерство (Ehrenamt) не заменяет опыта работы и должно стоять в отдельном разделе после опыта и образования. Начинающие могут указывать релевантное волонтерство как опыт, а Freiwilliges Soziales Jahr или Bundesfreiwilligendienst может засчитываться как практика. Украинские советы выносят волонтерство в отдельный раздел, если оно не было основной занятостью. Нидерландские, испанские, французские, британские и русские советы допускают волонтерство в опыте, если оно релевантно или оплачиваемого опыта мало, — поэтому проверка касается только немецких и украинских резюме.
+
+- [Ehrenamt im Lebenslauf: Beispiele, wie angeben? — karrierebibel.de](https://karrierebibel.de/ehrenamt-lebenslauf/)
+- [Ehrenamt im Lebenslauf angeben: Wo es hingehört — cvlotse.de](https://cvlotse.de/ratgeber/ehrenamt-im-lebenslauf)
+- [FSJ und BFD im Lebenslauf angeben — cvlotse.de](https://cvlotse.de/ratgeber/fsj-bfd-im-lebenslauf)
+- [Як і навіщо описувати волонтерство у резюме — happymonday.ua](https://happymonday.ua/yak-opysuvaty-volonterstvo-v-rezyume)
+- [Vrijwilligerswerk op je cv vermelden — cvmaker.nl](https://www.cvmaker.nl/blog/cv/vrijwilligerswerk-cv)
+- [¿Deberías incluir experiencia como voluntario en tu currículum? — Forbes España](https://forbes.es/empresas/356465/deberias-incluir-experiencia-como-voluntario-en-tu-curriculum/)
+- [Bénévolat sur le CV : conseils et exemples — OnlineCV](https://www.onlinecv.fr/comment-faire-un-cv/travail-volontaire/)
+- [How to include volunteer experience on a CV — Indeed UK](https://uk.indeed.com/career-advice/cvs-cover-letters/volunteer-experience-cv)
+- [Какой опыт волонтерства указывать в резюме — HR Time](https://hrtime.ru/material/kakoy-opyt-volonterstva-ukazyvat-v-reziume-89267/)
+
+## cv-gaps
+
+Немецкие советы считают перерывом период свыше двух месяцев без работы или обучения, восемь-десять недель — безвредными, а перерывы от трёх-четырёх месяцев ожидают объяснять в резюме. После окончания обучения около шести месяцев поиска работы считаются нормой.
+
+- [Lücken im Lebenslauf: Sinnvoll füllen und erklären — karrierebibel.de](https://karrierebibel.de/luecken-im-lebenslauf/)
+- [Lücke im Lebenslauf — StepStone](https://www.stepstone.de/magazin/artikel/luecke-im-lebenslauf)
+- [Lücken im Lebenslauf füllen und erklären — workwise](https://www.workwise.io/karriereguide/bewerbung/luecken-im-lebenslauf)
+
+## cv-date-logic
+
+Системы отбора кандидатов считают годы опыта по датам каждой записи, а рекрутеры фильтруют по этому числу. Даты, которые система не может вычислить, оставляют поле опыта пустым или неверно посчитанным.
+
+- [Resume Date Format: A Complete How-To Guide — Jobscan](https://www.jobscan.co/blog/resume-dates/)
+
+## cv-first-person
+
+Немецкие советы по табличному Lebenslauf подают записи короткими фразами, а не полными предложениями, с коротким профилем от первого лица как единственным исключением. Американские карьерные центры так же советуют избегать личных местоимений.
+
+- [Tabellarischer Lebenslauf: Aufbau, Inhalt, Vorlagen — karrierebibel.de](https://karrierebibel.de/tabellarischer-lebenslauf/)
+- [Tabellarischer Lebenslauf: Tipps & Muster — e-fellows.net](https://www.e-fellows.net/bewerbung/lebenslauf/tabellarischer-lebenslauf)
+- [Resume Tips — Duke University Career Center](https://careerhub.students.duke.edu/resources/resume-tips/)
+
+## cv-personal-details
+
+§ 1 Allgemeines Gleichbehandlungsgesetz защищает кандидатов от ущемления, в том числе из-за религии или мировоззрения. Семейное положение и дети в перечень признаков не входят; немецкие советы описывают их, как и вероисповедание, как необязательные данные, которые большинство уже не указывает, — а вероисповедание важно преимущественно для церковных работодателей.
+
+- [§ 1 Allgemeines Gleichbehandlungsgesetz — gesetze-im-internet.de](https://www.gesetze-im-internet.de/agg/__1.html)
+- [Im Lebenslauf die Konfession angeben? — Indeed Deutschland](https://de.indeed.com/karriere-guide/bewerbung/lebenslauf-konfession)
+- [Konfession im Lebenslauf: angeben oder weglassen? — cvlotse.de](https://cvlotse.de/ratgeber/konfession-im-lebenslauf)
+- [Familienstand im Lebenslauf angeben oder nicht? — die-bewerbungsschreiber.de](https://www.die-bewerbungsschreiber.de/familienstand-lebenslauf)
+
+## cv-reverse-chronological
+
+Обратный хронологический порядок — последняя должность первой — стал стандартом немецкого резюме, заимствованным из американского формата, где карьерные центры так же упорядочивают каждый раздел.
+
+- [Antichronologischer Lebenslauf — Indeed Deutschland](https://de.indeed.com/karriere-guide/bewerbung/antichronologischer-lebenslauf)
+- [Lebenslauf chronologisch: Absteigend oder aufsteigend? — karrierebibel.de](https://karrierebibel.de/lebenslauf-chronologisch/)
+- [Chronologischer oder antichronologischer Lebenslauf — cvlotse.de](https://cvlotse.de/ratgeber/lebenslauf-reihenfolge)
+- [Resume Tips — Duke University Career Center](https://careerhub.students.duke.edu/resources/resume-tips/)

@@ -7,7 +7,7 @@ by ``engine.py``, so the claims made here can be reviewed on their own,
 independent of the code that checks for them.
 """
 
-from .rule import Rule, register
+from .rule import CONVENTION, Rule, register
 
 NON_EMBEDDED_FONT = register(
     Rule(
@@ -161,5 +161,96 @@ BROKEN_CHARACTERS = register(
         ),
         severity="medium",
         source="ats-fonts",
+    )
+)
+
+
+# --------------------------------------------------------------------------
+# Conventions: the file reads fine, and says something a recruiter in that
+# country does not expect. Detected in ``conventions.py``; never scored.
+# --------------------------------------------------------------------------
+
+VOLUNTEERING_LISTED_AS_EMPLOYMENT = register(
+    Rule(
+        id="volunteering_listed_as_employment",
+        description=(
+            "Volunteer work is listed under work experience. In a German or "
+            "Ukrainian CV that section means paid employment, so a recruiter "
+            "reads the entry as a job and then finds out it was not one."
+        ),
+        severity="medium",
+        source="cv-volunteering",
+        category=CONVENTION,
+    )
+)
+
+UNEXPLAINED_GAP = register(
+    Rule(
+        id="unexplained_gap",
+        description=(
+            "The dates leave months with nothing in them. German recruiters "
+            "expect a CV without unexplained gaps, and read a silent one as "
+            "something being left out."
+        ),
+        severity="medium",
+        source="cv-gaps",
+        category=CONVENTION,
+    )
+)
+
+IMPOSSIBLE_DATES = register(
+    Rule(
+        id="impossible_dates",
+        description=(
+            "A date range cannot be true: it ends before it starts, or it "
+            "reaches years into the future. Software that works out years of "
+            "experience from the dates discards the range entirely."
+        ),
+        severity="medium",
+        source="cv-date-logic",
+        category=CONVENTION,
+    )
+)
+
+FIRST_PERSON_IN_CV = register(
+    Rule(
+        id="first_person_in_cv",
+        description=(
+            "Entries are written as sentences about \"I\". A CV lists its "
+            "entries as short fragments; first-person sentences belong in the "
+            "profile at the top or in the cover letter."
+        ),
+        severity="low",
+        source="cv-first-person",
+        category=CONVENTION,
+    )
+)
+
+OUTDATED_PERSONAL_DETAILS = register(
+    Rule(
+        id="outdated_personal_details",
+        description=(
+            "The personal details include fields a German CV no longer needs: "
+            "religion, marital status, children or parents. Religion is "
+            "protected under the equal treatment law, and the rest are "
+            "details most applicants no longer give."
+        ),
+        severity="low",
+        source="cv-personal-details",
+        category=CONVENTION,
+    )
+)
+
+OLDEST_ENTRY_FIRST = register(
+    Rule(
+        id="oldest_entry_first",
+        description=(
+            "Work experience runs from the oldest job to the newest. The "
+            "expected order is the reverse, so that the first thing a "
+            "recruiter reads is what the candidate does now."
+        ),
+        severity="low",
+        source="cv-reverse-chronological",
+        category=CONVENTION,
     )
 )
