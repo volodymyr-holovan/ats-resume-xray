@@ -32,6 +32,7 @@ SECTION_ALIASES_BY_LANGUAGE: dict[str, dict[str, list[str]]] = {
         "summary": ["summary", "profile", "professional summary", "about me", "objective"],
         "certifications": ["certifications", "certificates", "licenses"],
         "languages": ["languages"],
+        "volunteering": ["volunteering", "volunteer experience", "volunteer work", "volunteering experience", "community involvement"],
     },
     "de": {
         "experience": [
@@ -46,6 +47,7 @@ SECTION_ALIASES_BY_LANGUAGE: dict[str, dict[str, list[str]]] = {
         "summary": ["profil", "über mich", "zusammenfassung", "kurzprofil"],
         "certifications": ["zertifikate", "zertifizierungen", "weiterbildung"],
         "languages": ["sprachen", "sprachkenntnisse"],
+        "volunteering": ["ehrenamt", "ehrenamtliches engagement", "ehrenamtliche tätigkeit", "ehrenamtliche tätigkeiten", "soziales engagement", "freiwilliges engagement", "engagement"],
     },
     "uk": {
         "experience": [
@@ -59,6 +61,7 @@ SECTION_ALIASES_BY_LANGUAGE: dict[str, dict[str, list[str]]] = {
         "summary": ["про себе", "профіль", "коротко про себе", "мета"],
         "certifications": ["сертифікати", "сертифікація", "курси"],
         "languages": ["мови", "знання мов", "володіння мовами"],
+        "volunteering": ["волонтерство", "волонтерська діяльність", "волонтерський досвід", "громадська діяльність"],
     },
     "ru": {
         "experience": [
@@ -72,6 +75,7 @@ SECTION_ALIASES_BY_LANGUAGE: dict[str, dict[str, list[str]]] = {
         "summary": ["о себе", "профиль", "кратко о себе", "цель"],
         "certifications": ["сертификаты", "сертификация", "курсы"],
         "languages": ["языки", "знание языков", "владение языками"],
+        "volunteering": ["волонтерство", "волонтерская деятельность", "волонтерский опыт", "общественная деятельность"],
     },
     "es": {
         "experience": [
@@ -85,6 +89,7 @@ SECTION_ALIASES_BY_LANGUAGE: dict[str, dict[str, list[str]]] = {
         "summary": ["perfil", "sobre mí", "resumen", "perfil profesional", "objetivo"],
         "certifications": ["certificaciones", "certificados", "cursos"],
         "languages": ["idiomas", "lenguas"],
+        "volunteering": ["voluntariado", "experiencia de voluntariado", "actividades de voluntariado"],
     },
     "nl": {
         "experience": ["werkervaring", "ervaring", "professionele ervaring", "loopbaan"],
@@ -93,6 +98,7 @@ SECTION_ALIASES_BY_LANGUAGE: dict[str, dict[str, list[str]]] = {
         "summary": ["profiel", "over mij", "samenvatting", "persoonlijk profiel", "doelstelling"],
         "certifications": ["certificaten", "certificeringen", "cursussen"],
         "languages": ["talen", "talenkennis"],
+        "volunteering": ["vrijwilligerswerk", "nevenactiviteiten"],
     },
     "fr": {
         "experience": [
@@ -106,6 +112,7 @@ SECTION_ALIASES_BY_LANGUAGE: dict[str, dict[str, list[str]]] = {
         "summary": ["profil", "à propos", "résumé", "profil professionnel", "objectif"],
         "certifications": ["certifications", "certificats"],
         "languages": ["langues"],
+        "volunteering": ["bénévolat", "expérience associative", "engagement associatif", "activités associatives"],
     },
 }
 
