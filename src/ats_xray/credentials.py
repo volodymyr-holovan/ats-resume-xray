@@ -420,13 +420,36 @@ January 2019 to August 2022 and inventing two months of experience."""
 
 
 def _register_month(name: str, number: int) -> None:
-    """Record one spelling, plus the abbreviations people write for it."""
-    for spelling in _abbreviations(name):
-        folded = fold(spelling)
-        if not folded:
-            continue
-        MONTH_NAMES.setdefault(folded, number)
-        _MONTH_SPELLINGS.add(spelling)
+    """Record one spelling, plus the abbreviations people write for it.
+
+    Three spellings of every name, not one. "März" is how the word is
+    spelled; "Maerz" is how it is typed on a keyboard without umlauts, and
+    "fevrier", "aout" and "decembre" are how French is typed on one without
+    accents. The alternation is built from written spellings, so only the
+    first was ever found. A CV typed the second way lost the month and fell
+    back to January -- "decembre 2019 - mai 2020" counted as seventeen
+    months instead of six -- and when the unreadable name ended a range, the
+    whole range and the job with it disappeared: "Oktober 2014 - Maerz
+    2018" was simply not there, which read as a three-year gap in a CV that
+    had none.
+    """
+    variants = {name, fold(name), _strip_accents(name)}
+    for variant in variants:
+        for spelling in _abbreviations(variant):
+            folded = fold(spelling)
+            if not folded:
+                continue
+            MONTH_NAMES.setdefault(folded, number)
+            _MONTH_SPELLINGS.add(spelling)
+
+
+def _strip_accents(text: str) -> str:
+    """The name with its diacritics dropped rather than spelled out: "Marz"
+    beside "Maerz", because both are what people type."""
+    import unicodedata
+
+    decomposed = unicodedata.normalize("NFKD", text)
+    return "".join(character for character in decomposed if not unicodedata.combining(character))
 
 
 def _abbreviations(name: str) -> tuple[str, ...]:
@@ -504,6 +527,58 @@ def find_experience_months(text: str, today: date | None = None) -> int:
             spans.append((start, today.year * 12 + today.month))
 
     return _merged_length(spans)
+
+
+@dataclass(frozen=True)
+class DateSpan:
+    """One date range as written, with both ends kept.
+
+    ``find_experience_months`` needs only the covered length and throws a
+    range away when its end precedes its start. Checking a CV for that very
+    mistake needs the range it threw away, so this keeps everything and lets
+    the caller decide.
+    """
+
+    start: int
+    """Month index since year zero."""
+    end: int | None
+    """Month index, or None for a range still running ("seit 2019",
+    "2019 - heute")."""
+    line: int
+    """Which line of the text the range was found on."""
+    raw: str
+    """The range as written, for evidence."""
+
+    @property
+    def open_ended(self) -> bool:
+        return self.end is None
+
+
+def find_date_spans(text: str) -> list[DateSpan]:
+    """Every date range in ``text``, in reading order, backwards ones included.
+
+    Uses the same grammar as the experience counter, so the two can never
+    disagree about what a date is -- only about what to do with a bad one.
+    """
+    spans: list[DateSpan] = []
+    for index, line in enumerate(text.splitlines()):
+        consumed: list[tuple[int, int]] = []
+        for match in _DATE_RANGE.finditer(line):
+            start = _month_index(match, "start")
+            if start is None:
+                continue
+            end = None if match.group("open_ended") else _month_index(match, "end", end_of_year=True)
+            if end is None and not match.group("open_ended"):
+                continue
+            spans.append(DateSpan(start, end, index, match.group(0).strip()))
+            consumed.append(match.span())
+        for match in _SINCE.finditer(line):
+            if any(begin <= match.start() < stop for begin, stop in consumed):
+                continue
+            start = _month_index(match, "start")
+            if start is not None:
+                spans.append(DateSpan(start, None, index, match.group(0).strip()))
+    return spans
 
 
 def range_end(text: str, today: date | None = None) -> int | None:
