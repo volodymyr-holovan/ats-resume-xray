@@ -270,6 +270,20 @@
   white-space: nowrap;
 }
 
+/* Says which kind of finding this is when it is not about parsing. Quieter
+   than the severity beside it on purpose: the severity is what to act on
+   first, and this only explains why the score did not move. Neutral rather
+   than coloured, because the three severity colours already mean something
+   and a fourth hue would read as a fourth level. */
+.axr-kind {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  opacity: 0.7;
+  margin-left: 0.5rem;
+  white-space: nowrap;
+}
+
 .axr-severity-high { color: var(--axr-high-text); }
 .axr-severity-medium { color: var(--axr-medium-text); }
 .axr-severity-low { color: var(--axr-low-text); }

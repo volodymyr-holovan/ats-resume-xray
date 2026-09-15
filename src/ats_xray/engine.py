@@ -9,10 +9,12 @@ file and calls ``evaluate()``.
 """
 
 from dataclasses import dataclass, field, replace
+from datetime import date
 from pathlib import Path
 from typing import Callable
 
 from . import rules as _rules  # noqa: F401  (import registers the rule set)
+from .conventions import analyze_conventions
 from .field_report import build_field_report
 from .readability import analyze_readability
 from .i18n import DEFAULT_LANGUAGE, t
@@ -60,6 +62,7 @@ def evaluate(
     aware_fields: dict,
     naive_fields: dict,
     aware_text: str,
+    today: date | None = None,
 ) -> list[Finding]:
     """Evaluate every registered rule against pre-computed signals.
 
@@ -71,7 +74,11 @@ def evaluate(
     ``aware_text`` is the layout-aware extraction itself, which the
     text-level rules read. Required rather than defaulted: a caller who
     forgot it would lose three rules and see a clean report, which is
-    the one failure mode this tool must not have."""
+    the one failure mode this tool must not have.
+
+    ``today`` is when the CV is being read, which decides whether a gap
+    runs up to now and whether a date is in the future. Defaulted, and
+    only ever passed by tests that need a fixed calendar."""
     findings: list[Finding] = []
 
     def trigger(
@@ -100,6 +107,7 @@ def evaluate(
 
     _evaluate_fields(aware_fields, naive_fields, trigger)
     _evaluate_text(aware_text, trigger)
+    _evaluate_conventions(aware_text, trigger, today)
 
     return findings
 
@@ -204,6 +212,17 @@ def _evaluate_text(aware_text: str, trigger: Trigger) -> None:
     broken = findings["broken_characters"]
     if broken:
         trigger("broken_characters", "evidence_verbatim", {"text": "; ".join(broken)})
+
+
+def _evaluate_conventions(aware_text: str, trigger: Trigger, today: date | None) -> None:
+    """What the CV says against the conventions of where it is going.
+
+    Each check knows its own languages and its own severity -- the German
+    career-starter exception, the length of a gap -- so this only carries
+    what they found onto the finding list."""
+    for rule_id, found in analyze_conventions(aware_text, today).items():
+        if found is not None:
+            trigger(rule_id, found.evidence_key, found.params, severity=found.severity)
 
 
 MAX_LISTED_HEADINGS = 6

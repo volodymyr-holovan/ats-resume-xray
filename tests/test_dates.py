@@ -92,3 +92,29 @@ def test_a_year_alone_is_not_mistaken_for_a_month():
 def test_nonsense_dates_are_ignored_rather_than_guessed():
     for text in ("March 1200 - August 1300", "13/2019 - 14/2022", "August - March"):
         assert find_experience_months(text, today=TODAY) == 0
+
+
+TYPED_WITHOUT_ACCENTS = [
+    ("Maerz 2019 - Mai 2020", 15),
+    ("Marz 2019 - Mai 2020", 15),
+    ("fevrier 2019 - mai 2020", 16),
+    ("aout 2019 - mai 2020", 10),
+    ("decembre 2019 - mai 2020", 6),
+]
+
+
+@pytest.mark.parametrize(("text", "months"), TYPED_WITHOUT_ACCENTS)
+def test_a_month_typed_without_its_accent_is_read(text, months):
+    """"März" on a keyboard without umlauts is "Maerz"; French without accents
+    is "fevrier", "aout", "decembre". Only the accented spelling was in the
+    pattern, so the month was dropped and the year read alone as January --
+    "decembre 2019 - mai 2020" counted as seventeen months instead of six."""
+    assert find_experience_months(text, today=TODAY) == months
+
+
+def test_an_unaccented_month_ending_a_range_does_not_lose_the_job():
+    """The worse half of the same fault. When the unreadable name closed the
+    range, nothing matched at all: "Oktober 2014 - Maerz 2018" was not a
+    shorter job but no job, and the convention check read it as a three-year
+    gap in a CV that had none."""
+    assert find_experience_months("Oktober 2014 - Maerz 2018 Meditec GmbH", today=TODAY) == 42
