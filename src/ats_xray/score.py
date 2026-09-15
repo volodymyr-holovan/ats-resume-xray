@@ -33,6 +33,7 @@ its parameters so the same breakdown renders in any supported language.
 from dataclasses import dataclass, field
 
 from .engine import Finding
+from .rule import PARSING
 
 CONTACT_WEIGHT = 30
 SECTIONS_WEIGHT = 30
@@ -106,7 +107,7 @@ def score_resume(aware_fields: dict, naive_fields: dict, findings: list[Finding]
     weighted = sum(c.score * c.weight for c in present) / total_weight if total_weight else 100.0
     uncapped = round(weighted)
 
-    high_count = sum(1 for f in findings if f.severity == "high")
+    high_count = sum(1 for f in _parsing(findings) if f.severity == "high")
     cap = HIGH_SEVERITY_CAPS.get(min(high_count, 2)) if high_count else None
 
     if cap is not None and uncapped > cap:
@@ -171,8 +172,20 @@ def _sections_component(aware_fields: dict, naive_fields: dict) -> Component:
     )
 
 
+def _parsing(findings: list[Finding]) -> list[Finding]:
+    """The findings this score is about.
+
+    Convention findings -- volunteering under work experience, a gap nobody
+    explained -- are real and are reported beside the rest, and a parser
+    reads every one of those CVs without difficulty. Letting them cost
+    points would make a well-built file that breaks a German custom score
+    like a file that loses its skills table, which is the black-box number
+    this score exists not to be."""
+    return [f for f in findings if f.rule.category == PARSING]
+
+
 def _structure_component(findings: list[Finding]) -> Component:
-    structural = [f for f in findings if f.rule.id not in _FIELD_RULES]
+    structural = [f for f in _parsing(findings) if f.rule.id not in _FIELD_RULES]
     penalty = sum(SEVERITY_PENALTY[f.severity] for f in structural)
 
     # Pairs, not a sentence: which rules cost what is data until a language

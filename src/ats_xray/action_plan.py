@@ -12,10 +12,13 @@ undone:
 1. Anything that risks the file being read wrongly. A skill the parser
    cannot see is worth nothing however well it matches, so structure comes
    before content, and the most serious findings come first.
-2. What the advert asked for and did not find, largest gain first — which
+2. What the CV says against the conventions of where it is going -- the
+   volunteering listed as a job, the gap nobody explained. The file reads
+   fine; a recruiter reading it does not.
+3. What the advert asked for and did not find, largest gain first — which
    is not the order the gaps column happens to be in, because a blocking
    requirement is worth three times a preferred one.
-3. Skills that matched but only in an entry that ended years ago.
+4. Skills that matched but only in an entry that ended years ago.
 
 The steps carry keys rather than sentences. Wording lives in ``i18n``, the
 same as everywhere else, so the plan renders in whichever language the
@@ -23,6 +26,8 @@ reader has chosen and this module stays free of it.
 """
 
 from dataclasses import dataclass, field
+
+from .rule import PARSING
 
 SEVERITY_ORDER = {"high": 0, "medium": 1, "low": 2}
 
@@ -68,7 +73,14 @@ def build_plan(findings, report=None) -> list[Step]:
     steps: list[Step] = []
 
     triggered = {finding.rule.id for finding in findings}
-    for finding in sorted(findings, key=lambda f: SEVERITY_ORDER[f.severity]):
+    # Parsing before convention, then severity within each: a medium
+    # convention finding must not jump a low one that loses content,
+    # because the second is what decides whether anything is read at all.
+    ordered = sorted(
+        findings,
+        key=lambda f: (f.rule.category != PARSING, SEVERITY_ORDER[f.severity]),
+    )
+    for finding in ordered:
         if REDUNDANT_WITH.get(finding.rule.id) in triggered:
             continue
         steps.append(Step(kind="fix", rule_id=finding.rule.id))

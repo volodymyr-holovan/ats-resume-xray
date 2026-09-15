@@ -12,6 +12,10 @@ from dataclasses import dataclass
 
 _VALID_SEVERITIES = ("high", "medium", "low")
 
+PARSING = "parsing"
+CONVENTION = "convention"
+_VALID_CATEGORIES = (PARSING, CONVENTION)
+
 
 @dataclass(frozen=True)
 class Rule:
@@ -21,10 +25,24 @@ class Rule:
     source: str
     """Key into research_sources.md, not a raw URL — so a citation can be
     corrected or expanded in one place without touching any Python."""
+    category: str = PARSING
+    """What kind of problem this is, which decides what it may count against.
+
+    ``parsing``: the file risks being read wrongly by software. These are what
+    the parse-readiness score measures.
+
+    ``convention``: the file reads perfectly and says something a recruiter in
+    that country does not expect -- volunteering listed as a job in a German
+    CV, a date range that ends before it starts. Real problems, reported with
+    the rest, and kept out of the score, because a parser has no difficulty
+    with any of them and the score has never claimed to measure anything
+    else."""
 
     def __post_init__(self) -> None:
         if self.severity not in _VALID_SEVERITIES:
             raise ValueError(f"Invalid severity {self.severity!r}, expected one of {_VALID_SEVERITIES}")
+        if self.category not in _VALID_CATEGORIES:
+            raise ValueError(f"Invalid category {self.category!r}, expected one of {_VALID_CATEGORIES}")
 
 
 _REGISTRY: dict[str, Rule] = {}
