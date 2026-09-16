@@ -193,6 +193,12 @@ def find_volunteering_in_experience(text: str, language: str) -> ConventionFindi
         folded = f" {fold(line)} "
         if any(_mentions(folded, exception) for exception in exceptions):
             continue
+        # Cheap first. A line with no marker anywhere cannot have one opening
+        # a phrase, and _opens_a_phrase reads the dates out of the line before
+        # it can cut it up -- which, run on every line of the section, was
+        # most of the time this module spent.
+        if not any(marker in folded for marker in markers):
+            continue
         if _opens_a_phrase(line, markers):
             lines.append(_shorten(line))
             volunteer_rows.add(index)
