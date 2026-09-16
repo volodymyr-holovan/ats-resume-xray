@@ -19,10 +19,10 @@ from .i18n import (
     tn,
 )
 from .pipeline import extract_text
+from .rule import SEVERITY_ORDER
 from .score import score_resume
 from .structure import analyze_structure
 
-_SEVERITY_ORDER = {"high": 0, "medium": 1, "low": 2}
 
 SEPARATOR = "=" * 30
 
@@ -209,7 +209,7 @@ def _format_rule_report(findings: list, language: str = DEFAULT_LANGUAGE) -> str
     if not findings:
         return t("no_findings", language)
 
-    ordered = sorted(findings, key=lambda f: _SEVERITY_ORDER[f.severity])
+    ordered = sorted(findings, key=lambda f: SEVERITY_ORDER[f.severity])
     return "\n\n".join(_format_finding(finding, language) for finding in ordered)
 
 

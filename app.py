@@ -43,14 +43,13 @@ from ats_xray.match import evaluate_match
 from ats_xray.normalize import fold
 from ats_xray.overlay import SEVERITY_COLORS
 from ats_xray.pipeline import SUPPORTED_SUFFIXES, analyze_bytes
-from ats_xray.rule import CONVENTION
+from ats_xray.rule import CONVENTION, SEVERITY_ORDER
 from ats_xray.skills_lexicon import label_for
 from ats_xray.updates import check_for_update
 from ats_xray.vacancy import Requirement, parse_vacancy
 
 logger = logging.getLogger(__name__)
 
-SEVERITY_ORDER = {"high": 0, "medium": 1, "low": 2}
 _zone_numbers = itertools.count(1)
 JOB_AD_HEIGHT = 200
 REPO_URL = "https://github.com/volodymyr-holovan/ats-resume-xray"

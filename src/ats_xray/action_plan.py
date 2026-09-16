@@ -27,9 +27,8 @@ reader has chosen and this module stays free of it.
 
 from dataclasses import dataclass, field
 
-from .rule import PARSING
+from .rule import PARSING, SEVERITY_ORDER
 
-SEVERITY_ORDER = {"high": 0, "medium": 1, "low": 2}
 
 REDUNDANT_WITH = {"contact_only_as_link": "missing_contact_field"}
 """Rules whose plan line is the same instruction as another's.
