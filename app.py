@@ -21,6 +21,7 @@ import html
 import io
 import itertools
 import json
+import sys
 from contextlib import nullcontext
 import logging
 from dataclasses import replace
@@ -28,7 +29,58 @@ from pathlib import Path
 
 import streamlit as st
 
-from ats_xray.action_plan import build_plan
+
+def _load_this_commits_package() -> None:
+    """Make the ats_xray imported below the one committed beside this file.
+
+    After the push that added SEVERITY_ORDER, the live page raised
+    ImportError on `from ats_xray.rule import CONVENTION, SEVERITY_ORDER`:
+    the new app.py was running against an older rule.py. Streamlit reads
+    app.py from disk on every run, and two things can put an older package
+    behind it -- a package imported earlier in the same long-lived server
+    process, which stays as it was loaded, or an older installed copy sitting
+    ahead of the source on the path. Both reproduce that exact error locally,
+    and the host's logs were not available to say which one it was, so this
+    handles both.
+
+    So: the repo's src goes first on the path, and a package already loaded
+    from anywhere else, or loaded before one of its files last changed, is
+    unloaded so this run imports the code on disk. That costs one import after
+    a deploy and a few dozen stat calls on every other run.
+
+    A frozen build has no src beside app.py -- the package is bundled next to
+    it -- and is left alone.
+    """
+    src = Path(__file__).resolve().parent / "src"
+    package_dir = src / "ats_xray"
+    if not package_dir.is_dir():
+        return
+    if str(src) not in sys.path:
+        sys.path.insert(0, str(src))
+
+    loaded = sys.modules.get("ats_xray")
+    if loaded is None:
+        return
+    imported_at = getattr(loaded, "_IMPORTED_AT", None)
+    from_here = Path(loaded.__file__).resolve().is_relative_to(package_dir)
+    outdated = imported_at is None or any(
+        path.stat().st_mtime > imported_at for path in package_dir.glob("*.py")
+    )
+    if from_here and not outdated:
+        return
+    logger.warning(
+        "Reloading ats_xray: the loaded copy (%s) is %s.",
+        loaded.__file__,
+        "not this commit's" if not from_here else "older than the source on disk",
+    )
+    for name in [name for name in sys.modules if name == "ats_xray" or name.startswith("ats_xray.")]:
+        del sys.modules[name]
+
+
+logger = logging.getLogger(__name__)
+_load_this_commits_package()
+
+from ats_xray.action_plan import build_plan  # noqa: E402  (after the package check above)
 from ats_xray.i18n import (
     DEFAULT_LANGUAGE,
     UI_LANGUAGES,
@@ -49,8 +101,6 @@ from ats_xray.rule import CONVENTION, SEVERITY_ORDER
 from ats_xray.skills_lexicon import label_for
 from ats_xray.updates import check_for_update
 from ats_xray.vacancy import Requirement, parse_vacancy
-
-logger = logging.getLogger(__name__)
 
 _zone_numbers = itertools.count(1)
 JOB_AD_HEIGHT = 200
