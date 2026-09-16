@@ -16,6 +16,7 @@ two-pane review on a phone is two unreadable slivers.
 Run locally with: streamlit run app.py
 """
 
+import hashlib
 import html
 import itertools
 import json
@@ -258,6 +259,30 @@ def _upload_zone(lang: str):
             type=[suffix.lstrip(".") for suffix in SUPPORTED_SUFFIXES],
             key="resume",
         )
+
+
+def _analysis_of(uploaded_file, lang: str):
+    """The analysis of this upload, run once per file for the session.
+
+    Streamlit reruns the whole script on every interaction -- switching the
+    language, editing a keyword, asking for the match -- and each rerun
+    analysed and rendered the document again: some 440 ms before the page
+    could respond to a click that had nothing to do with the file.
+
+    Kept in the session, keyed on the file's content, beside the bytes the
+    uploader already holds there. Not st.cache_data: that cache is shared
+    across sessions and outlives them, and the page tells the reader nothing
+    is stored.
+    """
+    data = uploaded_file.getvalue()
+    key = (uploaded_file.name, hashlib.sha256(data).hexdigest())
+    kept = st.session_state.get("analysis")
+    if kept is not None and kept[0] == key:
+        return kept[1]
+    with st.spinner(t("analyzing", lang)):
+        result = analyze_bytes(data, uploaded_file.name, render=True)
+    st.session_state["analysis"] = (key, result)
+    return result
 
 
 def _empty_state(lang: str) -> None:
@@ -718,12 +743,13 @@ uploaded_file = _upload_zone(language)
 analysis = None
 
 if uploaded_file is None:
+    # A removed file takes its analysis with it.
+    st.session_state.pop("analysis", None)
     _empty_state(language)
 else:
     is_pdf = uploaded_file.name.lower().endswith(".pdf")
     try:
-        with st.spinner(t("analyzing", language)):
-            result = analyze_bytes(uploaded_file.getvalue(), uploaded_file.name, render=True)
+        result = _analysis_of(uploaded_file, language)
     except ValueError as exc:
         st.error(str(exc))
     except Exception:
