@@ -120,6 +120,39 @@ def _mentions(padded_folded: str, phrase: str) -> bool:
     return phrase in padded_folded
 
 
+_PHRASE = re.compile(r"[,;:|/()·•–—-]")
+_LEADING_NUMBERS = re.compile(r"^(?:\d+\s+)+")
+
+
+def _opens_a_phrase(line: str, markers: tuple[str, ...]) -> bool:
+    """Whether a marker starts a phrase here, rather than sitting inside one.
+
+    Mentioning volunteering is not the same as filing volunteering under
+    employment, and in both German and Ukrainian the difference is
+    grammatical. The candidate's own unpaid role opens its phrase --
+    "Ehrenamtliche Tätigkeit, Tafel Hamburg e.V.", "Волонтер, Карітас" --
+    behind nothing but a date, a bullet or a separator. Other people's
+    volunteering is governed by the noun in front of it: "Schulung
+    ehrenamtlicher Helfer" is a duty of a paid job, "Координація роботи
+    волонтерів" likewise, and "Verein zur Förderung ehrenamtlicher Arbeit" is
+    an employer's name. Matching the bare word reported all of them, on
+    fourteen of eighty-one real CVs that had put their volunteering exactly
+    where the convention asks for it.
+
+    No offset is ever taken into folded text. ``fold`` expands umlauts and
+    drops punctuation, so it does not preserve length and a position found in
+    the folded string points somewhere else in the raw one. The raw line is
+    cut into phrases first, and each phrase folded on its own.
+    """
+    for span in find_date_spans(line):
+        line = line.replace(span.raw, " ")
+    for phrase in _PHRASE.split(line):
+        opening = _LEADING_NUMBERS.sub("", fold(phrase))
+        if any(opening.startswith(marker) for marker in markers):
+            return True
+    return False
+
+
 def _dates_above(rows: list[str], index: int) -> list[int]:
     """The date line an undated volunteer line belongs to, if it has one.
 
@@ -160,7 +193,13 @@ def find_volunteering_in_experience(text: str, language: str) -> ConventionFindi
         folded = f" {fold(line)} "
         if any(_mentions(folded, exception) for exception in exceptions):
             continue
-        if any(marker in folded for marker in markers):
+        # Cheap first. A line with no marker anywhere cannot have one opening
+        # a phrase, and _opens_a_phrase reads the dates out of the line before
+        # it can cut it up -- which, run on every line of the section, was
+        # most of the time this module spent.
+        if not any(marker in folded for marker in markers):
+            continue
+        if _opens_a_phrase(line, markers):
             lines.append(_shorten(line))
             volunteer_rows.add(index)
             volunteer_rows.update(_dates_above(rows, index))
@@ -220,7 +259,14 @@ def find_unexplained_gap(text: str, language: str, today: date | None = None) ->
     # the job was. On a real CV that turned one mistyped digit into a
     # sixty-nine-month gap reported beside the date error that caused it.
     # The dates are reported; the gaps wait until they are fixed.
-    if any(span.end is not None and span.end < span.start for span in spans):
+    #
+    # A date typed far into the future does the same damage by the same
+    # route: "03/2201 - heute" is skipped below as a date that has not
+    # arrived, and the current job disappears from the timeline along with
+    # it, leaving the five years it covers looking like unemployment. Both
+    # kinds of broken date are recognised here exactly as the date check
+    # recognises them, so the two can never contradict each other.
+    if _backwards(spans) or _too_far_ahead(spans, owners, now + FUTURE_MARGIN_MONTHS):
         return None
 
     intervals: list[tuple[int, int, str]] = []
@@ -295,13 +341,33 @@ _FUTURE_EXEMPT_SECTIONS = frozenset({"education", "certifications"})
 their degree."""
 
 
+def _backwards(spans: list[DateSpan]) -> list[DateSpan]:
+    """Ranges whose end precedes their start."""
+    return [span for span in spans if span.end is not None and span.end < span.start]
+
+
+def _too_far_ahead(spans: list[DateSpan], owners: list[str], limit: int) -> list[DateSpan]:
+    """Ranges reaching past the point where a date reads as a typo.
+
+    Split out so the gap check can ask the same question and get the same
+    answer. Two definitions of a broken date would eventually disagree, and
+    the disagreement would surface as a gap reported beside the typo that
+    invented it.
+    """
+    return [
+        span for span in spans
+        if (span.line >= len(owners) or owners[span.line] not in _FUTURE_EXEMPT_SECTIONS)
+        and (span.start > limit or (span.end is not None and span.end > limit))
+    ]
+
+
 def find_impossible_dates(text: str, today: date | None = None) -> ConventionFinding | None:
     today = today or date.today()
     limit = _month_index(today) + FUTURE_MARGIN_MONTHS
     owners = _section_by_line(text)
     spans = find_date_spans(text)
 
-    backwards = [span for span in spans if span.end is not None and span.end < span.start]
+    backwards = _backwards(spans)
     if backwards:
         return ConventionFinding(
             evidence_key="evidence_date_backwards",
@@ -309,11 +375,7 @@ def find_impossible_dates(text: str, today: date | None = None) -> ConventionFin
             severity="medium",
         )
 
-    future = [
-        span for span in spans
-        if (span.line >= len(owners) or owners[span.line] not in _FUTURE_EXEMPT_SECTIONS)
-        and (span.start > limit or (span.end is not None and span.end > limit))
-    ]
+    future = _too_far_ahead(spans, owners, limit)
     if future:
         return ConventionFinding(
             evidence_key="evidence_date_future",
