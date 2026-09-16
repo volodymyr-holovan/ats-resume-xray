@@ -197,6 +197,18 @@ def test_a_language_named_without_a_level_is_still_reported():
     assert language_required_without_level("Wir erwarten Deutsch und Englisch", "de") == ["de", "en"]
 
 
+def test_a_language_given_a_level_further_down_is_not_also_levelless():
+    """The two answers come from one pass now. When they came from two, the
+    second looked only at the first mention, and an advert naming German in
+    passing before asking for C1 was reported as wanting both."""
+    text = (
+        "Sprachen: Deutsch. Weitere Anforderungen an Kommunikation, Dokumentation "
+        "und Teamarbeit im laufenden Betrieb. Deutsch C1 zwingend."
+    )
+    assert _levels(text, "de") == {"de": "c1"}
+    assert language_required_without_level(text, "de") == []
+
+
 # ------------------------------------------------------------------ licence
 def test_licence_class_is_read_and_defaults_to_b():
     assert find_licence("Führerschein Klasse B erforderlich") == "B"

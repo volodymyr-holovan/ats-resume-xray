@@ -12,7 +12,7 @@ with no date attached is treated as current, because a Skills section is a
 statement about now.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date
 
 from .credentials import range_end
@@ -37,6 +37,18 @@ class Entry:
     text: str
     ended: int
     """Month index since year zero, or 0 for an entry that has not ended."""
+    _skills: dict = field(default_factory=dict, compare=False, repr=False)
+
+    def skills(self, language: str | None = None) -> frozenset[str]:
+        """The skills this entry mentions, read from the lexicon once.
+
+        Matching asks every matched skill which entries mention it, so an
+        entry used to be scanned once per skill, twice for a stale one. The
+        answer is kept on the entry, which lives only as long as the match
+        that made it -- nothing about a CV outlasts the request."""
+        if language not in self._skills:
+            self._skills[language] = frozenset(find_skills(self.text, language))
+        return self._skills[language]
 
     @property
     def is_current(self) -> bool:
@@ -80,7 +92,7 @@ def last_used(
     seen = [
         entry.ended
         for entry in entries
-        if skill_id in find_skills(entry.text, language)
+        if skill_id in entry.skills(language)
     ]
     if not seen:
         return None
@@ -89,22 +101,32 @@ def last_used(
     return max(seen)
 
 
+def skills_listed(text: str, language: str | None = None) -> frozenset[str]:
+    """The skills a CV's Skills section names."""
+    listed = split_into_sections(text).get("skills")
+    return frozenset(find_skills(listed, language)) if listed else frozenset()
+
+
 def is_stale(
     skill_id: str,
     text: str,
     entries: list[Entry],
     today: date | None = None,
     language: str | None = None,
+    listed_skills: frozenset[str] | None = None,
 ) -> bool:
     """Whether every dated mention of this skill is old enough to ask about.
 
     A skill named in the Skills section is never stale, whatever the dated
     entries say: listing it is a claim about the present, and calling that
     out would be arguing with the candidate about their own CV.
+
+    ``listed_skills`` is that section's skills, for a caller asking about many
+    skills of one CV; left out, they are read from ``text``.
     """
-    sections = split_into_sections(text)
-    listed = sections.get("skills")
-    if listed and skill_id in find_skills(listed, language):
+    if listed_skills is None:
+        listed_skills = skills_listed(text, language)
+    if skill_id in listed_skills:
         return False
 
     ended = last_used(skill_id, entries, language)

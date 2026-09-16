@@ -10,7 +10,13 @@ independently.
 
 from dataclasses import dataclass
 
-_VALID_SEVERITIES = ("high", "medium", "low")
+SEVERITIES = ("high", "medium", "low")
+"""Most serious first."""
+
+SEVERITY_ORDER = {severity: rank for rank, severity in enumerate(SEVERITIES)}
+"""Sort key for listing findings most serious first. The findings zone, the
+command-line report and the action plan all list them that way, and each had
+written this mapping out for itself."""
 
 PARSING = "parsing"
 CONVENTION = "convention"
@@ -39,8 +45,8 @@ class Rule:
     else."""
 
     def __post_init__(self) -> None:
-        if self.severity not in _VALID_SEVERITIES:
-            raise ValueError(f"Invalid severity {self.severity!r}, expected one of {_VALID_SEVERITIES}")
+        if self.severity not in SEVERITIES:
+            raise ValueError(f"Invalid severity {self.severity!r}, expected one of {SEVERITIES}")
         if self.category not in _VALID_CATEGORIES:
             raise ValueError(f"Invalid category {self.category!r}, expected one of {_VALID_CATEGORIES}")
 

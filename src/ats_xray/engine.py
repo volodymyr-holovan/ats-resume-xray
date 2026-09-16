@@ -229,15 +229,26 @@ MAX_LISTED_HEADINGS = 6
 """Enough to show the pattern without printing the whole contents page."""
 
 
+def _sections_lost_under_naive_parsing(aware_fields: dict, naive_fields: dict) -> list[str]:
+    """Sections a layout-aware read finds and a naive one does not.
+
+    Three places need this answer and they have to agree: the rule that
+    reports the loss, and the two region lookups -- one per file type -- that
+    draw a box around it. Written out three times, a change to any one of
+    them would have the app highlighting sections the finding is not about.
+    """
+    return [
+        section
+        for section, aware in aware_fields["sections"].items()
+        if aware["found"] and not naive_fields["sections"][section]["found"]
+    ]
+
+
 def _evaluate_fields(aware_fields: dict, naive_fields: dict, trigger: Trigger) -> None:
     if not aware_fields["email"]["found"] and not aware_fields["phone"]["found"]:
         trigger("missing_contact_field", "evidence_no_contact")
 
-    at_risk = [
-        section
-        for section, aware_field in aware_fields["sections"].items()
-        if aware_field["found"] and not naive_fields["sections"][section]["found"]
-    ]
+    at_risk = _sections_lost_under_naive_parsing(aware_fields, naive_fields)
     if at_risk:
         # Joined but not quoted: i18n translates each name on the way to the
         # screen, and it can only recognise a bare token.
@@ -274,6 +285,30 @@ def run_rules(file_path: str, naive_text: str, aware_text: str) -> list[Finding]
     return findings
 
 
+def _heading_aliases(sections: list[str]) -> set[str]:
+    """Every spelling, in every language, of these sections' headings."""
+    from .sections import SECTION_ALIASES
+
+    return {alias for section in sections for alias in SECTION_ALIASES[section]}
+
+
+def _fill_regions(findings: list[Finding], locate) -> list[Finding]:
+    """Give each finding the regions ``locate`` can find for it.
+
+    PDF and DOCX findings reach this point needing the same treatment and
+    differing only in where a given rule's location is looked up, so the walk
+    is here and the lookup is the argument. Written out once per file type,
+    the two drifted in exactly the way that is hard to see: a finding that
+    already knows where it is must keep that, and one the lookup has nothing
+    for must pass through rather than lose what it had.
+    """
+    filled: list[Finding] = []
+    for finding in findings:
+        regions = None if finding.regions else locate(finding)
+        filled.append(replace(finding, regions=tuple(regions)) if regions else finding)
+    return filled
+
+
 def _attach_pdf_regions(
     file_path: str,
     findings: list[Finding],
@@ -291,31 +326,17 @@ def _attach_pdf_regions(
     """
     from .pdf_fonts import find_font_regions
     from .pdf_locate import find_section_regions
-    from .sections import SECTION_ALIASES
 
-    at_risk_sections = [
-        section
-        for section, aware in aware_fields["sections"].items()
-        if aware["found"] and not naive_fields["sections"][section]["found"]
-    ]
+    lost = _sections_lost_under_naive_parsing(aware_fields, naive_fields)
 
-    enriched: list[Finding] = []
-    for finding in findings:
-        if finding.regions:
-            enriched.append(finding)
-            continue
-
+    def locate(finding: Finding):
         if finding.rule.id == "pdf_non_embedded_font":
-            regions = find_font_regions(file_path, structure.get("non_embedded_fonts") or [])
-            enriched.append(replace(finding, regions=tuple(regions)))
-        elif finding.rule.id == "section_missing_under_naive_parsing" and at_risk_sections:
-            aliases = {alias for section in at_risk_sections for alias in SECTION_ALIASES[section]}
-            regions = find_section_regions(file_path, aliases)
-            enriched.append(replace(finding, regions=tuple(regions)))
-        else:
-            enriched.append(finding)
+            return find_font_regions(file_path, structure.get("non_embedded_fonts") or [])
+        if finding.rule.id == "section_missing_under_naive_parsing" and lost:
+            return find_section_regions(file_path, _heading_aliases(lost))
+        return None
 
-    return enriched
+    return _fill_regions(findings, locate)
 
 
 def attach_docx_regions(
@@ -338,7 +359,6 @@ def attach_docx_regions(
     yields no region -- the finding still stands on its text evidence.
     """
     from .pdf_locate import find_section_regions, find_text_regions
-    from .sections import SECTION_ALIASES
 
     headers_footers = structure.get("headers_footers") or {"headers": [], "footers": []}
     texts_by_rule = {
@@ -346,25 +366,13 @@ def attach_docx_regions(
         "docx_text_box_content": structure.get("text_box_content") or [],
         "docx_table_content": structure.get("table_texts") or [],
     }
+    lost = _sections_lost_under_naive_parsing(aware_fields, naive_fields)
 
-    at_risk_sections = [
-        section
-        for section, aware in aware_fields["sections"].items()
-        if aware["found"] and not naive_fields["sections"][section]["found"]
-    ]
+    def locate(finding: Finding):
+        if finding.rule.id in texts_by_rule:
+            return find_text_regions(rendered_pdf_path, texts_by_rule[finding.rule.id])
+        if finding.rule.id == "section_missing_under_naive_parsing" and lost:
+            return find_section_regions(rendered_pdf_path, _heading_aliases(lost))
+        return None
 
-    enriched: list[Finding] = []
-    for finding in findings:
-        if finding.regions:
-            enriched.append(finding)
-        elif finding.rule.id in texts_by_rule:
-            regions = find_text_regions(rendered_pdf_path, texts_by_rule[finding.rule.id])
-            enriched.append(replace(finding, regions=tuple(regions)))
-        elif finding.rule.id == "section_missing_under_naive_parsing" and at_risk_sections:
-            aliases = {alias for section in at_risk_sections for alias in SECTION_ALIASES[section]}
-            regions = find_section_regions(rendered_pdf_path, aliases)
-            enriched.append(replace(finding, regions=tuple(regions)))
-        else:
-            enriched.append(finding)
-
-    return enriched
+    return _fill_regions(findings, locate)

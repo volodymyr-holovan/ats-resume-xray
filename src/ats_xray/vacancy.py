@@ -18,10 +18,9 @@ from .credentials import (
     EDUCATION_RANK,
     education_waived,
     find_education,
-    find_languages,
     find_licence,
     find_required_years,
-    language_required_without_level,
+    language_levels,
 )
 from .langid import detect_language, merge_for
 from .normalize import fold
@@ -429,29 +428,29 @@ def _add_languages(scanned: dict[str, str], add, language: str) -> None:
     if not body.strip():
         return
 
-    for fact in find_languages(body, language):
-        add(
-            Requirement(
-                kind="language",
-                key=fact.language,
-                label=f"{fact.language.upper()} {fact.level.upper()}",
-                must=True,
-                evidence=fact.evidence,
-                detail={"level": fact.level},
+    for code, fact in language_levels(body, language).items():
+        if fact:
+            add(
+                Requirement(
+                    kind="language",
+                    key=code,
+                    label=f"{code.upper()} {fact.level.upper()}",
+                    must=True,
+                    evidence=fact.evidence,
+                    detail={"level": fact.level},
+                )
             )
-        )
-
-    for code in language_required_without_level(body, language):
-        add(
-            Requirement(
-                kind="language",
-                key=code,
-                label=f"{code.upper()}",
-                must=False,
-                evidence="",
-                detail={"level": None},
+        else:
+            add(
+                Requirement(
+                    kind="language",
+                    key=code,
+                    label=code.upper(),
+                    must=False,
+                    evidence="",
+                    detail={"level": None},
+                )
             )
-        )
 
 
 def _licence_is_must(text: str, language: str = "en") -> bool:

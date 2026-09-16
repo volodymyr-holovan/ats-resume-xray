@@ -11,8 +11,7 @@ Small images (icons, bullets, dividers) are excluded via an area threshold
 so this only flags images large enough to plausibly carry real content.
 """
 
-import pdfplumber
-
+from .pdf_document import open_pdf
 from .regions import Region
 
 DEFAULT_MIN_AREA_FRACTION = 0.02
@@ -25,7 +24,7 @@ def find_large_textless_images(pdf_path: str, min_area_fraction: float = DEFAULT
     """
     findings = []
 
-    with pdfplumber.open(pdf_path) as pdf:
+    with open_pdf(pdf_path) as pdf:
         for page_number, page in enumerate(pdf.pages, start=1):
             page_area = page.width * page.height
             if page_area <= 0:

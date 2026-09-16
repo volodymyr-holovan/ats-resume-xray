@@ -6,6 +6,7 @@ one place instead of being duplicated across the two entry points.
 import io
 import tempfile
 import zipfile
+from contextlib import nullcontext
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -13,6 +14,7 @@ from .docx_extract import extract_docx_full, extract_docx_naive
 from .engine import Finding, run_rules
 from .extract import extract_layout_aware, extract_naive
 from .field_report import build_field_report
+from .pdf_document import reading
 from .score import ScoreBreakdown, score_resume
 
 SUPPORTED_SUFFIXES = (".pdf", ".docx")
@@ -70,18 +72,20 @@ def analyze_path(file_path: str, render: bool = False) -> AnalysisResult:
     It is off by default because rendering is the slowest step here and only
     the visual UI needs it.
     """
-    naive_text, aware_text = extract_text(file_path)
-    findings = run_rules(file_path, naive_text, aware_text)
-    aware_fields = build_field_report(aware_text)
-    naive_fields = build_field_report(naive_text)
-    breakdown = score_resume(aware_fields, naive_fields, findings)
+    suffix = Path(file_path).suffix.lower()
+    # Every PDF detector below reads the same parsed document instead of
+    # opening and interpreting the file again for itself. See pdf_document.
+    with reading(file_path) if suffix == ".pdf" else nullcontext():
+        naive_text, aware_text = extract_text(file_path)
+        findings = run_rules(file_path, naive_text, aware_text)
+        aware_fields = build_field_report(aware_text)
+        naive_fields = build_field_report(naive_text)
+        breakdown = score_resume(aware_fields, naive_fields, findings)
 
-    rendered: list = []
-    if render:
-        suffix = Path(file_path).suffix.lower()
-        if suffix == ".pdf":
+        rendered: list = []
+        if render and suffix == ".pdf":
             rendered = _render(file_path, findings)
-        elif suffix == ".docx":
+        elif render and suffix == ".docx":
             findings, rendered = _render_docx(file_path, findings, aware_fields, naive_fields)
 
     return AnalysisResult(
@@ -121,10 +125,11 @@ def _render_docx(
         if converted is None:
             return findings, []
 
-        located = attach_docx_regions(
-            converted, findings, analyze_structure(docx_path), aware_fields, naive_fields
-        )
-        return located, _render(converted, located)
+        with reading(converted):
+            located = attach_docx_regions(
+                converted, findings, analyze_structure(docx_path), aware_fields, naive_fields
+            )
+            return located, _render(converted, located)
 
 
 def analyze_bytes(file_bytes: bytes, filename: str, render: bool = False) -> AnalysisResult:

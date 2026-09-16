@@ -199,3 +199,37 @@ def test_a_keyword_typed_by_the_reader_is_scored_too(tmp_path):
     assert not at.exception
     body = " ".join(m.value for m in at.markdown)
     assert "Kernphysik" in body
+
+
+def test_the_file_is_analysed_once_however_often_the_page_reruns(tmp_path, monkeypatch):
+    """Every click reruns the whole script. Analysing and rendering the
+    document again on each one made the page wait close to half a second to
+    answer a language switch that had nothing to do with the file."""
+    import ats_xray.pipeline as pipeline
+
+    calls = []
+    real = pipeline.analyze_bytes
+
+    def counting(file_bytes, filename, render=False):
+        calls.append(filename)
+        return real(file_bytes, filename, render=render)
+
+    monkeypatch.setattr(pipeline, "analyze_bytes", counting)
+
+    resume = tmp_path / "resume.pdf"
+    two_column_pdf(resume)
+    at = AppTest.from_file(APP_PATH, default_timeout=120)
+    at.run()
+    _upload(at, resume)
+    at.get("radio")[0].set_value("de").run()
+    at.get("radio")[0].set_value("uk").run()
+
+    assert not at.exception
+    assert calls == ["resume.pdf"]
+    # Still showing the analysis, in the language now chosen.
+    assert t("details_expander", "uk") in [expander.label for expander in at.get("expander")]
+
+    other = tmp_path / "other.pdf"
+    _cv_pdf(other)
+    _uploaded(at, other)
+    assert calls == ["resume.pdf", "other.pdf"], "a different file must be analysed afresh"

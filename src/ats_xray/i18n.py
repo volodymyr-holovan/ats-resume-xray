@@ -1768,16 +1768,30 @@ Short enough to sit inside a caption, and phrased as what is wrong rather
 than as a category: "Content inside a table", not "Table content"."""
 
 
+def _for_rule(table: dict[str, dict], rule_id: str, language: str, missing):
+    """One rule's wording from one of the per-rule tables.
+
+    The reader's language if it is there, English if it is not, and
+    ``missing`` when the rule has no entry at all. Five tables are read this
+    way and each had its own copy of those three lines, which made the
+    fallback policy five decisions instead of one -- and the interesting
+    thing about the policy is that it is uniform, since a half-translated
+    interface is worse than an English one.
+
+    What is not uniform is ``missing``, so that stays with each accessor:
+    what to show for a rule nobody has written about yet differs by where it
+    appears on the page, and each of them says why."""
+    entry = table.get(rule_id) or {}
+    return entry.get(language) or entry.get(DEFAULT_LANGUAGE) or missing
+
+
 def rule_name(rule_id: str, language: str) -> str:
     """The reader's name for a rule, falling back to the id.
 
     A rule with no entry shows its id rather than an empty caption, which
     is ugly on purpose: the test suite fails on a missing name, so the only
     way to see one is to have added a rule and not this."""
-    entry = RULE_NAMES.get(rule_id)
-    if entry is None:
-        return rule_id
-    return entry.get(language) or entry.get(DEFAULT_LANGUAGE) or rule_id
+    return _for_rule(RULE_NAMES, rule_id, language, rule_id)
 
 
 RULE_DESCRIPTIONS: dict[str, dict[str, str]] = {
@@ -2161,10 +2175,7 @@ def rule_description(rule_id: str, language: str, fallback: str) -> str:
     rule has no translation entry yet -- a new rule stays readable instead
     of showing a placeholder.
     """
-    entry = RULE_DESCRIPTIONS.get(rule_id)
-    if entry is None:
-        return fallback
-    return entry.get(language) or entry.get(DEFAULT_LANGUAGE) or fallback
+    return _for_rule(RULE_DESCRIPTIONS, rule_id, language, fallback)
 
 
 RULE_DETAILS: dict[str, dict[str, str]] = {
@@ -3130,20 +3141,14 @@ directly."""
 def rule_detail(rule_id: str, language: str) -> str:
     """The longer explanation shown when a finding is expanded, or "" when
     a rule has none yet -- the caller simply shows nothing extra."""
-    entry = RULE_DETAILS.get(rule_id)
-    if entry is None:
-        return ""
-    return entry.get(language) or entry.get(DEFAULT_LANGUAGE) or ""
+    return _for_rule(RULE_DETAILS, rule_id, language, "")
 
 
 def rule_fixes(rule_id: str, language: str) -> list[str]:
     """Concrete steps for this finding, most direct first. Empty when a
     rule has no advice yet, which the caller renders as no fix list rather
     than an empty heading."""
-    entry = RULE_FIXES.get(rule_id)
-    if entry is None:
-        return []
-    return entry.get(language) or entry.get(DEFAULT_LANGUAGE) or []
+    return _for_rule(RULE_FIXES, rule_id, language, [])
 
 
 def rule_plan(rule_id: str, language: str) -> str:
@@ -3152,10 +3157,7 @@ def rule_plan(rule_id: str, language: str) -> str:
     Falls back to nothing rather than to the fix list: a caller that
     silently borrowed a menu path would put back exactly what this table
     exists to keep out of the copied block."""
-    entry = RULE_PLAN.get(rule_id)
-    if entry is None:
-        return ""
-    return entry.get(language) or entry.get(DEFAULT_LANGUAGE) or ""
+    return _for_rule(RULE_PLAN, rule_id, language, "")
 
 
 SOURCES_FILENAME = "research_sources.md"

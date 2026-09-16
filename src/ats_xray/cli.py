@@ -3,6 +3,7 @@
 import argparse
 import sys
 import textwrap
+from contextlib import ExitStack
 from pathlib import Path
 
 from .engine import run_rules
@@ -18,11 +19,12 @@ from .i18n import (
     t,
     tn,
 )
+from .pdf_document import reading
 from .pipeline import extract_text
+from .rule import SEVERITY_ORDER
 from .score import score_resume
 from .structure import analyze_structure
 
-_SEVERITY_ORDER = {"high": 0, "medium": 1, "low": 2}
 
 SEPARATOR = "=" * 30
 
@@ -74,16 +76,24 @@ def main() -> None:
     if not path.exists():
         raise SystemExit(f"File not found: {path}")
 
-    try:
-        naive, aware = extract_text(str(path))
-    except ValueError as exc:
-        raise SystemExit(str(exc))
-    except Exception:
-        raise SystemExit(
-            f"Couldn't read {path} — it may be corrupted, password-protected, "
-            "or not a valid PDF/DOCX."
-        )
+    with ExitStack() as document:
+        try:
+            # Opened once for every section below: --report and --score each
+            # run the whole rule engine, and --structure the detectors again.
+            if path.suffix.lower() == ".pdf":
+                document.enter_context(reading(str(path)))
+            naive, aware = extract_text(str(path))
+        except ValueError as exc:
+            raise SystemExit(str(exc))
+        except Exception:
+            raise SystemExit(
+                f"Couldn't read {path} — it may be corrupted, password-protected, "
+                "or not a valid PDF/DOCX."
+            )
+        _print_sections(args, path, naive, aware)
 
+
+def _print_sections(args, path: Path, naive: str, aware: str) -> None:
     print(SEPARATOR, "NAIVE EXTRACTION (what a basic parser sees)", SEPARATOR)
     print(naive)
     print()
@@ -100,15 +110,16 @@ def main() -> None:
         print(SEPARATOR, "FIELD RECOGNITION (layout-aware vs. naive)", SEPARATOR)
         print(_format_field_comparison(build_field_report(aware), build_field_report(naive)))
 
+    # Both sections need the findings; the rules are run once for the two.
+    findings = run_rules(str(path), naive, aware) if args.report or args.score else []
+
     if args.report:
         print()
         print(SEPARATOR, "RULE ENGINE REPORT", SEPARATOR)
-        print(_format_rule_report(run_rules(str(path), naive, aware), args.language))
+        print(_format_rule_report(findings, args.language))
 
     if args.score:
-        breakdown = score_resume(
-            build_field_report(aware), build_field_report(naive), run_rules(str(path), naive, aware)
-        )
+        breakdown = score_resume(build_field_report(aware), build_field_report(naive), findings)
         print()
         print(SEPARATOR, "PARSE READINESS", SEPARATOR)
         print(_format_score(breakdown, args.language))
@@ -138,48 +149,43 @@ def _format_score(breakdown, language: str = DEFAULT_LANGUAGE) -> str:
     return "\n".join(lines)
 
 
+def _listing(title: str, items: list, describe=str, note: str = "") -> list[str]:
+    """A titled list, one indented line per item, or the title and "none found".
+
+    ``note`` is said only when there is something to say it about: "Header
+    content (invisible to naive extraction):" above the headers found, plain
+    "Header content: none found" when there are none.
+    """
+    if not items:
+        return [f"{title}: none found"]
+    return [f"{title}{note}:"] + [f"  {describe(item)}" for item in items]
+
+
+def _repeated_line(entry: dict) -> str:
+    pages = ", ".join(str(page) for page in entry["pages"])
+    return f'[{entry["zone"]}] "{entry["text"]}" (pages {pages})'
+
+
+def _textless_image(image: dict) -> str:
+    return f"page {image['page']}, {image['area_fraction'] * 100:.0f}% of page area, bbox {image['bbox']}"
+
+
 def _format_structure_report(findings: dict) -> str:
     lines: list[str] = []
 
     if "non_embedded_fonts" in findings:
         fonts = findings["non_embedded_fonts"]
         lines.append("Non-embedded, non-standard fonts: " + (", ".join(fonts) if fonts else "none found"))
-
-        repeated = findings["repeated_header_footer_lines"]
-        lines.append("Repeated header/footer lines:" if repeated else "Repeated header/footer lines: none found")
-        for entry in repeated:
-            pages = ", ".join(str(p) for p in entry["pages"])
-            lines.append(f'  [{entry["zone"]}] "{entry["text"]}" (pages {pages})')
-
-        images = findings["textless_images"]
-        lines.append(
-            "Large images with no extracted text:" if images else "Large images with no extracted text: none found"
-        )
-        for image in images:
-            lines.append(
-                f"  page {image['page']}, {image['area_fraction'] * 100:.0f}% of page area, bbox {image['bbox']}"
-            )
+        lines += _listing("Repeated header/footer lines", findings["repeated_header_footer_lines"], _repeated_line)
+        lines += _listing("Large images with no extracted text", findings["textless_images"], _textless_image)
 
     if "headers_footers" in findings:
-        headers = findings["headers_footers"]["headers"]
-        lines.append("Header content (invisible to naive extraction):" if headers else "Header content: none found")
-        for header in headers:
-            lines.append(f"  {header}")
-
-        footers = findings["headers_footers"]["footers"]
-        lines.append("Footer content (invisible to naive extraction):" if footers else "Footer content: none found")
-        for footer in footers:
-            lines.append(f"  {footer}")
-
-        text_boxes = findings["text_box_content"]
-        lines.append(
-            "Text box content (invisible to naive AND full extraction):"
-            if text_boxes
-            else "Text box content: none found"
+        hidden_from_naive = " (invisible to naive extraction)"
+        lines += _listing("Header content", findings["headers_footers"]["headers"], note=hidden_from_naive)
+        lines += _listing("Footer content", findings["headers_footers"]["footers"], note=hidden_from_naive)
+        lines += _listing(
+            "Text box content", findings["text_box_content"], note=" (invisible to naive AND full extraction)"
         )
-        for text_box in text_boxes:
-            lines.append(f"  {text_box}")
-
         lines.append(
             "Table content: found (many parsers scramble or skip table rows)"
             if findings.get("has_table_content")
@@ -214,7 +220,7 @@ def _format_rule_report(findings: list, language: str = DEFAULT_LANGUAGE) -> str
     if not findings:
         return t("no_findings", language)
 
-    ordered = sorted(findings, key=lambda f: _SEVERITY_ORDER[f.severity])
+    ordered = sorted(findings, key=lambda f: SEVERITY_ORDER[f.severity])
     return "\n\n".join(_format_finding(finding, language) for finding in ordered)
 
 

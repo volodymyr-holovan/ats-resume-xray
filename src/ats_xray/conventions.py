@@ -60,6 +60,11 @@ def _section_by_line(text: str) -> list[str]:
 
     Lines before the first recognised heading belong to ``"preamble"``; a
     heading line belongs to the section it opens.
+
+    Always exactly one entry per ``text.splitlines()`` line, so any line index
+    taken from the same text -- a date span's, a loop's -- can be looked up
+    without a bounds check. Every caller used to carry one anyway, and none
+    of them could ever fire.
     """
     lines = text.splitlines()
     owner = ["preamble"] * len(lines)
@@ -266,7 +271,7 @@ def find_unexplained_gap(text: str, language: str, today: date | None = None) ->
     # it, leaving the five years it covers looking like unemployment. Both
     # kinds of broken date are recognised here exactly as the date check
     # recognises them, so the two can never contradict each other.
-    if _backwards(spans) or _too_far_ahead(spans, owners, now + FUTURE_MARGIN_MONTHS):
+    if any(span.backwards for span in spans) or _too_far_ahead(spans, owners, now + FUTURE_MARGIN_MONTHS):
         return None
 
     intervals: list[tuple[int, int, str]] = []
@@ -274,7 +279,7 @@ def find_unexplained_gap(text: str, language: str, today: date | None = None) ->
         end = now if span.open_ended else span.end
         if span.start > now:
             continue  # a future date is its own finding, not a gap
-        intervals.append((span.start, min(end, now), owners[span.line] if span.line < len(owners) else ""))
+        intervals.append((span.start, min(end, now), owners[span.line]))
     if len(intervals) < 2:
         return None
 
@@ -341,11 +346,6 @@ _FUTURE_EXEMPT_SECTIONS = frozenset({"education", "certifications"})
 their degree."""
 
 
-def _backwards(spans: list[DateSpan]) -> list[DateSpan]:
-    """Ranges whose end precedes their start."""
-    return [span for span in spans if span.end is not None and span.end < span.start]
-
-
 def _too_far_ahead(spans: list[DateSpan], owners: list[str], limit: int) -> list[DateSpan]:
     """Ranges reaching past the point where a date reads as a typo.
 
@@ -356,7 +356,7 @@ def _too_far_ahead(spans: list[DateSpan], owners: list[str], limit: int) -> list
     """
     return [
         span for span in spans
-        if (span.line >= len(owners) or owners[span.line] not in _FUTURE_EXEMPT_SECTIONS)
+        if owners[span.line] not in _FUTURE_EXEMPT_SECTIONS
         and (span.start > limit or (span.end is not None and span.end > limit))
     ]
 
@@ -367,7 +367,7 @@ def find_impossible_dates(text: str, today: date | None = None) -> ConventionFin
     owners = _section_by_line(text)
     spans = find_date_spans(text)
 
-    backwards = _backwards(spans)
+    backwards = [span for span in spans if span.backwards]
     if backwards:
         return ConventionFinding(
             evidence_key="evidence_date_backwards",
@@ -431,7 +431,7 @@ def find_first_person(text: str, language: str) -> ConventionFinding | None:
     owners = _section_by_line(text)
     count, first = 0, ""
     for index, line in enumerate(text.splitlines()):
-        if index >= len(owners) or owners[index] in _PROFILE_SECTIONS:
+        if owners[index] in _PROFILE_SECTIONS:
             continue
         found = _first_person_count(line, language)
         if found and not first:
@@ -518,8 +518,7 @@ def find_oldest_first(text: str, language: str) -> ConventionFinding | None:
     experience = split_into_sections(text).get("experience")
     if not experience:
         return None
-    spans = [span for span in find_date_spans(experience)
-             if span.end is None or span.end >= span.start]
+    spans = [span for span in find_date_spans(experience) if not span.backwards]
     if len(spans) < MIN_ORDERED_ENTRIES:
         return None
     starts = [span.start for span in spans]
