@@ -138,48 +138,43 @@ def _format_score(breakdown, language: str = DEFAULT_LANGUAGE) -> str:
     return "\n".join(lines)
 
 
+def _listing(title: str, items: list, describe=str, note: str = "") -> list[str]:
+    """A titled list, one indented line per item, or the title and "none found".
+
+    ``note`` is said only when there is something to say it about: "Header
+    content (invisible to naive extraction):" above the headers found, plain
+    "Header content: none found" when there are none.
+    """
+    if not items:
+        return [f"{title}: none found"]
+    return [f"{title}{note}:"] + [f"  {describe(item)}" for item in items]
+
+
+def _repeated_line(entry: dict) -> str:
+    pages = ", ".join(str(page) for page in entry["pages"])
+    return f'[{entry["zone"]}] "{entry["text"]}" (pages {pages})'
+
+
+def _textless_image(image: dict) -> str:
+    return f"page {image['page']}, {image['area_fraction'] * 100:.0f}% of page area, bbox {image['bbox']}"
+
+
 def _format_structure_report(findings: dict) -> str:
     lines: list[str] = []
 
     if "non_embedded_fonts" in findings:
         fonts = findings["non_embedded_fonts"]
         lines.append("Non-embedded, non-standard fonts: " + (", ".join(fonts) if fonts else "none found"))
-
-        repeated = findings["repeated_header_footer_lines"]
-        lines.append("Repeated header/footer lines:" if repeated else "Repeated header/footer lines: none found")
-        for entry in repeated:
-            pages = ", ".join(str(p) for p in entry["pages"])
-            lines.append(f'  [{entry["zone"]}] "{entry["text"]}" (pages {pages})')
-
-        images = findings["textless_images"]
-        lines.append(
-            "Large images with no extracted text:" if images else "Large images with no extracted text: none found"
-        )
-        for image in images:
-            lines.append(
-                f"  page {image['page']}, {image['area_fraction'] * 100:.0f}% of page area, bbox {image['bbox']}"
-            )
+        lines += _listing("Repeated header/footer lines", findings["repeated_header_footer_lines"], _repeated_line)
+        lines += _listing("Large images with no extracted text", findings["textless_images"], _textless_image)
 
     if "headers_footers" in findings:
-        headers = findings["headers_footers"]["headers"]
-        lines.append("Header content (invisible to naive extraction):" if headers else "Header content: none found")
-        for header in headers:
-            lines.append(f"  {header}")
-
-        footers = findings["headers_footers"]["footers"]
-        lines.append("Footer content (invisible to naive extraction):" if footers else "Footer content: none found")
-        for footer in footers:
-            lines.append(f"  {footer}")
-
-        text_boxes = findings["text_box_content"]
-        lines.append(
-            "Text box content (invisible to naive AND full extraction):"
-            if text_boxes
-            else "Text box content: none found"
+        hidden_from_naive = " (invisible to naive extraction)"
+        lines += _listing("Header content", findings["headers_footers"]["headers"], note=hidden_from_naive)
+        lines += _listing("Footer content", findings["headers_footers"]["footers"], note=hidden_from_naive)
+        lines += _listing(
+            "Text box content", findings["text_box_content"], note=" (invisible to naive AND full extraction)"
         )
-        for text_box in text_boxes:
-            lines.append(f"  {text_box}")
-
         lines.append(
             "Table content: found (many parsers scramble or skip table rows)"
             if findings.get("has_table_content")
