@@ -694,31 +694,47 @@ def _names_for(language: str) -> dict[str, tuple[str, ...]]:
     return {spoken: tuple(dict.fromkeys(names)) for spoken, names in merged.items()}
 
 
-def find_languages(text: str, language: str | None = None) -> list[LanguageFact]:
-    """Language levels stated in ``text``, one entry per language.
+def language_levels(text: str, language: str | None = None) -> dict[str, LanguageFact | None]:
+    """Every language ``text`` names, with the highest level stated beside it.
 
-    Reads a window around each language name rather than the whole text, so
+    ``None`` for a language that is named and never given a level anywhere.
+    Reads a window around each mention rather than the whole text, so
     "Deutsch C1, Englisch B2" does not give both languages the higher level.
-    Where a language appears more than once, the highest level found wins.
+
+    One pass answers both questions an advert raises -- which levels it asks
+    for, and which languages it names without one. They used to be two
+    passes over the same names with the same window, and the second looked
+    only at the first mention of each spelling, so "Deutsch" named early and
+    "Deutsch C1" further down counted as both.
     """
     language = language or detect_language(text)
     folded = fold(text)
     names = _names_for(language)
-    descriptors = merge_for(DESCRIPTORS_BY_LANGUAGE, language)
-    best: dict[str, LanguageFact] = {}
+    descriptors = [
+        (fold(descriptor), level) for descriptor, level in merge_for(DESCRIPTORS_BY_LANGUAGE, language)
+    ]
+    found: dict[str, LanguageFact | None] = {}
 
     for code, spellings in names.items():
         for name in spellings:
             for match in re.finditer(rf"\b{re.escape(name)}", folded):
                 level = _nearest_level(folded, match.start(), match.end(), code, names, descriptors)
                 if level is None:
+                    found.setdefault(code, None)
                     continue
                 evidence = folded[max(0, match.start() - 20) : match.end() + 20].strip()
                 fact = LanguageFact(code, level, evidence)
-                if code not in best or fact.rank > best[code].rank:
-                    best[code] = fact
+                current = found.get(code)
+                if current is None or fact.rank > current.rank:
+                    found[code] = fact
+    return found
 
-    return sorted(best.values(), key=lambda f: f.language)
+
+def find_languages(text: str, language: str | None = None) -> list[LanguageFact]:
+    """Language levels stated in ``text``, one entry per language, the
+    highest level found where a language appears more than once."""
+    levels = language_levels(text, language)
+    return sorted((fact for fact in levels.values() if fact), key=lambda f: f.language)
 
 
 def _other_language_positions(text: str, exclude: str, names: dict) -> list[tuple[int, int]]:
@@ -751,8 +767,9 @@ def _nearest_level(folded, start, end, code, names, descriptors) -> str | None:
     for match in _CEFR_PATTERN.finditer(before):
         candidates.append((len(before) - match.end(), -2, match.group(1).lower()))
 
-    for descriptor, level in descriptors:
-        folded_descriptor = fold(descriptor)
+    # Folded once by the caller rather than here: this runs for every mention
+    # of every language name, and the descriptors are the same each time.
+    for folded_descriptor, level in descriptors:
         index = after.find(folded_descriptor)
         if index != -1:
             candidates.append((index, -len(folded_descriptor), level))
@@ -776,19 +793,7 @@ def language_required_without_level(text: str, language: str | None = None) -> l
     An advert that just says "Deutsch und Englisch" is still stating a
     requirement; reporting nothing at all would hide it.
     """
-    language = language or detect_language(text)
-    folded = fold(text)
-    names = _names_for(language)
-    descriptors = merge_for(DESCRIPTORS_BY_LANGUAGE, language)
-    named: list[str] = []
-
-    for code, spellings in names.items():
-        for name in spellings:
-            match = re.search(rf"\b{re.escape(name)}", folded)
-            if match and _nearest_level(folded, match.start(), match.end(), code, names, descriptors) is None:
-                named.append(code)
-                break
-    return named
+    return [code for code, fact in language_levels(text, language).items() if fact is None]
 
 
 # --------------------------------------------------------------------------
