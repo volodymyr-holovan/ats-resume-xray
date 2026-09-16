@@ -9,10 +9,9 @@ A section is its heading plus everything under it, so the box covers the
 content actually at risk rather than just the words of the heading.
 """
 
-import pdfplumber
-
 from ._pdf_words import DEFAULT_LINE_TOLERANCE, group_words_into_lines
 from .extract import _cluster_columns
+from .pdf_document import open_pdf
 from .regions import Region
 from .sections import SECTION_ALIASES, normalize_heading
 
@@ -34,7 +33,7 @@ def find_section_regions(
     """
     regions: list[Region] = []
 
-    with pdfplumber.open(pdf_path) as pdf:
+    with open_pdf(pdf_path) as pdf:
         for page_number, page in enumerate(pdf.pages, start=1):
             for column_words in _cluster_columns(page.extract_words()):
                 lines = group_words_into_lines(column_words, line_tolerance)
@@ -74,7 +73,7 @@ def find_text_regions(
 
     regions: list[Region] = []
 
-    with pdfplumber.open(pdf_path) as pdf:
+    with open_pdf(pdf_path) as pdf:
         for page_number, page in enumerate(pdf.pages, start=1):
             for column_words in _cluster_columns(page.extract_words()):
                 for line in group_words_into_lines(column_words, line_tolerance):

@@ -12,9 +12,8 @@ The column-clustering and line-building logic is split into pure functions
 so they can be unit-tested without opening a real PDF.
 """
 
-import pdfplumber
-
 from ._pdf_words import DEFAULT_LINE_TOLERANCE, group_words_into_lines
+from .pdf_document import open_pdf
 
 DEFAULT_MIN_COLUMN_GAP = 20.0
 
@@ -24,7 +23,7 @@ def extract_naive(pdf_path: str) -> str:
     top-to-bottom, left-to-right word ordering, with no column detection.
     """
     pages_text = []
-    with pdfplumber.open(pdf_path) as pdf:
+    with open_pdf(pdf_path) as pdf:
         for page in pdf.pages:
             pages_text.append(page.extract_text() or "")
     return "\n\n".join(pages_text)
@@ -35,7 +34,7 @@ def extract_layout_aware(pdf_path: str, min_gap: float = DEFAULT_MIN_COLUMN_GAP)
     order a human intends instead of interleaved row by row.
     """
     pages_text = []
-    with pdfplumber.open(pdf_path) as pdf:
+    with open_pdf(pdf_path) as pdf:
         for page in pdf.pages:
             words = page.extract_words()
             columns = _cluster_columns(words, min_gap=min_gap)

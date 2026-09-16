@@ -13,7 +13,6 @@ ships with them, so referencing (without embedding) them is normal and not
 a parsing risk.
 """
 
-import pdfplumber
 from pdfminer.pdfdocument import PDFDocument
 from pdfminer.pdfpage import PDFPage
 from pdfminer.pdfparser import PDFParser
@@ -21,6 +20,7 @@ from pdfminer.pdftypes import resolve1
 from pdfminer.psparser import PSLiteral
 
 from ._pdf_words import group_boxes_into_lines
+from .pdf_document import open_pdf
 from .regions import Region
 
 STANDARD_14_FONTS = {
@@ -74,7 +74,7 @@ def find_font_regions(pdf_path: str, font_names: list[str]) -> list[Region]:
     wanted = set(font_names)
     regions: list[Region] = []
 
-    with pdfplumber.open(pdf_path) as pdf:
+    with open_pdf(pdf_path) as pdf:
         for page_number, page in enumerate(pdf.pages, start=1):
             flagged = [c for c in page.chars if _clean_base_font_name(c.get("fontname")) in wanted]
             for line_chars in group_boxes_into_lines(flagged):

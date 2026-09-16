@@ -11,10 +11,10 @@ draw.
 
 from dataclasses import dataclass
 
-import pdfplumber
 from PIL import Image, ImageDraw
 
 from .engine import Finding
+from .pdf_document import open_pdf
 from .regions import Region
 
 DEFAULT_RESOLUTION = 130
@@ -51,7 +51,7 @@ def render_pages_with_findings(
     """
     rendered: list[RenderedPage] = []
 
-    with pdfplumber.open(pdf_path) as pdf:
+    with open_pdf(pdf_path) as pdf:
         for page_number, page in enumerate(pdf.pages, start=1):
             image = page.to_image(resolution=resolution).original.convert("RGB")
 

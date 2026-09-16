@@ -3,6 +3,7 @@
 import argparse
 import sys
 import textwrap
+from contextlib import ExitStack
 from pathlib import Path
 
 from .engine import run_rules
@@ -18,6 +19,7 @@ from .i18n import (
     t,
     tn,
 )
+from .pdf_document import reading
 from .pipeline import extract_text
 from .rule import SEVERITY_ORDER
 from .score import score_resume
@@ -74,16 +76,24 @@ def main() -> None:
     if not path.exists():
         raise SystemExit(f"File not found: {path}")
 
-    try:
-        naive, aware = extract_text(str(path))
-    except ValueError as exc:
-        raise SystemExit(str(exc))
-    except Exception:
-        raise SystemExit(
-            f"Couldn't read {path} — it may be corrupted, password-protected, "
-            "or not a valid PDF/DOCX."
-        )
+    with ExitStack() as document:
+        try:
+            # Opened once for every section below: --report and --score each
+            # run the whole rule engine, and --structure the detectors again.
+            if path.suffix.lower() == ".pdf":
+                document.enter_context(reading(str(path)))
+            naive, aware = extract_text(str(path))
+        except ValueError as exc:
+            raise SystemExit(str(exc))
+        except Exception:
+            raise SystemExit(
+                f"Couldn't read {path} — it may be corrupted, password-protected, "
+                "or not a valid PDF/DOCX."
+            )
+        _print_sections(args, path, naive, aware)
 
+
+def _print_sections(args, path: Path, naive: str, aware: str) -> None:
     print(SEPARATOR, "NAIVE EXTRACTION (what a basic parser sees)", SEPARATOR)
     print(naive)
     print()
@@ -100,15 +110,16 @@ def main() -> None:
         print(SEPARATOR, "FIELD RECOGNITION (layout-aware vs. naive)", SEPARATOR)
         print(_format_field_comparison(build_field_report(aware), build_field_report(naive)))
 
+    # Both sections need the findings; the rules are run once for the two.
+    findings = run_rules(str(path), naive, aware) if args.report or args.score else []
+
     if args.report:
         print()
         print(SEPARATOR, "RULE ENGINE REPORT", SEPARATOR)
-        print(_format_rule_report(run_rules(str(path), naive, aware), args.language))
+        print(_format_rule_report(findings, args.language))
 
     if args.score:
-        breakdown = score_resume(
-            build_field_report(aware), build_field_report(naive), run_rules(str(path), naive, aware)
-        )
+        breakdown = score_resume(build_field_report(aware), build_field_report(naive), findings)
         print()
         print(SEPARATOR, "PARSE READINESS", SEPARATOR)
         print(_format_score(breakdown, args.language))

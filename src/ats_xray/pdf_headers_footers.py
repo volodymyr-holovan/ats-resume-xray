@@ -15,9 +15,8 @@ single-page resumes.
 
 import re
 
-import pdfplumber
-
 from ._pdf_words import DEFAULT_LINE_TOLERANCE, group_words_into_lines
+from .pdf_document import open_pdf
 from .regions import Region
 
 DEFAULT_ZONE_FRACTION = 0.12
@@ -38,7 +37,7 @@ def find_repeated_header_footer_lines(
     header_occurrences: dict[str, dict] = {}
     footer_occurrences: dict[str, dict] = {}
 
-    with pdfplumber.open(pdf_path) as pdf:
+    with open_pdf(pdf_path) as pdf:
         if len(pdf.pages) < 2:
             return []
 
