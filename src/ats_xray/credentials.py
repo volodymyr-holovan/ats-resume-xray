@@ -553,6 +553,15 @@ class DateSpan:
     def open_ended(self) -> bool:
         return self.end is None
 
+    @property
+    def backwards(self) -> bool:
+        """Ends before it starts -- "03/2021 - 01/2020", a typo every time.
+
+        Defined on the span so that every check asking the question gets the
+        same answer; the date check, the gap check and the ordering check all
+        ask it, and each used to spell it out."""
+        return self.end is not None and self.end < self.start
+
 
 def find_date_spans(text: str) -> list[DateSpan]:
     """Every date range in ``text``, in reading order, backwards ones included.
