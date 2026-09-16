@@ -4,9 +4,16 @@ still importable directly from their own modules for anyone who wants
 finer-grained access.
 """
 
+import time as _time
+
 __version__ = "0.7.0"
 """Kept here rather than only in pyproject.toml so a frozen build, which has
 no package metadata to read, can still tell the update check what it is."""
+
+_IMPORTED_AT = _time.time()
+"""When this copy of the package was loaded into the process. A source file
+modified after it means the process is running older code than is on disk,
+which app.py checks before it imports anything from here."""
 
 from .extract import extract_layout_aware, extract_naive
 from .docx_extract import extract_docx_full, extract_docx_naive

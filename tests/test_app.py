@@ -7,6 +7,7 @@ being broken (bad imports, typos in widget calls, etc.).
 
 from pathlib import Path
 
+import pytest
 from streamlit.testing.v1 import AppTest
 
 from ats_xray.i18n import UI_LANGUAGES, t
@@ -233,3 +234,85 @@ def test_the_file_is_analysed_once_however_often_the_page_reruns(tmp_path, monke
     _cv_pdf(other)
     _uploaded(at, other)
     assert calls == ["resume.pdf", "other.pdf"], "a different file must be analysed afresh"
+
+
+PULL_UNDER_A_RUNNING_SERVER = r'''
+import re, shutil, sys, time
+from pathlib import Path
+from streamlit.testing.v1 import AppTest
+
+repo, sim, stamped = Path(sys.argv[1]), Path(sys.argv[2]), sys.argv[3] == "stamped"
+shutil.copytree(repo / "src", sim / "src", ignore=shutil.ignore_patterns("__pycache__"))
+shutil.copytree(repo / "assets", sim / "assets")
+shutil.copy2(repo / "app.py", sim / "app.py")
+
+rule = sim / "src" / "ats_xray" / "rule.py"
+current = rule.read_text(encoding="utf-8")
+rule.write_text(re.sub(r"\nSEVERITY_ORDER = .*?\n", "\n", current), encoding="utf-8")
+if not stamped:
+    init = sim / "src" / "ats_xray" / "__init__.py"
+    init.write_text(init.read_text(encoding="utf-8").replace("_IMPORTED_AT = _time.time()", ""), encoding="utf-8")
+
+sys.path[:] = [p for p in sys.path if Path(p).resolve() != (repo / "src").resolve()]
+for name in [n for n in sys.modules if n == "ats_xray" or n.startswith("ats_xray.")]:
+    del sys.modules[name]
+sys.path.insert(0, str(sim / "src"))
+import ats_xray.rule
+assert not hasattr(ats_xray.rule, "SEVERITY_ORDER"), "the simulated server should hold the old rule.py"
+
+time.sleep(1.1)
+rule.write_text(current, encoding="utf-8")
+
+at = AppTest.from_file(str(sim / "app.py"), default_timeout=120)
+at.run()
+print("EXCEPTION" if at.exception else "RAN")
+'''
+
+
+
+@pytest.mark.parametrize("stamped", ["stamped", "unstamped"])
+def test_the_page_survives_new_code_pulled_under_a_running_server(tmp_path, stamped):
+    """The live page once raised ImportError on its first import from the
+    package: a new app.py was running against an older rule.py still loaded in
+    the server. Streamlit rereads app.py on every run but keeps an imported
+    package as it was. "unstamped" is a server that loaded the package before
+    it recorded its import time -- the one that was live when this was found.
+
+    Run in a child process, because what is under test unloads modules and
+    would do it to the test run too."""
+    import subprocess
+    import sys
+
+    script = tmp_path / "pull.py"
+    script.write_text(PULL_UNDER_A_RUNNING_SERVER, encoding="utf-8")
+    root = Path(APP_PATH).parent
+    result = subprocess.run(
+        [sys.executable, str(script), str(root), str(tmp_path / "server"), stamped],
+        capture_output=True, text=True, timeout=240,
+    )
+
+    assert result.returncode == 0, result.stderr[-2000:]
+    assert result.stdout.strip().splitlines()[-1] == "RAN", result.stdout[-2000:]
+
+
+def test_a_frozen_build_is_left_alone(tmp_path, monkeypatch):
+    """The exe bundles ats_xray beside app.py, with no src directory. The
+    check must not touch the path or unload anything there."""
+    import ast
+    import logging
+    import sys
+
+    source = Path(APP_PATH).read_text(encoding="utf-8")
+    tree = ast.parse(source)
+    check = next(node for node in tree.body
+                 if isinstance(node, ast.FunctionDef) and node.name == "_load_this_commits_package")
+    namespace = {"Path": Path, "sys": sys, "logger": logging.getLogger("frozen-test"),
+                 "__file__": str(tmp_path / "app.py")}
+    exec(compile(ast.Module(body=[check], type_ignores=[]), "app.py", "exec"), namespace)
+
+    before_path = list(sys.path)
+    before_modules = {name for name in sys.modules if name.startswith("ats_xray")}
+    namespace["_load_this_commits_package"]()
+
+    assert sys.path == before_path
+    assert {name for name in sys.modules if name.startswith("ats_xray")} == before_modules
