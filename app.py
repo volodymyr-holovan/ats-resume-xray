@@ -18,6 +18,7 @@ Run locally with: streamlit run app.py
 
 import hashlib
 import html
+import io
 import itertools
 import json
 from contextlib import nullcontext
@@ -125,7 +126,7 @@ def _pick_language() -> str:
     codes = list(UI_LANGUAGES)
     with st.container(key="axr-language"):
         with st.popover(
-            UI_LANGUAGES[current], icon=":material/language:", use_container_width=True
+            UI_LANGUAGES[current], icon=":material/language:", width="stretch"
         ):
             return st.radio(
                 t("language_menu", current),
@@ -281,8 +282,25 @@ def _analysis_of(uploaded_file, lang: str):
         return kept[1]
     with st.spinner(t("analyzing", lang)):
         result = analyze_bytes(data, uploaded_file.name, render=True)
+        # Kept as PNG rather than as decoded images. A rendered A4 page is
+        # about 5 MB of raw pixels and some 45 KB as PNG, and a session holds
+        # its analysis for as long as the reader stays -- on a host with one
+        # memory ceiling for every visitor at once. _render_pages hands these
+        # bytes to st.image marked as PNG, which serves them untouched: no
+        # re-encoding per rerun, and the browser downloads a seventh of the
+        # JPEG Streamlit used to make from each page, with sharper text.
+        result = replace(
+            result,
+            rendered_pages=[replace(page, image=_png(page.image)) for page in result.rendered_pages],
+        )
     st.session_state["analysis"] = (key, result)
     return result
+
+
+def _png(image) -> bytes:
+    buffer = io.BytesIO()
+    image.save(buffer, format="PNG")
+    return buffer.getvalue()
 
 
 def _empty_state(lang: str) -> None:
@@ -346,7 +364,7 @@ def _render_pages(pages, is_pdf: bool, lang: str) -> None:
                 label += " — " + ", ".join(named)
             else:
                 label += f" — {t('nothing_flagged', lang)}"
-            st.image(page.image, caption=label, use_container_width=True)
+            st.image(page.image, caption=label, width="stretch", output_format="PNG")
 
 
 def _extraction(text: str, lang: str) -> None:
