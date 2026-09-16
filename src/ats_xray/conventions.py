@@ -120,6 +120,39 @@ def _mentions(padded_folded: str, phrase: str) -> bool:
     return phrase in padded_folded
 
 
+_PHRASE = re.compile(r"[,;:|/()·•–—-]")
+_LEADING_NUMBERS = re.compile(r"^(?:\d+\s+)+")
+
+
+def _opens_a_phrase(line: str, markers: tuple[str, ...]) -> bool:
+    """Whether a marker starts a phrase here, rather than sitting inside one.
+
+    Mentioning volunteering is not the same as filing volunteering under
+    employment, and in both German and Ukrainian the difference is
+    grammatical. The candidate's own unpaid role opens its phrase --
+    "Ehrenamtliche Tätigkeit, Tafel Hamburg e.V.", "Волонтер, Карітас" --
+    behind nothing but a date, a bullet or a separator. Other people's
+    volunteering is governed by the noun in front of it: "Schulung
+    ehrenamtlicher Helfer" is a duty of a paid job, "Координація роботи
+    волонтерів" likewise, and "Verein zur Förderung ehrenamtlicher Arbeit" is
+    an employer's name. Matching the bare word reported all of them, on
+    fourteen of eighty-one real CVs that had put their volunteering exactly
+    where the convention asks for it.
+
+    No offset is ever taken into folded text. ``fold`` expands umlauts and
+    drops punctuation, so it does not preserve length and a position found in
+    the folded string points somewhere else in the raw one. The raw line is
+    cut into phrases first, and each phrase folded on its own.
+    """
+    for span in find_date_spans(line):
+        line = line.replace(span.raw, " ")
+    for phrase in _PHRASE.split(line):
+        opening = _LEADING_NUMBERS.sub("", fold(phrase))
+        if any(opening.startswith(marker) for marker in markers):
+            return True
+    return False
+
+
 def _dates_above(rows: list[str], index: int) -> list[int]:
     """The date line an undated volunteer line belongs to, if it has one.
 
@@ -160,7 +193,7 @@ def find_volunteering_in_experience(text: str, language: str) -> ConventionFindi
         folded = f" {fold(line)} "
         if any(_mentions(folded, exception) for exception in exceptions):
             continue
-        if any(marker in folded for marker in markers):
+        if _opens_a_phrase(line, markers):
             lines.append(_shorten(line))
             volunteer_rows.add(index)
             volunteer_rows.update(_dates_above(rows, index))
