@@ -357,7 +357,14 @@ def test_the_page_language_is_declared_without_a_deprecated_call():
 def test_the_declared_streamlit_floor_has_the_api_the_page_calls():
     """`st.iframe` was added in 1.56; the floor said 1.30, which would have
     installed cleanly and raised AttributeError on the first render. The
-    same shape of untruth as the python floor above."""
+    same shape of untruth as the python floor above.
+
+    Then 1.56 turned out to be untrue as well, in a quieter way. The
+    stylesheet targets stRadioOption, stMultiSelectTagsContainer and
+    data-tag, which Streamlit only emits from 1.61; on 1.56 to 1.60 the page
+    runs and those rules match nothing. The tests that catch a selector with
+    no element only look at the Streamlit installed, which in CI is always
+    the newest, so it took installing each version in turn to see it."""
     pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
 
     floors = {
@@ -366,7 +373,7 @@ def test_the_declared_streamlit_floor_has_the_api_the_page_calls():
     }
 
     assert floors, "pyproject declares no streamlit floor"
-    assert min(floors) >= (1, 56), f"st.iframe needs >=1.56, pyproject says {min(floors)}"
+    assert min(floors) >= (1, 61), f"the stylesheet needs >=1.61, pyproject says {min(floors)}"
     assert len(floors) == 1, f"the extras disagree about the floor: {sorted(floors)}"
 
 
