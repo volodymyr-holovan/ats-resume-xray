@@ -6,7 +6,7 @@ finer-grained access.
 
 import time as _time
 
-__version__ = "0.7.0"
+__version__ = "0.7.1"
 """Kept here rather than only in pyproject.toml so a frozen build, which has
 no package metadata to read, can still tell the update check what it is."""
 
