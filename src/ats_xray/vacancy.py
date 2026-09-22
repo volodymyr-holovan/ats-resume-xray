@@ -12,12 +12,14 @@ erforderlich" and "von Vorteil" sit in the same sentence structure and mean
 opposite things, and German adverts use them consistently enough to read.
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 from .credentials import (
     EDUCATION_RANK,
     education_waived,
     find_education,
+    field_markers,
+    find_study_field,
     find_licence,
     find_required_years,
     language_levels,
@@ -346,6 +348,7 @@ def parse_vacancy(text: str, language: str | None = None) -> VacancyProfile:
             )
         )
 
+    _fold_terms_into_the_degree(requirements, language)
     _cap_generic_terms(requirements)
 
     ordered = sorted(
@@ -353,6 +356,50 @@ def parse_vacancy(text: str, language: str | None = None) -> VacancyProfile:
         key=lambda r: (not r.must, KIND_ORDER.get(r.kind, 9), r.label.lower()),
     )
     return VacancyProfile(tuple(ordered), blocks)
+
+
+def _fold_terms_into_the_degree(requirements: dict, language: str) -> None:
+    """Move a guessed keyword that is the subject of the degree onto the degree.
+
+    "A degree in business administration" and "Bachelor degree in computer
+    science" are read twice: once by the education extractor, which records
+    the level and the field, and once by the keyword guesser, which sees a
+    requirement phrase and takes the subject out of it. The reader then gets
+    "Bachelor / Studium" and "computer science" as two things to satisfy, and
+    the score counts the degree twice.
+
+    The subject is not thrown away with the duplicate. The education label
+    says only the level, so deleting the keyword outright would leave nothing
+    on screen naming the subject the advert asked for, and the matcher's note
+    about the wrong field only appears when there is a CV to disagree with.
+    The subject is appended to the degree in the advert's own words instead.
+    """
+    education = next((r for r in requirements.values() if r.kind == "education"), None)
+    field = education.detail.get("field") if education else None
+    if not field:
+        return
+    markers = field_markers(field, language)
+    absorbed: list[str] = []
+    for requirement in list(requirements.values()):
+        if not requirement.key.startswith("term:"):
+            continue
+        folded = fold(requirement.label)
+        named = find_study_field(folded, language) == field
+        # "business" on its own is not a subject the extractor knows, but it
+        # is one word of "business administration", which is the subject this
+        # advert just asked for a degree in.
+        part_of = any(f" {folded} " in f" {marker} " for marker in markers)
+        if named or part_of:
+            absorbed.append(requirement.label)
+            del requirements[requirement.uid]
+    if absorbed:
+        # The longest, because that is the fullest spelling of the subject:
+        # an advert naming both "informatics" and "applied informatics" gets
+        # the one that says more.
+        subject = max(absorbed, key=len)
+        requirements[education.uid] = replace(
+            education, label=f"{education.label} ({subject})"
+        )
 
 
 def _cap_generic_terms(requirements: dict) -> None:

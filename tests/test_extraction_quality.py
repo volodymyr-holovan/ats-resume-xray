@@ -48,6 +48,10 @@ def _guesses(requirements) -> list[str]:
 # against every requirement, typed or guessed, because the reader does not
 # care which route it came by. ``must_not_find`` is matched on the whole
 # label: "Grund" is noise and "Grundpflege" is not.
+#
+# The subject of a degree rides on the degree -- "Bachelor / Studium
+# (computer science)" -- rather than standing beside it as a keyword of
+# its own, so the expected label here is the whole thing, folded.
 CASES = [
     (
         ADVERTS / "de_erzieher.txt",
@@ -58,7 +62,8 @@ CASES = [
     ),
     (
         ADVERTS / "en_devops.txt",
-        ("docker", "kubernetes", "linux", "terraform", "computer science"),
+        ("docker", "kubernetes", "linux", "terraform",
+         "bachelor studium computer science"),
         ("take", "operate", "automate", "in production", "work", "rotation"),
     ),
     (
@@ -108,7 +113,8 @@ CASES = [
     ),
     (
         CORPUS / "python_engineer.txt",
-        ("python", "django", "kubernetes", "informatik", "softwareentwicklung"),
+        ("python", "django", "kubernetes", "softwareentwicklung",
+         "bachelor studium informatik"),
         ("entwicklung", "betrieb", "code", "reviews", "konzeption", "releases",
          "services", "weiterentwicklung"),
     ),

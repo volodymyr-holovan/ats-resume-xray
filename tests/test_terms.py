@@ -118,3 +118,84 @@ def test_a_partly_known_phrase_keeps_its_unknown_words_whole():
     found = extract_terms("- Erfahrung mit Docker und Hochregallagertechnik", "de")
 
     assert any(term == "Hochregallagertechnik" for term in found)
+
+
+@pytest.mark.parametrize(
+    ("line", "language", "expected"),
+    [
+        ("- Ervaring met bedrijfsschoonmaak is vereist", "nl", "bedrijfsschoonmaak"),
+        ("- Conocimientos de automatismos valorables", "es", "automatismos"),
+        ("- La connaissance des programmes est exigee", "fr", "programmes"),
+    ],
+)
+def test_the_boilerplate_after_a_requirement_is_not_part_of_it(line, language, expected):
+    """Dutch, Spanish and French mark a requirement as required after naming
+    it, not before: "is vereist", "valorables", "est exigee". The introducer
+    pattern reaches the end of the line and hands back the whole tail, so the
+    keyword arrived as "bedrijfsschoonmaak is vereist" -- a phrase no CV will
+    ever contain, scored as a missing requirement on every match."""
+    assert extract_terms(line, language) == [expected]
+
+
+def test_a_head_noun_is_not_trimmed_off_the_phrase_it_heads():
+    """"Planning" is furniture at the edge of a phrase ("planning of the
+    rota") and the subject in the middle of one. Dropping it wherever it sat
+    last turned "lesson planning" into "lesson", which is not a skill."""
+    assert extract_terms("- Experience with lesson planning and with didactics", "en") == [
+        "lesson planning"
+    ]
+
+
+@pytest.mark.parametrize(
+    ("line", "language"),
+    [
+        ("- At least three years of experience in a professional kitchen", "en"),
+        ("- Une experience du nettoyage industriel est exigee", "fr"),
+    ],
+)
+def test_an_adjective_left_behind_by_a_known_skill_is_not_a_requirement(line, language):
+    """The lexicon takes "kitchen" and "nettoyage" out of the phrase and
+    leaves the word that was describing them. On its own "professional" asks
+    for nothing, and it counted against every CV that did not say it."""
+    assert extract_terms(line, language) == []
+
+
+@pytest.mark.parametrize(
+    ("line", "language", "expected"),
+    [
+        ("- Erfahrung mit Docker Swarm", "de", "Swarm"),
+        ("- Connaissance des soins de plaies et de l'administration", "fr", "plaies"),
+        ("- Manejo de maquinaria de limpieza y de productos quimicos", "es", "maquinaria"),
+    ],
+)
+def test_a_noun_left_behind_by_a_known_skill_is_still_a_requirement(line, language, expected):
+    """The other half of the rule above, and the reason it tests the shape of
+    the word rather than counting how many are left. "Swarm" is the part of
+    "Docker Swarm" the gazetteer does not know; wound care and machinery are
+    the trade itself. A rule that dropped every single-word leftover lost all
+    three."""
+    assert extract_terms(line, language) == [expected]
+
+
+def test_a_ukrainian_adjective_left_on_its_own_is_not_a_requirement():
+    """"Роздрібній торгівлі" is retail trade; the gazetteer knows the trade
+    and leaves the adjective. The rule that was meant to catch it compared
+    Cyrillic endings written with "й" against text that had already been
+    folded, and folding takes the breve off -- so the six commonest endings
+    matched nothing at all."""
+    assert extract_terms("- Досвід роботи в роздрібній торгівлі та на касі", "uk") == []
+
+
+@pytest.mark.parametrize(
+    ("line", "language", "expected"),
+    [
+        ("- Знание ХАССП и калькуляции блюд", "ru", "калькуляции"),
+        ("- Опыт работы с типографикой и фирменным стилем", "ru", "типографикой"),
+    ],
+)
+def test_a_declined_russian_noun_is_not_mistaken_for_an_adjective(line, language, expected):
+    """Why only half the endings could be revived. Once the breve is gone,
+    the adjective ending "ой" is spelled like the instrumental of a noun and
+    "ий" like the genitive, and both of these are trades the advert wants:
+    food costing and typography."""
+    assert extract_terms(line, language) == [expected]

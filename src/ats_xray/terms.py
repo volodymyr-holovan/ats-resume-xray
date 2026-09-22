@@ -135,6 +135,15 @@ _MODIFIERS = (
     "advanced", "working", "outstanding", "ideally", "preferably", "several",
     "willingness", "passion", "familiarity", "proficiency", "hands-on",
     "completed", "afgeronde", "vloeiend", "diplome", "estudios",
+    # "... is required", "... est exigee", "... es imprescindible": the
+    # sentence saying a requirement is one. German has these above; these are
+    # the languages that put them after the noun rather than before it.
+    "required", "preferred", "essential", "desirable", "mandatory", "welcome",
+    "exige", "exigee", "exigees", "exiges", "requis", "requise", "requises",
+    "souhaite", "souhaitee", "souhaitees", "obligatoire", "indispensable",
+    "imprescindible", "imprescindibles", "necesario", "necesaria", "requerido",
+    "requerida", "valorable", "valorables", "deseable", "deseables",
+    "vereist", "gewenst", "noodzakelijk",
     "technische", "technisches", "technischer", "direkter", "direkte",
     "moderne", "modernes", "hochwertiges", "attraktive", "gründliche",
     "abwechslungsreiches", "innovativem", "wichtige", "verschiedene",
@@ -147,10 +156,20 @@ _MODIFIERS = (
     # "HACCP-Vorgaben" must not come back as a requirement called "Vorgaben".
     "vorgabe", "vorgaben", "regelungen", "bestimmungen", "grundsätze",
     "kriterien", "aspekte", "inhalte", "punkte", "verfahren", "methoden",
+    "methode", "methoden", "metodo", "metodos", "method", "methods",
     "maßnahmen", "abläufe", "vorschriften", "unterlagen", "dokumente",
 )
 
-_FRAMING_WORDS = (
+_HEAD_NOUNS = (
+    # Framing words that are still the head of the phrase they end. Trimming
+    # them off the front of "Planung der Einsaetze" is right; trimming them
+    # off the end of "lesson planning" leaves "lesson", which is not what the
+    # advert asked for. They stay in STOPWORDS, so alone they are still
+    # dropped -- this only stops the trailing trim from eating them.
+    "planning", "production", "rotation",
+)
+
+_FRAMING_WORDS = _HEAD_NOUNS + (
     # Words that frame a requirement without being one.
     "kenntnis", "kenntnisse", "kenntnissen", "erfahrung", "erfahrungen", "umgang",
     "bereich", "bereichen", "jahre", "jahren", "vorteil", "profil", "aufgabe",
@@ -163,13 +182,13 @@ _FRAMING_WORDS = (
     "durchführung", "sinne", "vorteilhaft", "nachweis", "niveau", "wort", "schrift",
     "experience", "knowledge", "skills", "skill", "ability", "years", "requirements",
     "qualifications", "understanding", "background", "plus", "advantage", "level",
-    "production", "rotation", "planning",
     # Handled by the typed extractors, so never a loose keyword.
     "deutsch", "englisch", "deutschkenntnisse", "englischkenntnisse", "sprache",
     "sprachkenntnisse", "german", "english", "führerschein", "fahrerlaubnis",
     "rijbewijs", "permis", "carné", "carne", "bachelor", "master", "diplom",
     "promotion", "degree", "diploma",
     # Company and posting boilerplate.
+    "paragraf", "paragraph", "absatz", "abs", "satz",
     "unternehmen", "firma", "arbeitgeber", "stelle", "position", "team", "teams",
     "mitarbeiter", "mitarbeiterinnen", "kunden", "kunde", "bewerbung",
     "gehalt", "woche", "wochen", "stunden", "monat", "monate", "euro", "urlaub",
@@ -246,13 +265,37 @@ _SLAVIC_ADJECTIVE_ENDINGS = (
     "ого", "ому", "ими", "ыми", "ий", "ый", "ая", "яя", "ое", "ее", "ые", "ие",
     "ой", "ей", "ою", "ою", "их", "ых", "ым", "им", "ій", "ої", "ою", "і",
 )
-"""Endings that mark a Russian or Ukrainian adjective.
+"""Endings that mark a Russian or Ukrainian adjective, written as they are
+read rather than as they are compared.
 
 Applied only to a candidate that is a single word. "Медицинская книжка
 обязательна" left "Медицинская" standing alone once the noun was trimmed,
 and an adjective with no noun names nothing. Inside a phrase the adjective
 is doing its job -- "санитарных норм" is a real requirement -- so the rule
 never looks at a word with a neighbour."""
+
+_SLAVIC_ADJECTIVE_ENDINGS_AFTER_FOLDING = ("ыи", "іи", "оі")
+"""Endings above that the comparison never saw, restored as folding spells
+them, and only the ones that are safe to restore.
+
+Folding strips the breve off "й", so every ending built on it -- "ий", "ый",
+"ой", "ей", "ій", "ої" -- was compared against words that no longer
+contained it. Six of the twenty-four entries had been dead since the day
+they were written.
+
+Three of the six stay dead on purpose. Once the breve is gone "ой" and "ий"
+and "ей" are spelled exactly like the case endings of ordinary nouns, and
+reviving them cost two real requirements: "калькуляции" (food costing) and
+"типографикой" (typography), both nouns the advert was asking for. The three
+kept here have no such twin: nothing in either language declines a noun to
+"ый", "ій" or "ої"."""
+
+_SLAVIC_ADJECTIVE_ENDINGS_FOLDED = tuple(
+    sorted(
+        {ending for ending in _SLAVIC_ADJECTIVE_ENDINGS if fold(ending) == ending}
+        | set(_SLAVIC_ADJECTIVE_ENDINGS_AFTER_FOLDING)
+    )
+)
 
 _SLAVIC_INFINITIVE_ENDINGS = ("ти", "ть", "тись", "ться")
 """Ukrainian and Russian mark the infinitive at the end of the word.
@@ -410,6 +453,14 @@ def _introduced_pattern(language: str) -> re.Pattern:
     return cached
 
 
+def _head_nouns() -> frozenset[str]:
+    """Folded words the trailing trim leaves alone. See ``_HEAD_NOUNS``."""
+    global _HEAD_CACHE
+    if _HEAD_CACHE is None:
+        _HEAD_CACHE = frozenset(fold(word) for word in _HEAD_NOUNS)
+    return _HEAD_CACHE
+
+
 def _edge_words(language: str) -> frozenset[str]:
     """Folded words that may be trimmed off either end of a phrase.
 
@@ -429,6 +480,7 @@ def _edge_words(language: str) -> frozenset[str]:
 
 _PATTERN_CACHE: dict[str, re.Pattern] = {}
 _EDGE_CACHE: dict[str, frozenset[str]] = {}
+_HEAD_CACHE: frozenset[str] | None = None
 _NUMERAL_CACHE: dict[str, tuple[str, ...]] = {}
 
 _CAPITALISED = re.compile(r"(\w*[^\W\d_]\w*)", re.UNICODE)
@@ -601,11 +653,13 @@ def _trim(candidate: str, language: str) -> str:
         words = [_drop_elision(word) for word in words]
     edges = _edge_words(language)
 
+    heads = _head_nouns()
+
     def droppable(word: str) -> bool:
         folded = fold(word)
         return not folded or folded in edges or _is_numeral(folded, language)
 
-    while words and droppable(words[-1]):
+    while words and droppable(words[-1]) and not (len(words) > 1 and fold(words[-1]) in heads):
         words.pop()
     while words and droppable(words[0]):
         words.pop(0)
@@ -617,6 +671,48 @@ def _trim(candidate: str, language: str) -> str:
             while words and droppable(words[0]):
                 words.pop(0)
     return " ".join(words)
+
+
+ADJECTIVE_ENDINGS: dict[str, tuple[str, ...]] = {
+    # Endings that mark a word as describing a noun rather than being one.
+    # Checked only against a single word the gazetteer left behind, never
+    # against a phrase, so they can afford to be broad.
+    "en": ("al", "ial", "ual", "ive", "ous", "ed"),
+    "es": ("al", "ales", "ivo", "iva", "ivos", "ivas", "oso", "osa", "era", "ero"),
+    "fr": ("el", "elle", "al", "ale", "aux", "elles", "if", "ive", "ives"),
+    "nl": ("eel", "ele", "isch", "ische", "ig", "ige"),
+}
+"""Per language, because the same letters mean different things: Spanish
+"maquinaria" and French "plaies" are nouns an advert really is asking for,
+while "financiera" and "industriel" only describe the noun beside them."""
+
+
+def _is_leftover_modifier(before: str, after: str, language: str) -> bool:
+    """Whether what the gazetteer left behind only describes what it took.
+
+    English and the Romance languages put the adjective after the noun, and
+    the noun is the half the gazetteer knows: "cocina profesional",
+    "contabilidad financiera", "nettoyage industriel", "professional kitchen".
+    The skill was recorded, the noun removed as already explained, and the
+    adjective came back as a requirement of its own -- eleven of them across
+    eighty-two adverts, every one a word no recruiter asked for.
+
+    So a single word left over after the gazetteer took part of the phrase is
+    dropped when it is shaped like an adjective. Shaped, not merely single:
+    "soins des plaies" leaves "plaies" and "maquinaria de limpieza" leaves
+    "maquinaria", which are the wound care and the machines the advert wants.
+
+    A word capitalised where the language does not capitalise nouns is kept
+    whatever its ending: "Docker Swarm" leaves "Swarm", a product rather than
+    a description of one. German is left alone entirely -- it capitalises
+    every noun, and its leftovers ("Vorgaben", "Richtlinien") are already
+    known framing words.
+    """
+    if after == before or " " in after:
+        return False
+    if language in NOUN_CAPITALISING_LANGUAGES or after[:1].isupper():
+        return False
+    return fold(after).endswith(ADJECTIVE_ENDINGS.get(language, ()))
 
 
 def _is_bare_modifier(candidate: str, language: str) -> bool:
@@ -633,7 +729,7 @@ def _is_bare_modifier(candidate: str, language: str) -> bool:
         return False
     folded = fold(candidate)
     if language in ("uk", "ru"):
-        return len(folded) >= 6 and folded.endswith(_SLAVIC_ADJECTIVE_ENDINGS)
+        return len(folded) >= 6 and folded.endswith(_SLAVIC_ADJECTIVE_ENDINGS_FOLDED)
     if language in NOUN_CAPITALISING_LANGUAGES:
         return candidate[:1].islower()
     return False
@@ -677,9 +773,12 @@ def _collect(
     # Words a lexicon match already explained are removed rather than the
     # whole phrase: "HACCP-Richtlinien" collapses to nothing and disappears,
     # while "underwater welding" keeps the half the gazetteer does not know.
+    before = candidate
     candidate = _trim(_drop_covered_words(candidate, covered), language)
     folded = fold(candidate)
     if len(candidate) < MIN_TERM_LENGTH or not folded:
+        return
+    if _is_leftover_modifier(before, candidate, language):
         return
     if all(word in STOPWORDS for word in folded.split()):
         return

@@ -278,6 +278,16 @@ def find_study_field(folded_text: str, language: str = "en") -> str | None:
     return None
 
 
+def field_markers(field: str, language: str = "en") -> tuple[str, ...]:
+    """Every way this language writes the subject of a degree.
+
+    The caller is the advert reader, which has to recognise that a keyword it
+    guessed ("business") is one word of the subject it already recorded
+    ("business administration") rather than a second thing to know.
+    """
+    return tuple(_merged_fields(language).get(field, ()))
+
+
 def education_waived(text: str, language: str | None = None) -> bool:
     language = language or detect_language(text)
     folded = fold(text)

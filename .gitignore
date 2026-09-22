@@ -15,3 +15,9 @@ venv/
 # Promotional material, not part of the project
 linkedin_*.jpg
 linkedin_post*.md
+
+# Local-only working notes: the project map and the pointers to it
+PROJECT_MAP.md
+CLAUDE.md
+AGENTS.md
+brag-output/

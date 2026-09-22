@@ -1,6 +1,7 @@
 from datetime import date
 
-from ats_xray.match import MUST_WEIGHT, NICE_WEIGHT, evaluate_match
+from ats_xray.match import GUESS_CONFIDENCE, MUST_WEIGHT, NICE_WEIGHT, evaluate_match
+from ats_xray.terms import WEIGHT_INTRODUCED, WEIGHT_NOUN, WEIGHT_TASK
 from ats_xray.vacancy import Requirement, parse_vacancy
 
 TODAY = date(2026, 8, 24)
@@ -202,6 +203,56 @@ def test_a_custom_keyword_absent_from_the_cv_is_missing():
     typed = Requirement(kind="skill", key="custom:kernphysik", label="Kernphysik", must=True)
 
     assert _match([typed]).outcomes[0].status == "missing"
+
+
+# ---------------------------------------------------------- guessed keywords
+def _guess(key, weight, must=True):
+    """A keyword the extractor guessed, carrying how the advert evidenced it."""
+    return Requirement(
+        kind="skill", key=f"term:{key}", label=key, must=must, detail={"weight": weight}
+    )
+
+
+def test_a_keyword_scraped_from_a_duties_line_costs_less_than_one_the_advert_named():
+    """Both are guesses, and they are not equally good guesses. "Kenntnisse
+    in X" says X is wanted; a noun lifted out of a list of daily duties only
+    suggests it. Scored the same, one lucky noun in a tasks block cost a
+    candidate as much as the qualification the advert actually asked for."""
+    introduced = _match([_skill("docker"), _guess("kernphysik", WEIGHT_INTRODUCED)])
+    from_tasks = _match([_skill("docker"), _guess("kernphysik", WEIGHT_TASK)])
+
+    assert from_tasks.score > introduced.score
+
+
+def test_the_confidence_is_the_whole_of_the_difference():
+    """A guess from a duties line is worth half a named requirement, and the
+    arithmetic says so rather than the ordering merely coming out right."""
+    report = _match([_skill("docker"), _guess("kernphysik", WEIGHT_TASK)])
+
+    earned = MUST_WEIGHT
+    total = MUST_WEIGHT + MUST_WEIGHT * GUESS_CONFIDENCE[WEIGHT_TASK]
+    assert report.score == round(earned / total * 100)
+
+
+def test_the_three_confidences_are_ordered():
+    """A capitalised noun sits between the two: German capitalises every
+    noun, so the signal is real but weaker than a phrase that announced a
+    requirement."""
+    scores = [
+        _match([_skill("docker"), _guess("kernphysik", weight)]).score
+        for weight in (WEIGHT_INTRODUCED, WEIGHT_NOUN, WEIGHT_TASK)
+    ]
+
+    assert scores == sorted(scores)
+    assert len(set(scores)) == 3
+
+
+def test_a_keyword_the_reader_typed_by_hand_counts_in_full():
+    """Confidence is about how the extractor came by a word. A person who
+    typed one in meant it."""
+    typed = Requirement(kind="skill", key="custom:kernphysik", label="Kernphysik", must=True)
+
+    assert _match([_skill("docker"), typed]).score == 50
 
 
 # ------------------------------------------------------------------- extras
