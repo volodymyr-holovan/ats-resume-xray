@@ -118,3 +118,30 @@ def test_a_partly_known_phrase_keeps_its_unknown_words_whole():
     found = extract_terms("- Erfahrung mit Docker und Hochregallagertechnik", "de")
 
     assert any(term == "Hochregallagertechnik" for term in found)
+
+
+@pytest.mark.parametrize(
+    ("line", "language", "expected"),
+    [
+        ("- Ervaring met bedrijfsschoonmaak is vereist", "nl", "bedrijfsschoonmaak"),
+        ("- Conocimientos de automatismos valorables", "es", "automatismos"),
+        ("- La connaissance des programmes est exigee", "fr", "programmes"),
+    ],
+)
+def test_the_boilerplate_after_a_requirement_is_not_part_of_it(line, language, expected):
+    """Dutch, Spanish and French mark a requirement as required after naming
+    it, not before: "is vereist", "valorables", "est exigee". The introducer
+    pattern reaches the end of the line and hands back the whole tail, so the
+    keyword arrived as "bedrijfsschoonmaak is vereist" -- a phrase no CV will
+    ever contain, scored as a missing requirement on every match."""
+    assert extract_terms(line, language) == [expected]
+
+
+def test_a_head_noun_is_not_trimmed_off_the_phrase_it_heads():
+    """"Planning" is furniture at the edge of a phrase ("planning of the
+    rota") and the subject in the middle of one. Dropping it wherever it sat
+    last turned "lesson planning" into "lesson", which is not a skill."""
+    assert extract_terms("- Experience with lesson planning and with didactics", "en") == [
+        "lesson planning"
+    ]
+

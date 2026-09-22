@@ -135,6 +135,15 @@ _MODIFIERS = (
     "advanced", "working", "outstanding", "ideally", "preferably", "several",
     "willingness", "passion", "familiarity", "proficiency", "hands-on",
     "completed", "afgeronde", "vloeiend", "diplome", "estudios",
+    # "... is required", "... est exigee", "... es imprescindible": the
+    # sentence saying a requirement is one. German has these above; these are
+    # the languages that put them after the noun rather than before it.
+    "required", "preferred", "essential", "desirable", "mandatory", "welcome",
+    "exige", "exigee", "exigees", "exiges", "requis", "requise", "requises",
+    "souhaite", "souhaitee", "souhaitees", "obligatoire", "indispensable",
+    "imprescindible", "imprescindibles", "necesario", "necesaria", "requerido",
+    "requerida", "valorable", "valorables", "deseable", "deseables",
+    "vereist", "gewenst", "noodzakelijk",
     "technische", "technisches", "technischer", "direkter", "direkte",
     "moderne", "modernes", "hochwertiges", "attraktive", "gründliche",
     "abwechslungsreiches", "innovativem", "wichtige", "verschiedene",
@@ -147,10 +156,20 @@ _MODIFIERS = (
     # "HACCP-Vorgaben" must not come back as a requirement called "Vorgaben".
     "vorgabe", "vorgaben", "regelungen", "bestimmungen", "grundsätze",
     "kriterien", "aspekte", "inhalte", "punkte", "verfahren", "methoden",
+    "methode", "methoden", "metodo", "metodos", "method", "methods",
     "maßnahmen", "abläufe", "vorschriften", "unterlagen", "dokumente",
 )
 
-_FRAMING_WORDS = (
+_HEAD_NOUNS = (
+    # Framing words that are still the head of the phrase they end. Trimming
+    # them off the front of "Planung der Einsaetze" is right; trimming them
+    # off the end of "lesson planning" leaves "lesson", which is not what the
+    # advert asked for. They stay in STOPWORDS, so alone they are still
+    # dropped -- this only stops the trailing trim from eating them.
+    "planning", "production", "rotation",
+)
+
+_FRAMING_WORDS = _HEAD_NOUNS + (
     # Words that frame a requirement without being one.
     "kenntnis", "kenntnisse", "kenntnissen", "erfahrung", "erfahrungen", "umgang",
     "bereich", "bereichen", "jahre", "jahren", "vorteil", "profil", "aufgabe",
@@ -163,13 +182,13 @@ _FRAMING_WORDS = (
     "durchführung", "sinne", "vorteilhaft", "nachweis", "niveau", "wort", "schrift",
     "experience", "knowledge", "skills", "skill", "ability", "years", "requirements",
     "qualifications", "understanding", "background", "plus", "advantage", "level",
-    "production", "rotation", "planning",
     # Handled by the typed extractors, so never a loose keyword.
     "deutsch", "englisch", "deutschkenntnisse", "englischkenntnisse", "sprache",
     "sprachkenntnisse", "german", "english", "führerschein", "fahrerlaubnis",
     "rijbewijs", "permis", "carné", "carne", "bachelor", "master", "diplom",
     "promotion", "degree", "diploma",
     # Company and posting boilerplate.
+    "paragraf", "paragraph", "absatz", "abs", "satz",
     "unternehmen", "firma", "arbeitgeber", "stelle", "position", "team", "teams",
     "mitarbeiter", "mitarbeiterinnen", "kunden", "kunde", "bewerbung",
     "gehalt", "woche", "wochen", "stunden", "monat", "monate", "euro", "urlaub",
@@ -410,6 +429,14 @@ def _introduced_pattern(language: str) -> re.Pattern:
     return cached
 
 
+def _head_nouns() -> frozenset[str]:
+    """Folded words the trailing trim leaves alone. See ``_HEAD_NOUNS``."""
+    global _HEAD_CACHE
+    if _HEAD_CACHE is None:
+        _HEAD_CACHE = frozenset(fold(word) for word in _HEAD_NOUNS)
+    return _HEAD_CACHE
+
+
 def _edge_words(language: str) -> frozenset[str]:
     """Folded words that may be trimmed off either end of a phrase.
 
@@ -429,6 +456,7 @@ def _edge_words(language: str) -> frozenset[str]:
 
 _PATTERN_CACHE: dict[str, re.Pattern] = {}
 _EDGE_CACHE: dict[str, frozenset[str]] = {}
+_HEAD_CACHE: frozenset[str] | None = None
 _NUMERAL_CACHE: dict[str, tuple[str, ...]] = {}
 
 _CAPITALISED = re.compile(r"(\w*[^\W\d_]\w*)", re.UNICODE)
@@ -601,11 +629,13 @@ def _trim(candidate: str, language: str) -> str:
         words = [_drop_elision(word) for word in words]
     edges = _edge_words(language)
 
+    heads = _head_nouns()
+
     def droppable(word: str) -> bool:
         folded = fold(word)
         return not folded or folded in edges or _is_numeral(folded, language)
 
-    while words and droppable(words[-1]):
+    while words and droppable(words[-1]) and not (len(words) > 1 and fold(words[-1]) in heads):
         words.pop()
     while words and droppable(words[0]):
         words.pop(0)
