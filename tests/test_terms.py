@@ -176,3 +176,26 @@ def test_a_noun_left_behind_by_a_known_skill_is_still_a_requirement(line, langua
     three."""
     assert extract_terms(line, language) == [expected]
 
+
+def test_a_ukrainian_adjective_left_on_its_own_is_not_a_requirement():
+    """"Роздрібній торгівлі" is retail trade; the gazetteer knows the trade
+    and leaves the adjective. The rule that was meant to catch it compared
+    Cyrillic endings written with "й" against text that had already been
+    folded, and folding takes the breve off -- so the six commonest endings
+    matched nothing at all."""
+    assert extract_terms("- Досвід роботи в роздрібній торгівлі та на касі", "uk") == []
+
+
+@pytest.mark.parametrize(
+    ("line", "language", "expected"),
+    [
+        ("- Знание ХАССП и калькуляции блюд", "ru", "калькуляции"),
+        ("- Опыт работы с типографикой и фирменным стилем", "ru", "типографикой"),
+    ],
+)
+def test_a_declined_russian_noun_is_not_mistaken_for_an_adjective(line, language, expected):
+    """Why only half the endings could be revived. Once the breve is gone,
+    the adjective ending "ой" is spelled like the instrumental of a noun and
+    "ий" like the genitive, and both of these are trades the advert wants:
+    food costing and typography."""
+    assert extract_terms(line, language) == [expected]

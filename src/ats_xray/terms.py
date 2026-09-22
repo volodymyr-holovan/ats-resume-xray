@@ -265,13 +265,37 @@ _SLAVIC_ADJECTIVE_ENDINGS = (
     "ого", "ому", "ими", "ыми", "ий", "ый", "ая", "яя", "ое", "ее", "ые", "ие",
     "ой", "ей", "ою", "ою", "их", "ых", "ым", "им", "ій", "ої", "ою", "і",
 )
-"""Endings that mark a Russian or Ukrainian adjective.
+"""Endings that mark a Russian or Ukrainian adjective, written as they are
+read rather than as they are compared.
 
 Applied only to a candidate that is a single word. "Медицинская книжка
 обязательна" left "Медицинская" standing alone once the noun was trimmed,
 and an adjective with no noun names nothing. Inside a phrase the adjective
 is doing its job -- "санитарных норм" is a real requirement -- so the rule
 never looks at a word with a neighbour."""
+
+_SLAVIC_ADJECTIVE_ENDINGS_AFTER_FOLDING = ("ыи", "іи", "оі")
+"""Endings above that the comparison never saw, restored as folding spells
+them, and only the ones that are safe to restore.
+
+Folding strips the breve off "й", so every ending built on it -- "ий", "ый",
+"ой", "ей", "ій", "ої" -- was compared against words that no longer
+contained it. Six of the twenty-four entries had been dead since the day
+they were written.
+
+Three of the six stay dead on purpose. Once the breve is gone "ой" and "ий"
+and "ей" are spelled exactly like the case endings of ordinary nouns, and
+reviving them cost two real requirements: "калькуляции" (food costing) and
+"типографикой" (typography), both nouns the advert was asking for. The three
+kept here have no such twin: nothing in either language declines a noun to
+"ый", "ій" or "ої"."""
+
+_SLAVIC_ADJECTIVE_ENDINGS_FOLDED = tuple(
+    sorted(
+        {ending for ending in _SLAVIC_ADJECTIVE_ENDINGS if fold(ending) == ending}
+        | set(_SLAVIC_ADJECTIVE_ENDINGS_AFTER_FOLDING)
+    )
+)
 
 _SLAVIC_INFINITIVE_ENDINGS = ("ти", "ть", "тись", "ться")
 """Ukrainian and Russian mark the infinitive at the end of the word.
@@ -705,7 +729,7 @@ def _is_bare_modifier(candidate: str, language: str) -> bool:
         return False
     folded = fold(candidate)
     if language in ("uk", "ru"):
-        return len(folded) >= 6 and folded.endswith(_SLAVIC_ADJECTIVE_ENDINGS)
+        return len(folded) >= 6 and folded.endswith(_SLAVIC_ADJECTIVE_ENDINGS_FOLDED)
     if language in NOUN_CAPITALISING_LANGUAGES:
         return candidate[:1].islower()
     return False
