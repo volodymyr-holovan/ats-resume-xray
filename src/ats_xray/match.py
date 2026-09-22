@@ -33,6 +33,7 @@ from .normalize import contains_phrase, fold, tokens
 from .recency import find_dated_entries, is_stale, last_used, skills_listed, years_since
 from .sections import split_into_sections
 from .skills_lexicon import SKILLS_BY_ID, find_skills, label_for
+from .terms import WEIGHT_INTRODUCED, WEIGHT_NOUN, WEIGHT_TASK
 from .vacancy import Requirement
 
 MUST_WEIGHT = 3
@@ -42,6 +43,20 @@ call; what matters is that missing one blocking requirement outweighs
 collecting several optional ones."""
 
 PARTIAL_CREDIT = 0.5
+
+GUESS_CONFIDENCE = {WEIGHT_INTRODUCED: 1.0, WEIGHT_NOUN: 0.75, WEIGHT_TASK: 0.5}
+"""How far a keyword the gazetteer does not know is trusted, by how the
+advert evidenced it.
+
+A named skill is a fact about the advert; a guessed keyword is a reading of
+it, and the readings are not equally sure. "Kenntnisse in X" says X is
+wanted. A capitalised noun in a German bullet only suggests it. A word taken
+out of a duties line is the weakest of the three -- the block describes work
+rather than stating requirements.
+
+Scoring all three like a named skill let one guess cost a candidate as much
+as the degree the advert asked for. They still count, at what they are
+worth."""
 
 RATING_THRESHOLDS = (
     (80, "match_rating_strong"),
@@ -84,8 +99,11 @@ class Outcome:
     note_params: dict = field(default_factory=dict)
 
     @property
-    def weight(self) -> int:
-        return MUST_WEIGHT if self.requirement.must else NICE_WEIGHT
+    def weight(self) -> float:
+        base = MUST_WEIGHT if self.requirement.must else NICE_WEIGHT
+        # Only a guessed keyword carries an evidence weight; everything else
+        # is a requirement the advert named, and counts in full.
+        return base * GUESS_CONFIDENCE.get(self.requirement.detail.get("weight"), 1.0)
 
     @property
     def credit(self) -> float:
