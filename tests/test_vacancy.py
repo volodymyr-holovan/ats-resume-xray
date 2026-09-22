@@ -327,3 +327,40 @@ def test_a_real_advert_keeps_its_typed_requirements():
 
     assert by_kind["education"].key == "ausbildung"
     assert by_kind["experience"].detail["years"] == 3
+
+
+DEGREE_AD = """Projektmanager (m/w/d)
+
+Ihr Profil
+- Abgeschlossenes Studium der Betriebswirtschaft
+- Erfahrung mit Vertragsverhandlungen
+"""
+
+
+def test_the_subject_of_a_degree_is_not_a_second_requirement():
+    """An advert asking for a degree in business administration states one
+    requirement. It used to arrive as two -- the degree from the credential
+    reader and the subject from the keyword guesser -- so a candidate without
+    that degree lost points twice for the same sentence."""
+    profile = parse_vacancy(DEGREE_AD)
+    guesses = [r.label for r in profile.requirements if r.key.startswith("term:")]
+
+    assert not any("betriebswirtschaft" in label.lower() for label in guesses)
+
+
+def test_the_subject_of_a_degree_still_appears_on_the_degree():
+    """Deduplicating the subject must not hide it. The education label says
+    the level and nothing else, so with the keyword gone the reader would
+    have been told to bring a Bachelor of something unspecified."""
+    profile = parse_vacancy(DEGREE_AD)
+    education = next(r for r in profile.requirements if r.kind == "education")
+
+    assert "Betriebswirtschaft" in education.label
+    assert education.detail["field"] == "business"
+
+
+def test_a_degree_with_no_subject_named_keeps_its_plain_label():
+    profile = parse_vacancy(GERMAN_AD.replace("der Informatik", ""))
+    education = next(r for r in profile.requirements if r.kind == "education")
+
+    assert education.label == "Bachelor / Studium"
