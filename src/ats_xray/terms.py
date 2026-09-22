@@ -649,6 +649,48 @@ def _trim(candidate: str, language: str) -> str:
     return " ".join(words)
 
 
+ADJECTIVE_ENDINGS: dict[str, tuple[str, ...]] = {
+    # Endings that mark a word as describing a noun rather than being one.
+    # Checked only against a single word the gazetteer left behind, never
+    # against a phrase, so they can afford to be broad.
+    "en": ("al", "ial", "ual", "ive", "ous", "ed"),
+    "es": ("al", "ales", "ivo", "iva", "ivos", "ivas", "oso", "osa", "era", "ero"),
+    "fr": ("el", "elle", "al", "ale", "aux", "elles", "if", "ive", "ives"),
+    "nl": ("eel", "ele", "isch", "ische", "ig", "ige"),
+}
+"""Per language, because the same letters mean different things: Spanish
+"maquinaria" and French "plaies" are nouns an advert really is asking for,
+while "financiera" and "industriel" only describe the noun beside them."""
+
+
+def _is_leftover_modifier(before: str, after: str, language: str) -> bool:
+    """Whether what the gazetteer left behind only describes what it took.
+
+    English and the Romance languages put the adjective after the noun, and
+    the noun is the half the gazetteer knows: "cocina profesional",
+    "contabilidad financiera", "nettoyage industriel", "professional kitchen".
+    The skill was recorded, the noun removed as already explained, and the
+    adjective came back as a requirement of its own -- eleven of them across
+    eighty-two adverts, every one a word no recruiter asked for.
+
+    So a single word left over after the gazetteer took part of the phrase is
+    dropped when it is shaped like an adjective. Shaped, not merely single:
+    "soins des plaies" leaves "plaies" and "maquinaria de limpieza" leaves
+    "maquinaria", which are the wound care and the machines the advert wants.
+
+    A word capitalised where the language does not capitalise nouns is kept
+    whatever its ending: "Docker Swarm" leaves "Swarm", a product rather than
+    a description of one. German is left alone entirely -- it capitalises
+    every noun, and its leftovers ("Vorgaben", "Richtlinien") are already
+    known framing words.
+    """
+    if after == before or " " in after:
+        return False
+    if language in NOUN_CAPITALISING_LANGUAGES or after[:1].isupper():
+        return False
+    return fold(after).endswith(ADJECTIVE_ENDINGS.get(language, ()))
+
+
 def _is_bare_modifier(candidate: str, language: str) -> bool:
     """Whether a single-word candidate is an adjective with no noun.
 
@@ -707,9 +749,12 @@ def _collect(
     # Words a lexicon match already explained are removed rather than the
     # whole phrase: "HACCP-Richtlinien" collapses to nothing and disappears,
     # while "underwater welding" keeps the half the gazetteer does not know.
+    before = candidate
     candidate = _trim(_drop_covered_words(candidate, covered), language)
     folded = fold(candidate)
     if len(candidate) < MIN_TERM_LENGTH or not folded:
+        return
+    if _is_leftover_modifier(before, candidate, language):
         return
     if all(word in STOPWORDS for word in folded.split()):
         return

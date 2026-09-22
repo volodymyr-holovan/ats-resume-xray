@@ -145,3 +145,34 @@ def test_a_head_noun_is_not_trimmed_off_the_phrase_it_heads():
         "lesson planning"
     ]
 
+
+@pytest.mark.parametrize(
+    ("line", "language"),
+    [
+        ("- At least three years of experience in a professional kitchen", "en"),
+        ("- Une experience du nettoyage industriel est exigee", "fr"),
+    ],
+)
+def test_an_adjective_left_behind_by_a_known_skill_is_not_a_requirement(line, language):
+    """The lexicon takes "kitchen" and "nettoyage" out of the phrase and
+    leaves the word that was describing them. On its own "professional" asks
+    for nothing, and it counted against every CV that did not say it."""
+    assert extract_terms(line, language) == []
+
+
+@pytest.mark.parametrize(
+    ("line", "language", "expected"),
+    [
+        ("- Erfahrung mit Docker Swarm", "de", "Swarm"),
+        ("- Connaissance des soins de plaies et de l'administration", "fr", "plaies"),
+        ("- Manejo de maquinaria de limpieza y de productos quimicos", "es", "maquinaria"),
+    ],
+)
+def test_a_noun_left_behind_by_a_known_skill_is_still_a_requirement(line, language, expected):
+    """The other half of the rule above, and the reason it tests the shape of
+    the word rather than counting how many are left. "Swarm" is the part of
+    "Docker Swarm" the gazetteer does not know; wound care and machinery are
+    the trade itself. A rule that dropped every single-word leftover lost all
+    three."""
+    assert extract_terms(line, language) == [expected]
+
