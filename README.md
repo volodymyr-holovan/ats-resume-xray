@@ -291,13 +291,12 @@ Two things to expect:
   signature — silencing those warnings needs a paid code-signing
   certificate. Build it yourself with `python build_exe.py` if you would
   rather not trust a download.
-- **DOCX page previews need LibreOffice** installed separately; everything
-  else works offline. The hosted demo currently has no LibreOffice and falls
-  back to the text-only view for DOCX -- Streamlit Community Cloud installs
-  system packages with `apt-get`, and its base image still carries a Debian
-  bullseye source whose signing metadata expired for good when that release
-  went end-of-life, which fails every deploy that asks for one. PDFs are
-  unaffected, and so is the Windows build.
+- **DOCX page previews need LibreOffice.** A DOCX stores content but no page
+  positions, so it has to be laid out before a finding can be drawn on it. The
+  hosted app asks for it in `packages.txt`; run it yourself and it uses
+  whatever LibreOffice is installed, falling back to the text-only view with a
+  line saying why when there is none. Everything else — every score, finding,
+  match and plan — works without it, and PDFs never need it.
 
 ## Install from source
 

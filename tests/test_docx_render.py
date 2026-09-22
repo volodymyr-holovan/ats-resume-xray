@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import docx
 import pytest
 from reportlab.pdfgen import canvas
@@ -8,6 +10,8 @@ from ats_xray.field_report import build_field_report
 from ats_xray.pdf_locate import find_text_regions
 from ats_xray.pipeline import analyze_path, extract_text
 from ats_xray.structure import analyze_structure
+
+ROOT = Path(__file__).parent.parent
 
 needs_libreoffice = pytest.mark.skipif(
     find_soffice() is None,
@@ -155,3 +159,28 @@ def test_attach_docx_regions_leaves_findings_alone_when_nothing_matches(tmp_path
 
     assert len(located) == len(findings)
     assert all(f.regions == () for f in located)
+
+
+def test_the_hosted_app_asks_for_a_layout_engine():
+    """A DOCX carries content but no page positions, so findings can only be
+    drawn on pages after something lays the file out. packages.txt is the only
+    way to ask Streamlit Community Cloud for that something.
+
+    The file was deleted on 8 September 2026 because Debian bullseye's
+    security repository had expired, apt-get failed on every deploy, and the
+    app would not start at all. Streamlit fixed the base image on 9 September
+    and the file is back. Nothing in the app fails loudly without it: DOCX
+    uploads keep working and quietly lose their page previews, which is why
+    this test exists.
+
+    If apt ever breaks on the host again, delete this test in the same commit
+    as the file, and say in that commit why the previews are going.
+    """
+    path = ROOT / "packages.txt"
+
+    assert path.exists(), "packages.txt is gone, so the hosted app has no layout engine and DOCX previews are off"
+    packages = path.read_text(encoding="utf-8").split()
+
+    assert any(
+        name.startswith("libreoffice") and "writer" in name for name in packages
+    ), f"no LibreOffice writer package in packages.txt: {packages}"
