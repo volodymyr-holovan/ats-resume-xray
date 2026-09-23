@@ -14,9 +14,12 @@ it directly.
 from pathlib import Path
 
 import docx
+import reportlab
 from docx.oxml import parse_xml
 from docx.oxml.ns import nsmap
 from PIL import Image
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
 
 
@@ -221,3 +224,83 @@ def pdf_unembedded_font(path) -> None:
     out += b"startxref" + newline + str(xref_at).encode() + newline + b"%%EOF" + newline
 
     Path(path).write_bytes(bytes(out))
+
+
+def pdf_contact_only_as_link(path) -> None:
+    """A tidy resume whose only route to the candidate is a profile URL.
+
+    The link text is what a parser reads; the address behind it lives in an
+    annotation most parsers never open. Written out as text rather than as a
+    real annotation for that reason -- the fixture is about what the reader
+    gets, and what it gets is a string that is not an email address.
+    """
+    c = canvas.Canvas(str(path), pagesize=(400, 420))
+    c.setFont("Helvetica", 12)
+    c.drawString(30, 390, "Jane Doe")
+    c.drawString(30, 370, "linkedin.com/in/janedoe")
+    c.drawString(30, 330, "Experience")
+    c.drawString(30, 310, "Senior Engineer at Acme")
+    c.drawString(30, 270, "Education")
+    c.drawString(30, 250, "BSc Computer Science")
+    c.drawString(30, 210, "Skills")
+    c.drawString(30, 190, "Python, SQL")
+    c.save()
+
+
+def pdf_invented_headings(path) -> None:
+    """Every section label is a phrase the parser has never heard of.
+
+    "My Journey" and "What I Bring" read beautifully and leave the document
+    as one undifferentiated block with no history in it. Each label is
+    followed by a dated entry, which is the signal that tells the detector a
+    heading-shaped line was labelling a section rather than being a job
+    title.
+    """
+    c = canvas.Canvas(str(path), pagesize=(400, 420))
+    c.setFont("Helvetica", 12)
+    c.drawString(30, 390, "Jane Doe")
+    c.drawString(30, 370, "jane@example.com | +1 555 123 4567")
+    c.drawString(30, 330, "My Journey")
+    c.drawString(30, 310, "Senior Engineer at Acme 03/2019 - 07/2024")
+    c.drawString(30, 270, "Where I Studied")
+    c.drawString(30, 250, "BSc Computer Science 09/2014 - 06/2018")
+    c.drawString(30, 210, "What I Bring")
+    c.drawString(30, 190, "Python, SQL")
+    c.save()
+
+
+def pdf_broken_characters(path) -> None:
+    """A soft hyphen in the middle of a word nobody will ever search for.
+
+    It is invisible unless the line happens to break there, and a search for
+    "Responsible" does not find "Respon-sible" with an invisible hyphen in
+    the join. The character is built with chr() rather than pasted, so that
+    this file stays greppable and no editor quietly removes the one thing
+    the fixture is for.
+
+    Set in an embedded TrueType face rather than Helvetica, and that is not
+    decoration. Drawn in a standard-14 font the soft hyphen comes back out
+    of the PDF as an ordinary space, so the fault the fixture exists to
+    carry simply is not there. Only a font with a real glyph for it and a
+    character map that says so preserves it -- which is also why this turns
+    up in documents from design tools and not in plain exports.
+
+    A soft hyphen and not a zero-width space: a zero-width space draws no
+    glyph at all, so it never becomes a word and never reaches the extracted
+    text of a PDF. That one can only be tested through a DOCX.
+    """
+    soft_hyphen = chr(0x00AD)
+    vera = Path(reportlab.__file__).parent / "fonts" / "Vera.ttf"
+    pdfmetrics.registerFont(TTFont("Vera", str(vera)))
+
+    c = canvas.Canvas(str(path), pagesize=(400, 420))
+    c.setFont("Vera", 12)
+    c.drawString(30, 390, "Jane Doe")
+    c.drawString(30, 370, "jane@example.com | +1 555 123 4567")
+    c.drawString(30, 330, "Experience")
+    c.drawString(30, 310, f"Respon{soft_hyphen}sible for the payments platform at Acme")
+    c.drawString(30, 270, "Education")
+    c.drawString(30, 250, "BSc Computer Science")
+    c.drawString(30, 210, "Skills")
+    c.drawString(30, 190, "Python, SQL")
+    c.save()
