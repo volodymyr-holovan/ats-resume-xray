@@ -18,6 +18,8 @@ GOLDEN_CASES: list[tuple] = [
     (generators.missing_contact, ".pdf", {"missing_contact_field"}),
     (generators.pdf_textless_image, ".pdf", {"pdf_textless_image"}),
     (generators.pdf_repeated_header_footer, ".pdf", {"pdf_repeated_header_footer_content"}),
+    (generators.pdf_unembedded_font, ".pdf", {"pdf_non_embedded_font"}),
+    (generators.pdf_unembedded_font, ".pdf", {"pdf_non_embedded_font"}),
     (generators.docx_with_table, ".docx", {"docx_table_content"}),
     (generators.docx_contact_in_header, ".docx", {"docx_header_footer_content", "missing_contact_field"}),
     (generators.docx_text_box, ".docx", {"docx_text_box_content"}),

@@ -161,3 +161,63 @@ def docx_text_box(path) -> None:
     )
     document.element.body.append(parse_xml(txbx_xml))
     document.save(str(path))
+
+
+def pdf_unembedded_font(path) -> None:
+    """A clean single-column resume set in a font that is referenced and
+    never embedded.
+
+    Written out byte by byte because nothing in this project can produce
+    one: reportlab embeds every TrueType face it is handed, and the only
+    fonts it references without embedding are the standard fourteen, which
+    the rule exempts. That is why a high-severity rule went this long with
+    no golden fixture — not because the case is rare in the wild, but
+    because the fixture could not be generated the usual way.
+
+    The font carries a FontDescriptor with metrics and no font program,
+    which is what a real non-embedded font looks like, rather than no
+    descriptor at all.
+    """
+    lines = [
+        (30, 390, "Jane Doe"),
+        (30, 370, "jane@example.com | +1 555 123 4567"),
+        (30, 330, "Experience"),
+        (30, 310, "Senior Engineer at Acme"),
+        (30, 270, "Education"),
+        (30, 250, "BSc Computer Science"),
+        (30, 210, "Skills"),
+        (30, 190, "Python, SQL"),
+    ]
+    newline = b"\n"
+    content = newline.join(
+        f"BT /F1 12 Tf {x} {y} Td ({text}) Tj ET".encode("latin-1")
+        for x, y, text in lines
+    )
+    objects = [
+        b"<< /Type /Catalog /Pages 2 0 R >>",
+        b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 400 420] "
+        b"/Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>",
+        b"<< /Length " + str(len(content)).encode() + b" >>"
+        + newline + b"stream" + newline + content + newline + b"endstream",
+        b"<< /Type /Font /Subtype /Type1 /BaseFont /Frutiger-Light /FontDescriptor 6 0 R >>",
+        b"<< /Type /FontDescriptor /FontName /Frutiger-Light /Flags 32 "
+        b"/FontBBox [-100 -250 1000 900] /ItalicAngle 0 /Ascent 900 "
+        b"/Descent -250 /CapHeight 700 /StemV 80 >>",
+    ]
+
+    out = bytearray(b"%PDF-1.4" + newline)
+    offsets = []
+    for number, body in enumerate(objects, start=1):
+        offsets.append(len(out))
+        out += str(number).encode() + b" 0 obj" + newline + body + newline + b"endobj" + newline
+
+    xref_at = len(out)
+    size = str(len(objects) + 1).encode()
+    out += b"xref" + newline + b"0 " + size + newline + b"0000000000 65535 f " + newline
+    for offset in offsets:
+        out += str(offset).zfill(10).encode() + b" 00000 n " + newline
+    out += b"trailer" + newline + b"<< /Size " + size + b" /Root 1 0 R >>" + newline
+    out += b"startxref" + newline + str(xref_at).encode() + newline + b"%%EOF" + newline
+
+    Path(path).write_bytes(bytes(out))
