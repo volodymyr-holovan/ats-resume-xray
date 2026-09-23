@@ -1,7 +1,9 @@
 {
   "name": "Python 3",
-  // Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-  "image": "mcr.microsoft.com/devcontainers/python:1-3.11-bookworm",
+  // 3.10 rather than the newest: it is the floor pyproject declares and the
+  // older of the two legs CI runs, so a Codespace hits the same constraints
+  // the stricter half of CI does instead of passing locally and failing there.
+  "image": "mcr.microsoft.com/devcontainers/python:1-3.10-bookworm",
   "customizations": {
     "codespaces": {
       "openFiles": [
@@ -10,14 +12,25 @@
       ]
     },
     "vscode": {
-      "settings": {},
+      "settings": {
+        "python.testing.pytestEnabled": true,
+        "python.testing.pytestArgs": [
+          "tests"
+        ]
+      },
       "extensions": [
         "ms-python.python",
         "ms-python.vscode-pylance"
       ]
     }
   },
-  "updateContentCommand": "[ -f packages.txt ] && sudo apt update && sudo apt upgrade -y && sudo xargs apt install -y <packages.txt; [ -f requirements.txt ] && pip3 install --user -r requirements.txt; pip3 install --user streamlit; echo '✅ Packages installed and Requirements met'",
+  // The dev extra, not requirements.txt. That file exists for Streamlit
+  // Community Cloud and installs the app alone, which left a Codespace with
+  // no pytest and no reportlab -- so the suite, which is the specification
+  // here, could not be run in the environment set up to work on it.
+  // packages.txt is LibreOffice, and only the DOCX page previews need it, so
+  // a failure to install it must not take the whole container down with it.
+  "updateContentCommand": "[ -f packages.txt ] && (sudo apt-get update && sudo xargs sudo apt-get install -y <packages.txt || echo '⚠ LibreOffice not installed; DOCX previews will fall back to text'); pip3 install --user -e '.[dev,web]'; echo '✅ Environment ready — run pytest'",
   "postAttachCommand": {
     "server": "streamlit run app.py --server.enableCORS false --server.enableXsrfProtection false"
   },

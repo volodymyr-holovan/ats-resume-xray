@@ -14,9 +14,12 @@ it directly.
 from pathlib import Path
 
 import docx
+import reportlab
 from docx.oxml import parse_xml
 from docx.oxml.ns import nsmap
 from PIL import Image
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
 
 
@@ -161,3 +164,143 @@ def docx_text_box(path) -> None:
     )
     document.element.body.append(parse_xml(txbx_xml))
     document.save(str(path))
+
+
+def pdf_unembedded_font(path) -> None:
+    """A clean single-column resume set in a font that is referenced and
+    never embedded.
+
+    Written out byte by byte because nothing in this project can produce
+    one: reportlab embeds every TrueType face it is handed, and the only
+    fonts it references without embedding are the standard fourteen, which
+    the rule exempts. That is why a high-severity rule went this long with
+    no golden fixture — not because the case is rare in the wild, but
+    because the fixture could not be generated the usual way.
+
+    The font carries a FontDescriptor with metrics and no font program,
+    which is what a real non-embedded font looks like, rather than no
+    descriptor at all.
+    """
+    lines = [
+        (30, 390, "Jane Doe"),
+        (30, 370, "jane@example.com | +1 555 123 4567"),
+        (30, 330, "Experience"),
+        (30, 310, "Senior Engineer at Acme"),
+        (30, 270, "Education"),
+        (30, 250, "BSc Computer Science"),
+        (30, 210, "Skills"),
+        (30, 190, "Python, SQL"),
+    ]
+    newline = b"\n"
+    content = newline.join(
+        f"BT /F1 12 Tf {x} {y} Td ({text}) Tj ET".encode("latin-1")
+        for x, y, text in lines
+    )
+    objects = [
+        b"<< /Type /Catalog /Pages 2 0 R >>",
+        b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 400 420] "
+        b"/Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>",
+        b"<< /Length " + str(len(content)).encode() + b" >>"
+        + newline + b"stream" + newline + content + newline + b"endstream",
+        b"<< /Type /Font /Subtype /Type1 /BaseFont /Frutiger-Light /FontDescriptor 6 0 R >>",
+        b"<< /Type /FontDescriptor /FontName /Frutiger-Light /Flags 32 "
+        b"/FontBBox [-100 -250 1000 900] /ItalicAngle 0 /Ascent 900 "
+        b"/Descent -250 /CapHeight 700 /StemV 80 >>",
+    ]
+
+    out = bytearray(b"%PDF-1.4" + newline)
+    offsets = []
+    for number, body in enumerate(objects, start=1):
+        offsets.append(len(out))
+        out += str(number).encode() + b" 0 obj" + newline + body + newline + b"endobj" + newline
+
+    xref_at = len(out)
+    size = str(len(objects) + 1).encode()
+    out += b"xref" + newline + b"0 " + size + newline + b"0000000000 65535 f " + newline
+    for offset in offsets:
+        out += str(offset).zfill(10).encode() + b" 00000 n " + newline
+    out += b"trailer" + newline + b"<< /Size " + size + b" /Root 1 0 R >>" + newline
+    out += b"startxref" + newline + str(xref_at).encode() + newline + b"%%EOF" + newline
+
+    Path(path).write_bytes(bytes(out))
+
+
+def pdf_contact_only_as_link(path) -> None:
+    """A tidy resume whose only route to the candidate is a profile URL.
+
+    The link text is what a parser reads; the address behind it lives in an
+    annotation most parsers never open. Written out as text rather than as a
+    real annotation for that reason -- the fixture is about what the reader
+    gets, and what it gets is a string that is not an email address.
+    """
+    c = canvas.Canvas(str(path), pagesize=(400, 420))
+    c.setFont("Helvetica", 12)
+    c.drawString(30, 390, "Jane Doe")
+    c.drawString(30, 370, "linkedin.com/in/janedoe")
+    c.drawString(30, 330, "Experience")
+    c.drawString(30, 310, "Senior Engineer at Acme")
+    c.drawString(30, 270, "Education")
+    c.drawString(30, 250, "BSc Computer Science")
+    c.drawString(30, 210, "Skills")
+    c.drawString(30, 190, "Python, SQL")
+    c.save()
+
+
+def pdf_invented_headings(path) -> None:
+    """Every section label is a phrase the parser has never heard of.
+
+    "My Journey" and "What I Bring" read beautifully and leave the document
+    as one undifferentiated block with no history in it. Each label is
+    followed by a dated entry, which is the signal that tells the detector a
+    heading-shaped line was labelling a section rather than being a job
+    title.
+    """
+    c = canvas.Canvas(str(path), pagesize=(400, 420))
+    c.setFont("Helvetica", 12)
+    c.drawString(30, 390, "Jane Doe")
+    c.drawString(30, 370, "jane@example.com | +1 555 123 4567")
+    c.drawString(30, 330, "My Journey")
+    c.drawString(30, 310, "Senior Engineer at Acme 03/2019 - 07/2024")
+    c.drawString(30, 270, "Where I Studied")
+    c.drawString(30, 250, "BSc Computer Science 09/2014 - 06/2018")
+    c.drawString(30, 210, "What I Bring")
+    c.drawString(30, 190, "Python, SQL")
+    c.save()
+
+
+def pdf_broken_characters(path) -> None:
+    """A soft hyphen in the middle of a word nobody will ever search for.
+
+    It is invisible unless the line happens to break there, and a search for
+    "Responsible" does not find "Respon-sible" with an invisible hyphen in
+    the join. The character is built with chr() rather than pasted, so that
+    this file stays greppable and no editor quietly removes the one thing
+    the fixture is for.
+
+    Set in an embedded TrueType face rather than Helvetica, and that is not
+    decoration. Drawn in a standard-14 font the soft hyphen comes back out
+    of the PDF as an ordinary space, so the fault the fixture exists to
+    carry simply is not there. Only a font with a real glyph for it and a
+    character map that says so preserves it -- which is also why this turns
+    up in documents from design tools and not in plain exports.
+
+    A soft hyphen and not a zero-width space: a zero-width space draws no
+    glyph at all, so it never becomes a word and never reaches the extracted
+    text of a PDF. That one can only be tested through a DOCX.
+    """
+    soft_hyphen = chr(0x00AD)
+    vera = Path(reportlab.__file__).parent / "fonts" / "Vera.ttf"
+    pdfmetrics.registerFont(TTFont("Vera", str(vera)))
+
+    c = canvas.Canvas(str(path), pagesize=(400, 420))
+    c.setFont("Vera", 12)
+    c.drawString(30, 390, "Jane Doe")
+    c.drawString(30, 370, "jane@example.com | +1 555 123 4567")
+    c.drawString(30, 330, "Experience")
+    c.drawString(30, 310, f"Respon{soft_hyphen}sible for the payments platform at Acme")
+    c.drawString(30, 270, "Education")
+    c.drawString(30, 250, "BSc Computer Science")
+    c.drawString(30, 210, "Skills")
+    c.drawString(30, 190, "Python, SQL")
+    c.save()

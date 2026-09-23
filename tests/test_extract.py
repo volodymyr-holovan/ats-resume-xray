@@ -59,3 +59,39 @@ def test_naive_vs_layout_aware_two_column_interleaving():
     columns = _cluster_columns(words, min_gap=50)
     aware_text = "\n\n".join(_words_to_text(col) for col in columns)
     assert aware_text == "Left1\nLeft2\n\nRight1\nRight2"
+
+
+def test_one_line_reaching_across_the_gutter_merges_the_columns():
+    """Why a dated one-column CV stays one column, and the trap that comes
+    with it.
+
+    The spans of every word on the page are merged before anything is
+    assigned, so the widest line decides for all of them. A job title on the
+    left and its dates on the right look like two columns until the first
+    paragraph underneath reaches across, and then they are one -- which is
+    the behaviour a normal CV depends on.
+
+    The same rule the other way round is the trap: a genuinely two-column
+    page with a single full-width banner across the top has no gap left to
+    find, and reads as one scrambled column.
+    """
+    two_columns = [
+        word("Left", 0, 40, 20),
+        word("Right", 200, 240, 20),
+    ]
+    assert len(_cluster_columns(two_columns, min_gap=50)) == 2
+
+    bridged = two_columns + [word("A-full-width-banner-line", 0, 240, 0)]
+    assert len(_cluster_columns(bridged, min_gap=50)) == 1
+
+
+def test_a_gap_exactly_the_size_of_the_threshold_is_not_a_boundary():
+    """The comparison is strictly greater than, and the difference is not
+    academic: the default threshold is 20 points, which is close enough to
+    ordinary paragraph indentation that an off-by-one here would start
+    reporting indented text as a second column."""
+    exactly = [word("Left", 0, 40, 0), word("Right", 60, 100, 0)]
+    assert len(_cluster_columns(exactly, min_gap=20)) == 1
+
+    one_point_wider = [word("Left", 0, 40, 0), word("Right", 60.5, 100, 0)]
+    assert len(_cluster_columns(one_point_wider, min_gap=20)) == 2
